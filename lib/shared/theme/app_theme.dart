@@ -13,6 +13,7 @@ class AppColors {
   static const textMuted = Color(0xFF9CA3AF);
   static const divider = Color(0xFFE5E7EB);
   static const badgeGreen = Color(0xFF1DB954);
+  static const accentGreen = Color(0xFF1DB954);
   static const badgeGrey = Color(0xFF6B7280);
   static const closed = Color(0xFFEF4444);
 }
