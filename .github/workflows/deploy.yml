@@ -7,7 +7,6 @@ on:
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -35,48 +34,3 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./build/web
-```
-
-### 8.3 Abilita GitHub Pages
-
-1. Nel repo → **Settings** → **Pages**
-2. **Source:** Deploy from a branch
-3. **Branch:** `gh-pages` → `/ (root)`
-4. Clicca **Save**
-
-Ora ad ogni `git push` su `main` → GitHub Actions builda → GitHub Pages pubblica l'app all'indirizzo:
-`https://tuo-username.github.io/restaurant-booking/`
-
----
-
-## STEP 9 — Verifica Tutto Funzioni
-
-### Checklist finale
-```
-✅ GitHub repo creato con .devcontainer
-✅ Codespace avviato e Flutter installato
-✅ flutter --version risponde correttamente
-✅ Supabase progetto creato
-✅ Database schema creato con SQL Editor
-✅ Credenziali Supabase salvate in GitHub Secrets
-✅ File .env nel Codespace (non committato)
-✅ flutter pub get completato senza errori
-✅ flutter run -d web-server mostra l'app nel browser
-✅ GitHub Actions workflow creato
-✅ GitHub Pages abilitato su branch gh-pages
-✅ Primo push → Actions esegue build → app online
-```
-
----
-
-## Flusso di Lavoro Quotidiano
-```
-1. Vai su github.com/tuo-repo
-2. Clicca "Code" → Codespaces → apri il tuo Codespace
-3. Sviluppa nel VS Code nel browser
-4. Testa con: flutter run -d web-server --web-port=8080
-5. Quando sei soddisfatto:
-   git add .
-   git commit -m "descrizione modifica"
-   git push
-6. GitHub Actions fa il resto → app aggiornata su GitHub Pages
