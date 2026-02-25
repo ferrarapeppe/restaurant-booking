@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:go_router/go_router.dart';
 import 'package:restaurant_booking/shared/widgets/app_drawer.dart';
 import 'package:restaurant_booking/shared/theme/app_theme.dart';
-import 'package:go_router/go_router.dart';
 
-// Modello prenotazione
 class Booking {
   final String id;
   final String guestName;
@@ -25,6 +24,12 @@ class Booking {
     this.notes,
     this.source = 'web',
   });
+
+  Booking copyWith({String? status}) => Booking(
+    id: id, guestName: guestName, partySize: partySize,
+    time: time, status: status ?? this.status,
+    table: table, notes: notes, source: source,
+  );
 }
 
 class BookingsScreen extends StatefulWidget {
@@ -37,7 +42,6 @@ class _BookingsScreenState extends State<BookingsScreen> {
   DateTime _selectedDate = DateTime.now();
   String _filterStatus = 'tutti';
 
-  // Dati mock
   final List<Booking> _bookings = [
     Booking(id: '1', guestName: 'Mario Rossi', partySize: 2, time: '12:30', status: 'confirmed', table: 'T1', source: 'web'),
     Booking(id: '2', guestName: 'Anna Bianchi', partySize: 4, time: '13:00', status: 'seated', table: 'T3', notes: 'Anniversario di matrimonio'),
@@ -58,9 +62,6 @@ class _BookingsScreenState extends State<BookingsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final dateStr = DateFormat('EEEE d MMMM yyyy', 'it_IT').format(_selectedDate);
-    final capitalDate = dateStr[0].toUpperCase() + dateStr.substring(1);
-
     return Scaffold(
       backgroundColor: AppColors.background,
       drawer: const AppDrawer(),
@@ -100,7 +101,6 @@ class _BookingsScreenState extends State<BookingsScreen> {
       ),
       body: Column(
         children: [
-          // Stats bar
           Container(
             color: AppColors.surface,
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
@@ -110,24 +110,20 @@ class _BookingsScreenState extends State<BookingsScreen> {
                 const SizedBox(width: 8),
                 _StatChip(label: '$_totalGuests ospiti', color: AppColors.badgeGrey),
                 const Spacer(),
-                // Navigazione date
                 IconButton(
                   icon: const Icon(Icons.chevron_left, color: AppColors.textSecondary),
                   onPressed: () => setState(() => _selectedDate = _selectedDate.subtract(const Duration(days: 1))),
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(),
+                  padding: EdgeInsets.zero, constraints: const BoxConstraints(),
                 ),
                 const SizedBox(width: 8),
                 IconButton(
                   icon: const Icon(Icons.chevron_right, color: AppColors.textSecondary),
                   onPressed: () => setState(() => _selectedDate = _selectedDate.add(const Duration(days: 1))),
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(),
+                  padding: EdgeInsets.zero, constraints: const BoxConstraints(),
                 ),
               ],
             ),
           ),
-          // Filtri stato
           Container(
             color: AppColors.surface,
             height: 40,
@@ -135,18 +131,17 @@ class _BookingsScreenState extends State<BookingsScreen> {
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
               children: [
-                _FilterChip(label: 'Tutti', value: 'tutti', selected: _filterStatus == 'tutti', onTap: () => setState(() => _filterStatus = 'tutti')),
-                _FilterChip(label: 'Confermati', value: 'confirmed', selected: _filterStatus == 'confirmed', onTap: () => setState(() => _filterStatus = 'confirmed')),
-                _FilterChip(label: 'In attesa', value: 'pending', selected: _filterStatus == 'pending', onTap: () => setState(() => _filterStatus = 'pending')),
-                _FilterChip(label: 'Seduti', value: 'seated', selected: _filterStatus == 'seated', onTap: () => setState(() => _filterStatus = 'seated')),
-                _FilterChip(label: 'Partiti', value: 'left', selected: _filterStatus == 'left', onTap: () => setState(() => _filterStatus = 'left')),
-                _FilterChip(label: 'No-show', value: 'noshow', selected: _filterStatus == 'noshow', onTap: () => setState(() => _filterStatus = 'noshow')),
-                _FilterChip(label: 'Walk-in', value: 'walkin', selected: _filterStatus == 'walkin', onTap: () => setState(() => _filterStatus = 'walkin')),
+                _FilterChip(label: 'Tutti', selected: _filterStatus == 'tutti', onTap: () => setState(() => _filterStatus = 'tutti')),
+                _FilterChip(label: 'Confermati', selected: _filterStatus == 'confirmed', onTap: () => setState(() => _filterStatus = 'confirmed')),
+                _FilterChip(label: 'In attesa', selected: _filterStatus == 'pending', onTap: () => setState(() => _filterStatus = 'pending')),
+                _FilterChip(label: 'Seduti', selected: _filterStatus == 'seated', onTap: () => setState(() => _filterStatus = 'seated')),
+                _FilterChip(label: 'Partiti', selected: _filterStatus == 'left', onTap: () => setState(() => _filterStatus = 'left')),
+                _FilterChip(label: 'No-show', selected: _filterStatus == 'noshow', onTap: () => setState(() => _filterStatus = 'noshow')),
+                _FilterChip(label: 'Walk-in', selected: _filterStatus == 'walkin', onTap: () => setState(() => _filterStatus = 'walkin')),
               ],
             ),
           ),
           const Divider(height: 1, color: AppColors.divider),
-          // Lista prenotazioni
           Expanded(
             child: _filteredBookings.isEmpty
                 ? const Center(child: Text('Nessuna prenotazione', style: TextStyle(color: AppColors.textSecondary)))
@@ -158,21 +153,11 @@ class _BookingsScreenState extends State<BookingsScreen> {
                       final booking = _filteredBookings[index];
                       return _BookingCard(
                         booking: booking,
+                        onTap: () => context.push('/bookings/${booking.id}', extra: booking),
                         onStatusChange: (newStatus) {
                           setState(() {
                             final idx = _bookings.indexWhere((b) => b.id == booking.id);
-                            if (idx != -1) {
-                              _bookings[idx] = Booking(
-                                id: booking.id,
-                                guestName: booking.guestName,
-                                partySize: booking.partySize,
-                                time: booking.time,
-                                status: newStatus,
-                                table: booking.table,
-                                notes: booking.notes,
-                                source: booking.source,
-                              );
-                            }
+                            if (idx != -1) _bookings[idx] = booking.copyWith(status: newStatus);
                           });
                         },
                       );
@@ -188,111 +173,110 @@ class _BookingsScreenState extends State<BookingsScreen> {
       ),
     );
   }
-
-  void _showNewBookingDialog(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: AppColors.surface,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-      builder: (context) => const _NewBookingSheet(),
-    );
-  }
 }
 
-// Card prenotazione
 class _BookingCard extends StatelessWidget {
   final Booking booking;
+  final VoidCallback onTap;
   final Function(String) onStatusChange;
 
-  const _BookingCard({required this.booking, required this.onStatusChange});
+  const _BookingCard({required this.booking, required this.onTap, required this.onStatusChange});
+
+  Map<String, dynamic> _getStatusInfo(String status) {
+    switch (status) {
+      case 'confirmed': return {'label': 'Confermato', 'color': const Color(0xFF28A745)};
+      case 'pending': return {'label': 'In attesa', 'color': const Color(0xFFFFC107)};
+      case 'seated': return {'label': 'Seduto', 'color': const Color(0xFF007BFF)};
+      case 'left': return {'label': 'Partito', 'color': const Color(0xFF6C757D)};
+      case 'noshow': return {'label': 'No-show', 'color': const Color(0xFFDC3545)};
+      case 'walkin': return {'label': 'Walk-in', 'color': const Color(0xFFFF8C00)};
+      default: return {'label': status, 'color': AppColors.textSecondary};
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final statusInfo = _getStatusInfo(booking.status);
-
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(12),
-        border: Border(left: BorderSide(color: statusInfo['color'] as Color, width: 4)),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 4, offset: const Offset(0, 2))],
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Row(
-          children: [
-            // Orario
-            SizedBox(
-              width: 48,
-              child: Text(booking.time,
-                  style: const TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.bold, fontSize: 15)),
-            ),
-            // Info prenotazione
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Text(booking.guestName,
-                          style: const TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w600, fontSize: 15)),
-                      const SizedBox(width: 8),
-                      Icon(Icons.people, size: 14, color: AppColors.textSecondary),
-                      const SizedBox(width: 2),
-                      Text('${booking.partySize}',
-                          style: const TextStyle(color: AppColors.textSecondary, fontSize: 14)),
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(12),
+          border: Border(left: BorderSide(color: statusInfo['color'] as Color, width: 4)),
+          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 4, offset: const Offset(0, 2))],
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Row(
+            children: [
+              SizedBox(
+                width: 48,
+                child: Text(booking.time,
+                    style: const TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.bold, fontSize: 15)),
+              ),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Text(booking.guestName,
+                            style: const TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w600, fontSize: 15)),
+                        const SizedBox(width: 8),
+                        const Icon(Icons.people, size: 14, color: AppColors.textSecondary),
+                        const SizedBox(width: 2),
+                        Text('${booking.partySize}', style: const TextStyle(color: AppColors.textSecondary, fontSize: 14)),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        if (booking.table != null) ...[
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(color: AppColors.background, borderRadius: BorderRadius.circular(4)),
+                            child: Text(booking.table!, style: const TextStyle(color: AppColors.textSecondary, fontSize: 12)),
+                          ),
+                          const SizedBox(width: 6),
+                        ],
+                        _SourceIcon(source: booking.source),
+                        if (booking.notes != null) ...[
+                          const SizedBox(width: 6),
+                          const Icon(Icons.note_outlined, size: 14, color: AppColors.textMuted),
+                        ],
+                      ],
+                    ),
+                    if (booking.notes != null) ...[
+                      const SizedBox(height: 4),
+                      Text(booking.notes!,
+                          style: const TextStyle(color: AppColors.textSecondary, fontSize: 12),
+                          maxLines: 1, overflow: TextOverflow.ellipsis),
                     ],
+                  ],
+                ),
+              ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: (statusInfo['color'] as Color).withOpacity(0.15),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(statusInfo['label'] as String,
+                        style: TextStyle(color: statusInfo['color'] as Color, fontSize: 12, fontWeight: FontWeight.w600)),
                   ),
                   const SizedBox(height: 4),
-                  Row(
-                    children: [
-                      if (booking.table != null) ...[
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                          decoration: BoxDecoration(color: AppColors.background, borderRadius: BorderRadius.circular(4)),
-                          child: Text(booking.table!,
-                              style: const TextStyle(color: AppColors.textSecondary, fontSize: 12)),
-                        ),
-                        const SizedBox(width: 6),
-                      ],
-                      _SourceIcon(source: booking.source),
-                      if (booking.notes != null) ...[
-                        const SizedBox(width: 6),
-                        const Icon(Icons.note_outlined, size: 14, color: AppColors.textMuted),
-                      ],
-                    ],
+                  GestureDetector(
+                    onTap: () => _showStatusMenu(context),
+                    child: const Icon(Icons.more_vert, color: AppColors.textMuted, size: 20),
                   ),
-                  if (booking.notes != null) ...[
-                    const SizedBox(height: 4),
-                    Text(booking.notes!,
-                        style: const TextStyle(color: AppColors.textSecondary, fontSize: 12),
-                        maxLines: 1, overflow: TextOverflow.ellipsis),
-                  ],
                 ],
               ),
-            ),
-            // Status badge + menu
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: (statusInfo['color'] as Color).withOpacity(0.15),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(statusInfo['label'] as String,
-                      style: TextStyle(color: statusInfo['color'] as Color, fontSize: 12, fontWeight: FontWeight.w600)),
-                ),
-                const SizedBox(height: 4),
-                GestureDetector(
-                  onTap: () => _showStatusMenu(context),
-                  child: const Icon(Icons.more_vert, color: AppColors.textMuted, size: 20),
-                ),
-              ],
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -313,10 +297,7 @@ class _BookingCard extends StatelessWidget {
           const SizedBox(height: 16),
           for (final status in ['confirmed', 'seated', 'left', 'noshow', 'pending'])
             ListTile(
-              leading: CircleAvatar(
-                radius: 8,
-                backgroundColor: _getStatusInfo(status)['color'] as Color,
-              ),
+              leading: CircleAvatar(radius: 8, backgroundColor: _getStatusInfo(status)['color'] as Color),
               title: Text(_getStatusInfo(status)['label'] as String),
               onTap: () { onStatusChange(status); Navigator.pop(context); },
             ),
@@ -324,18 +305,6 @@ class _BookingCard extends StatelessWidget {
         ],
       ),
     );
-  }
-
-  Map<String, dynamic> _getStatusInfo(String status) {
-    switch (status) {
-      case 'confirmed': return {'label': 'Confermato', 'color': const Color(0xFF28A745)};
-      case 'pending': return {'label': 'In attesa', 'color': const Color(0xFFFFC107)};
-      case 'seated': return {'label': 'Seduto', 'color': const Color(0xFF007BFF)};
-      case 'left': return {'label': 'Partito', 'color': const Color(0xFF6C757D)};
-      case 'noshow': return {'label': 'No-show', 'color': const Color(0xFFDC3545)};
-      case 'walkin': return {'label': 'Walk-in', 'color': const Color(0xFFFF8C00)};
-      default: return {'label': status, 'color': AppColors.textSecondary};
-    }
   }
 }
 
@@ -345,8 +314,7 @@ class _SourceIcon extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    IconData icon;
-    Color color;
+    IconData icon; Color color;
     switch (source) {
       case 'google': icon = Icons.g_mobiledata; color = Colors.red; break;
       case 'phone': icon = Icons.phone; color = AppColors.textSecondary; break;
@@ -374,10 +342,9 @@ class _StatChip extends StatelessWidget {
 
 class _FilterChip extends StatelessWidget {
   final String label;
-  final String value;
   final bool selected;
   final VoidCallback onTap;
-  const _FilterChip({required this.label, required this.value, required this.selected, required this.onTap});
+  const _FilterChip({required this.label, required this.selected, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -396,56 +363,6 @@ class _FilterChip extends StatelessWidget {
                 color: selected ? Colors.white : AppColors.textSecondary,
                 fontSize: 12,
                 fontWeight: selected ? FontWeight.w600 : FontWeight.normal)),
-      ),
-    );
-  }
-}
-
-class _NewBookingSheet extends StatelessWidget {
-  const _NewBookingSheet();
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
-      child: Container(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                const Text('Nuova prenotazione', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                const Spacer(),
-                IconButton(icon: const Icon(Icons.close), onPressed: () => Navigator.pop(context)),
-              ],
-            ),
-            const SizedBox(height: 16),
-            const TextField(decoration: InputDecoration(labelText: 'Nome cliente', prefixIcon: Icon(Icons.person_outline), border: OutlineInputBorder())),
-            const SizedBox(height: 12),
-            const TextField(decoration: InputDecoration(labelText: 'Telefono', prefixIcon: Icon(Icons.phone_outlined), border: OutlineInputBorder())),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(child: TextField(decoration: const InputDecoration(labelText: 'Numero ospiti', prefixIcon: Icon(Icons.people_outline), border: OutlineInputBorder()))),
-                const SizedBox(width: 12),
-                Expanded(child: TextField(decoration: const InputDecoration(labelText: 'Orario', prefixIcon: Icon(Icons.access_time), border: OutlineInputBorder()))),
-              ],
-            ),
-            const SizedBox(height: 12),
-            const TextField(decoration: InputDecoration(labelText: 'Note', prefixIcon: Icon(Icons.note_outlined), border: OutlineInputBorder()), maxLines: 2),
-            const SizedBox(height: 20),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () => Navigator.pop(context),
-                style: ElevatedButton.styleFrom(backgroundColor: AppColors.accent, foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(vertical: 14)),
-                child: const Text('Crea prenotazione', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }
