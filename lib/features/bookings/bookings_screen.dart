@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:restaurant_booking/shared/widgets/app_drawer.dart';
 import 'package:restaurant_booking/shared/theme/app_theme.dart';
+import 'package:go_router/go_router.dart';
 
 // Modello prenotazione
 class Booking {
@@ -181,7 +182,7 @@ class _BookingsScreenState extends State<BookingsScreen> {
         ],
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () => _showNewBookingDialog(context),
+        onPressed: () => context.push('/bookings/new'),
         backgroundColor: AppColors.accent,
         child: const Icon(Icons.add, color: Colors.white),
       ),
