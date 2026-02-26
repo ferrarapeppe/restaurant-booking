@@ -25,9 +25,45 @@ class TableRepository {
   }
 
   Future<void> updateTablePosition(String id, double posX, double posY) async {
-    await _client
+    await _client.from('tables').update({'pos_x': posX, 'pos_y': posY}).eq('id', id);
+  }
+
+  Future<AreaModel> createArea(String name, int sortOrder) async {
+    final response = await _client
+        .from('areas')
+        .insert({'restaurant_id': _restaurantId, 'name': name, 'sort_order': sortOrder})
+        .select()
+        .single();
+    return AreaModel.fromJson(response);
+  }
+
+  Future<void> updateArea(String id, String name) async {
+    await _client.from('areas').update({'name': name}).eq('id', id);
+  }
+
+  Future<void> deleteArea(String id) async {
+    await _client.from('areas').delete().eq('id', id);
+  }
+
+  Future<TableModel> createTable(TableModel table) async {
+    final response = await _client
         .from('tables')
-        .update({'pos_x': posX, 'pos_y': posY})
-        .eq('id', id);
+        .insert(table.toJson())
+        .select()
+        .single();
+    return TableModel.fromJson(response);
+  }
+
+  Future<void> updateTable(String id, {String? name, int? capacity, int? minCapacity, String? shape}) async {
+    final data = <String, dynamic>{};
+    if (name != null) data['name'] = name;
+    if (capacity != null) data['capacity'] = capacity;
+    if (minCapacity != null) data['min_capacity'] = minCapacity;
+    if (shape != null) data['shape'] = shape;
+    if (data.isNotEmpty) await _client.from('tables').update(data).eq('id', id);
+  }
+
+  Future<void> deleteTable(String id) async {
+    await _client.from('tables').delete().eq('id', id);
   }
 }

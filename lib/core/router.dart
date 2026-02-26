@@ -12,6 +12,7 @@ import 'package:restaurant_booking/features/guests/guests_screen.dart';
 import 'package:restaurant_booking/features/reports/reports_screen.dart';
 import 'package:restaurant_booking/features/settings/settings_screen.dart';
 import 'package:restaurant_booking/features/floorplan/floorplan_screen.dart';
+import 'package:restaurant_booking/features/floorplan/manage_areas_screen.dart';
 
 final router = GoRouter(
   initialLocation: '/splash',
@@ -33,5 +34,6 @@ final router = GoRouter(
     GoRoute(path: '/reports', builder: (context, state) => const ReportsScreen()),
     GoRoute(path: '/settings', builder: (context, state) => const SettingsScreen()),
     GoRoute(path: '/floorplan', builder: (context, state) => const FloorplanScreen()),
+    GoRoute(path: '/floorplan/manage', builder: (context, state) => const ManageAreasScreen()),
   ],
 );

@@ -4,6 +4,8 @@ import 'package:restaurant_booking/shared/widgets/app_drawer.dart';
 import 'package:restaurant_booking/shared/theme/app_theme.dart';
 import 'package:restaurant_booking/data/models/table_model.dart';
 import 'package:restaurant_booking/core/providers/table_providers.dart';
+import 'package:restaurant_booking/features/floorplan/manage_areas_screen.dart';
+import 'package:go_router/go_router.dart';
 
 class FloorplanScreen extends ConsumerWidget {
   const FloorplanScreen({super.key});
@@ -27,7 +29,7 @@ class FloorplanScreen extends ConsumerWidget {
         ),
         title: const Text('Planimetria', style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.bold)),
         actions: [
-          IconButton(icon: const Icon(Icons.edit_outlined, color: AppColors.textSecondary), onPressed: () {}),
+          IconButton(icon: const Icon(Icons.edit_outlined, color: AppColors.textSecondary), onPressed: () => context.push('/floorplan/manage')),
         ],
       ),
       body: Column(
@@ -92,7 +94,14 @@ class FloorplanScreen extends ConsumerWidget {
         ],
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () {},
+        onPressed: () {
+          final areas = areasAsync.valueOrNull;
+          final selectedAreaId = selectedArea ?? areas?.first.id;
+          final area = areas?.firstWhere((a) => a.id == selectedAreaId, orElse: () => areas!.first);
+          if (area != null) {
+            Navigator.push(context, MaterialPageRoute(builder: (_) => ManageTablesScreen(area: area)));
+          }
+        },
         backgroundColor: AppColors.accent,
         child: const Icon(Icons.add, color: Colors.white),
       ),
