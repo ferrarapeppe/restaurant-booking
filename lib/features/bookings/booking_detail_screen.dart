@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:restaurant_booking/shared/theme/app_theme.dart';
-import 'package:restaurant_booking/features/bookings/bookings_screen.dart';
+import 'package:restaurant_booking/data/models/booking_model.dart';
 
 class BookingDetailScreen extends StatefulWidget {
-  final Booking booking;
-  const BookingDetailScreen({super.key, required this.booking});
+  final BookingModel booking;
+  const BookingDetailScreen({super.key, required this.booking});  
 
   @override
   State<BookingDetailScreen> createState() => _BookingDetailScreenState();
@@ -143,10 +143,10 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
               title: 'Prenotazione',
               children: [
                 _InfoRow(icon: Icons.calendar_today_outlined, label: 'Data', value: '24 febbraio 2026'),
-                _InfoRow(icon: Icons.access_time, label: 'Orario', value: widget.booking.time),
+                _InfoRow(icon: Icons.access_time, label: 'Orario', value: widget.booking.timeStart.substring(0, 5)),
                 _InfoRow(icon: Icons.people_outline, label: 'Ospiti', value: '${widget.booking.partySize} persone'),
-                if (widget.booking.table != null)
-                  _InfoRow(icon: Icons.table_restaurant_outlined, label: 'Tavolo', value: widget.booking.table!),
+                if (widget.booking.tableId != null)
+                  _InfoRow(icon: Icons.table_restaurant_outlined, label: 'Tavolo', value: widget.booking.tableId!),
                 _InfoRow(
                   icon: _sourceIcon(widget.booking.source),
                   label: 'Sorgente',

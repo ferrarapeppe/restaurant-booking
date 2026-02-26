@@ -5,7 +5,9 @@ import 'package:restaurant_booking/features/calendar/calendar_screen.dart';
 import 'package:restaurant_booking/features/bookings/bookings_screen.dart';
 import 'package:restaurant_booking/features/bookings/new_booking_screen.dart';
 import 'package:restaurant_booking/features/bookings/booking_detail_screen.dart';
+import 'package:restaurant_booking/data/models/booking_model.dart';
 import 'package:restaurant_booking/features/bookings/booking_detail_screen.dart';
+import 'package:restaurant_booking/data/models/booking_model.dart';
 import 'package:restaurant_booking/features/guests/guests_screen.dart';
 import 'package:restaurant_booking/features/reports/reports_screen.dart';
 import 'package:restaurant_booking/features/settings/settings_screen.dart';
@@ -18,7 +20,7 @@ final router = GoRouter(
     GoRoute(path: '/calendar', builder: (context, state) => const CalendarScreen()),
     GoRoute(path: '/bookings', builder: (context, state) => const BookingsScreen()),
     GoRoute(path: '/bookings/new', builder: (context, state) => const NewBookingScreen()),
-    GoRoute(path: '/bookings/detail', builder: (context, state) { final booking = state.extra as Booking; return BookingDetailScreen(booking: booking); }),
+    GoRoute(path: '/bookings/detail', builder: (context, state) { final booking = state.extra as BookingModel; return BookingDetailScreen(booking: booking); }),
     GoRoute(
       path: '/bookings/:id',
       builder: (context, state) {
