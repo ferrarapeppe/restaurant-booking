@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:math' as math;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:restaurant_booking/shared/widgets/app_drawer.dart';
 import 'package:restaurant_booking/shared/theme/app_theme.dart';
@@ -257,29 +258,150 @@ class _TableWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     final isRound = table.shape == 'round' || table.shape == 'circle';
     final isRect = table.shape == 'rectangle';
-    final width = isRect ? 100.0 : 70.0;
-    final height = isRect ? 60.0 : 70.0;
+    final width = isRect ? 120.0 : 90.0;
+    final height = isRect ? 90.0 : 90.0;
 
-    return Container(
+    return SizedBox(
       width: width,
       height: height,
-      decoration: BoxDecoration(
-        color: _statusColor.withOpacity(0.15),
-        borderRadius: BorderRadius.circular(isRound ? 50 : 12),
-        border: Border.all(color: _statusColor, width: 2.5),
-        boxShadow: [BoxShadow(color: _statusColor.withOpacity(0.2), blurRadius: 8, offset: const Offset(0, 3))],
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(table.name,
-              style: TextStyle(color: _statusColor, fontWeight: FontWeight.bold, fontSize: 14)),
-          Text('${table.capacity}p',
-              style: TextStyle(color: _statusColor.withOpacity(0.8), fontSize: 11)),
-        ],
+      child: CustomPaint(
+        painter: _TablePainter(
+          shape: isRound ? 'round' : isRect ? 'rectangle' : 'square',
+          color: _statusColor,
+          seats: table.capacity,
+        ),
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(table.name, style: TextStyle(color: _statusColor, fontWeight: FontWeight.bold, fontSize: 13)),
+              Text('${table.capacity}p', style: TextStyle(color: _statusColor.withOpacity(0.8), fontSize: 10)),
+            ],
+          ),
+        ),
       ),
     );
   }
+}
+
+class _TablePainter extends CustomPainter {
+  final String shape;
+  final Color color;
+  final int seats;
+
+  _TablePainter({required this.shape, required this.color, required this.seats});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final tablePaint = Paint()
+      ..color = color.withOpacity(0.15)
+      ..style = PaintingStyle.fill;
+    final tableBorder = Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2.5;
+    final seatPaint = Paint()
+      ..color = color.withOpacity(0.25)
+      ..style = PaintingStyle.fill;
+    final seatBorder = Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.5;
+
+    const seatSize = 10.0;
+    const seatOffset = 8.0;
+
+    if (shape == 'round') {
+      // Tavolo rotondo
+      final center = Offset(size.width / 2, size.height / 2);
+      final tableRadius = size.width * 0.28;
+
+      // Sedie intorno
+      final angleStep = (3.14159 * 2) / seats;
+      for (int i = 0; i < seats; i++) {
+        final angle = i * angleStep - 3.14159 / 2;
+        final seatCenter = Offset(
+          center.dx + (tableRadius + seatOffset + seatSize) * math.cos(angle),
+          center.dy + (tableRadius + seatOffset + seatSize) * math.sin(angle),
+        );
+        canvas.drawCircle(seatCenter, seatSize, seatPaint);
+        canvas.drawCircle(seatCenter, seatSize, seatBorder);
+      }
+
+      // Tavolo
+      canvas.drawCircle(center, tableRadius, tablePaint);
+      canvas.drawCircle(center, tableRadius, tableBorder);
+
+    } else if (shape == 'rectangle') {
+      // Tavolo rettangolare
+      final tableRect = RRect.fromLTRBR(
+        seatSize * 2, seatSize * 2,
+        size.width - seatSize * 2, size.height - seatSize * 2,
+        const Radius.circular(8),
+      );
+
+      // Sedie sopra e sotto
+      final topCount = (seats / 2).ceil();
+      final bottomCount = seats - topCount;
+      final tableWidth = tableRect.right - tableRect.left;
+
+      for (int i = 0; i < topCount; i++) {
+        final x = tableRect.left + tableWidth / (topCount + 1) * (i + 1);
+        final rect = RRect.fromLTRBR(x - seatSize, tableRect.top - seatOffset - seatSize * 2, x + seatSize, tableRect.top - seatOffset, const Radius.circular(4));
+        canvas.drawRRect(rect, seatPaint);
+        canvas.drawRRect(rect, seatBorder);
+      }
+      for (int i = 0; i < bottomCount; i++) {
+        final x = tableRect.left + tableWidth / (bottomCount + 1) * (i + 1);
+        final rect = RRect.fromLTRBR(x - seatSize, tableRect.bottom + seatOffset, x + seatSize, tableRect.bottom + seatOffset + seatSize * 2, const Radius.circular(4));
+        canvas.drawRRect(rect, seatPaint);
+        canvas.drawRRect(rect, seatBorder);
+      }
+
+      canvas.drawRRect(tableRect, tablePaint);
+      canvas.drawRRect(tableRect, tableBorder);
+
+    } else {
+      // Tavolo quadrato
+      final tableRect = RRect.fromLTRBR(
+        seatSize * 2, seatSize * 2,
+        size.width - seatSize * 2, size.height - seatSize * 2,
+        const Radius.circular(8),
+      );
+      final cx = size.width / 2;
+      final cy = size.height / 2;
+      final seatsPerSide = (seats / 4).ceil();
+
+      // Sedia sopra
+      for (int i = 0; i < seatsPerSide && i < seats; i++) {
+        final rect = RRect.fromLTRBR(cx - seatSize + i * (seatSize * 2 + 2), tableRect.top - seatOffset - seatSize * 2, cx + seatSize + i * (seatSize * 2 + 2), tableRect.top - seatOffset, const Radius.circular(4));
+        canvas.drawRRect(rect, seatPaint);
+        canvas.drawRRect(rect, seatBorder);
+      }
+      // Sedia sotto
+      for (int i = 0; i < seatsPerSide && i + seatsPerSide < seats; i++) {
+        final rect = RRect.fromLTRBR(cx - seatSize + i * (seatSize * 2 + 2), tableRect.bottom + seatOffset, cx + seatSize + i * (seatSize * 2 + 2), tableRect.bottom + seatOffset + seatSize * 2, const Radius.circular(4));
+        canvas.drawRRect(rect, seatPaint);
+        canvas.drawRRect(rect, seatBorder);
+      }
+      // Sedia sinistra
+      final rect3 = RRect.fromLTRBR(tableRect.left - seatOffset - seatSize * 2, cy - seatSize, tableRect.left - seatOffset, cy + seatSize, const Radius.circular(4));
+      canvas.drawRRect(rect3, seatPaint);
+      canvas.drawRRect(rect3, seatBorder);
+      // Sedia destra
+      final rect4 = RRect.fromLTRBR(tableRect.right + seatOffset, cy - seatSize, tableRect.right + seatOffset + seatSize * 2, cy + seatSize, const Radius.circular(4));
+      canvas.drawRRect(rect4, seatPaint);
+      canvas.drawRRect(rect4, seatBorder);
+
+      canvas.drawRRect(tableRect, tablePaint);
+      canvas.drawRRect(tableRect, tableBorder);
+    }
+  }
+
+
+
+  @override
+  bool shouldRepaint(_TablePainter old) => old.color != color || old.seats != seats;
 }
 
 class _LegendDot extends StatelessWidget {
