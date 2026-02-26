@@ -151,7 +151,9 @@ class _BookingsScreenState extends State<BookingsScreen> {
                     separatorBuilder: (_, __) => const SizedBox(height: 8),
                     itemBuilder: (context, index) {
                       final booking = _filteredBookings[index];
-                      return _BookingCard(
+                      return GestureDetector(
+                      onTap: () => context.push('/bookings/detail', extra: booking),
+                      child: _BookingCard(
                         booking: booking,
                         onTap: () => context.push('/bookings/${booking.id}', extra: booking),
                         onStatusChange: (newStatus) {
@@ -160,7 +162,8 @@ class _BookingsScreenState extends State<BookingsScreen> {
                             if (idx != -1) _bookings[idx] = booking.copyWith(status: newStatus);
                           });
                         },
-                      );
+                      ),
+                    );
                     },
                   ),
           ),
