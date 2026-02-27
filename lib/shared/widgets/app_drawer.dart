@@ -31,6 +31,7 @@ class AppDrawer extends StatelessWidget {
             _DrawerItem(icon: Icons.dashboard_outlined, label: 'Pannello di controllo', onTap: () { context.go('/'); Navigator.pop(context); }),
             const Divider(color: AppColors.divider, indent: 16, endIndent: 16),
             _DrawerItem(icon: Icons.calendar_month_outlined, label: 'Calendario', onTap: () { context.go('/calendar'); Navigator.pop(context); }),
+            _DrawerItem(icon: Icons.calendar_today_outlined, label: 'Prenotazioni', onTap: () { context.go('/reservations'); Navigator.pop(context); }),
             _DrawerItem(icon: Icons.view_week_outlined, label: 'Programma', onTap: () { context.go('/bookings'); Navigator.pop(context); }),
             _DrawerItem(icon: Icons.list_alt_outlined, label: 'Elenco', onTap: () { context.go('/bookings'); Navigator.pop(context); }),
             _DrawerItem(icon: Icons.table_restaurant_outlined, label: 'Planimetria', onTap: () { Navigator.pop(context); context.go('/floorplan'); }),
