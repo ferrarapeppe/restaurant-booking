@@ -39,7 +39,7 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Colors.black,
       body: Center(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 48),
@@ -54,16 +54,9 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
                 ),
                 child: Column(
                   children: [
-                    Container(
-                      width: 100,
-                      height: 100,
-                      decoration: BoxDecoration(color: AppColors.accentLight, borderRadius: BorderRadius.circular(28)),
-                      child: const Icon(Icons.local_fire_department, size: 60, color: AppColors.accent),
-                    ),
-                    const SizedBox(height: 20),
-                    const Text('Fenix Restaurant', style: TextStyle(color: AppColors.textPrimary, fontSize: 28, fontWeight: FontWeight.bold, letterSpacing: -0.5)),
-                    const SizedBox(height: 6),
-                    const Text('Gestione prenotazioni', style: TextStyle(color: AppColors.textSecondary, fontSize: 15)),
+                    Image.asset('assets/images/logo_splash.png', width: 320, fit: BoxFit.contain, filterQuality: FilterQuality.high),
+                    const SizedBox(height: 12),
+                    Text('Gestione prenotazioni', style: TextStyle(color: AppColors.gold.withOpacity(0.7), fontSize: 13, letterSpacing: 3)),
                   ],
                 ),
               ),
@@ -76,8 +69,8 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
                       borderRadius: BorderRadius.circular(8),
                       child: LinearProgressIndicator(
                         value: _progress.value,
-                        backgroundColor: AppColors.divider,
-                        valueColor: const AlwaysStoppedAnimation<Color>(AppColors.accent),
+                        backgroundColor: AppColors.surface,
+                        valueColor: const AlwaysStoppedAnimation<Color>(AppColors.gold),
                         minHeight: 6,
                       ),
                     ),

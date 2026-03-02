@@ -16,20 +16,14 @@ class DashboardScreen extends StatelessWidget {
       backgroundColor: AppColors.background,
       drawer: const AppDrawer(),
       appBar: AppBar(
-        backgroundColor: AppColors.surface,
+        backgroundColor: Colors.black,
         leading: Builder(
           builder: (context) => IconButton(
             icon: const Icon(Icons.menu, color: AppColors.textPrimary, size: 28),
             onPressed: () => Scaffold.of(context).openDrawer(),
           ),
         ),
-        title: Row(
-          children: [
-            const Icon(Icons.local_fire_department, color: AppColors.accent, size: 28),
-            const SizedBox(width: 8),
-            const Text('Fenix Restaurant', style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.bold, fontSize: 18)),
-          ],
-        ),
+        title: Image.asset('assets/images/logo_appbar.png', height: 34, fit: BoxFit.contain),
         actions: [
           IconButton(icon: const Icon(Icons.search, color: AppColors.textSecondary), onPressed: () {}),
           IconButton(icon: const Icon(Icons.notifications_outlined, color: AppColors.textSecondary), onPressed: () {}),

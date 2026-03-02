@@ -12,18 +12,25 @@ class AppDrawer extends StatelessWidget {
       child: SafeArea(
         child: Column(
           children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              child: Row(
+            Container(
+              color: Colors.black,
+              padding: const EdgeInsets.fromLTRB(12, 16, 12, 12),
+              child: Column(
                 children: [
-                  IconButton(
-                    icon: const Icon(Icons.menu_open, color: AppColors.textPrimary, size: 28),
-                    onPressed: () => Navigator.of(context).pop(),
+                  Row(
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.menu_open, color: AppColors.textPrimary, size: 26),
+                        onPressed: () => Navigator.of(context).pop(),
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                      ),
+                      const Spacer(),
+                    ],
                   ),
-                  const SizedBox(width: 8),
-                  const Icon(Icons.local_fire_department, color: AppColors.accent, size: 24),
-                  const SizedBox(width: 6),
-                  const Text('Fenix Restaurant', style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.bold, fontSize: 16)),
+                  const SizedBox(height: 8),
+                  Image.asset('assets/images/logo_drawer.png', height: 60, fit: BoxFit.contain, filterQuality: FilterQuality.high),
+                  const SizedBox(height: 8),
                 ],
               ),
             ),
