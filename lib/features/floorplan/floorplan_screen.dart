@@ -150,6 +150,9 @@ class _FloorplanCanvasState extends ConsumerState<_FloorplanCanvas> {
   @override
   Widget build(BuildContext context) {
     return InteractiveViewer(
+      panEnabled: true,
+      scaleEnabled: true,
+      constrained: false,
       minScale: 0.5,
       maxScale: 2.0,
       child: Container(
