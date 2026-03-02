@@ -10,8 +10,9 @@ class AppDrawer extends StatelessWidget {
     return Drawer(
       backgroundColor: AppColors.surface,
       child: SafeArea(
-        child: Column(
-          children: [
+        child: SingleChildScrollView(
+          child: Column(
+            children: [
             Container(
               color: Colors.black,
               padding: const EdgeInsets.fromLTRB(12, 16, 12, 12),
@@ -25,8 +26,7 @@ class AppDrawer extends StatelessWidget {
                         padding: EdgeInsets.zero,
                         constraints: const BoxConstraints(),
                       ),
-                      const Spacer(),
-                    ],
+                              ],
                   ),
                   const SizedBox(height: 8),
                   Image.asset('assets/images/logo_drawer.png', height: 60, fit: BoxFit.contain, filterQuality: FilterQuality.high),
@@ -46,11 +46,11 @@ class AppDrawer extends StatelessWidget {
             _DrawerItem(icon: Icons.people_outline, label: 'Clienti', onTap: () { context.go('/guests'); Navigator.pop(context); }),
             _DrawerItem(icon: Icons.bar_chart_outlined, label: 'Rapporti', onTap: () { context.go('/reports'); Navigator.pop(context); }),
             _DrawerItem(icon: Icons.settings_outlined, label: 'Impostazioni', onTap: () { context.go('/settings'); Navigator.pop(context); }),
-            const Spacer(),
             const Divider(color: AppColors.divider),
             _DrawerItem(icon: Icons.store_outlined, label: 'I tuoi ristoranti', onTap: () { Navigator.pop(context); }),
             const SizedBox(height: 16),
-          ],
+            ],
+          ),
         ),
       ),
     );
