@@ -23,12 +23,7 @@ class DashboardScreen extends StatelessWidget {
             onPressed: () => Scaffold.of(context).openDrawer(),
           ),
         ),
-        title: Container(
-          decoration: BoxDecoration(
-            boxShadow: [BoxShadow(color: Color(0xFFC9B06E).withOpacity(0.3), blurRadius: 20, spreadRadius: 5)],
-          ),
-          child: Image.asset('assets/images/logo_appbar.png', height: 34, fit: BoxFit.contain),
-        ),
+        title: Image.asset('assets/images/logo_appbar.png', height: 34, fit: BoxFit.contain),
         actions: [
           IconButton(icon: const Icon(Icons.search, color: AppColors.textSecondary), onPressed: () {}),
           IconButton(icon: const Icon(Icons.notifications_outlined, color: AppColors.textSecondary), onPressed: () {}),
