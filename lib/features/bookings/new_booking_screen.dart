@@ -21,6 +21,7 @@ class _NewBookingScreenState extends ConsumerState<NewBookingScreen> {
 
   // Campi form
   final _nameCtrl = TextEditingController();
+  final _surnameCtrl = TextEditingController();
   final _phoneCtrl = TextEditingController();
   final _emailCtrl = TextEditingController();
   final _notesCtrl = TextEditingController();
@@ -64,7 +65,7 @@ class _NewBookingScreenState extends ConsumerState<NewBookingScreen> {
 
   @override
   void dispose() {
-    _nameCtrl.dispose(); _phoneCtrl.dispose(); _emailCtrl.dispose();
+    _nameCtrl.dispose(); _surnameCtrl.dispose(); _phoneCtrl.dispose(); _emailCtrl.dispose();
     _notesCtrl.dispose(); _internalNotesCtrl.dispose();
     super.dispose();
   }
@@ -78,7 +79,7 @@ class _NewBookingScreenState extends ConsumerState<NewBookingScreen> {
       String guestId;
       if (_newGuest) {
         final guest = await ref.read(guestRepositoryProvider).createGuest(
-          name: _nameCtrl.text,
+          name: '${_nameCtrl.text} ${_surnameCtrl.text}'.trim(),
           phone: _phoneCtrl.text.isEmpty ? null : _phoneCtrl.text,
           email: _emailCtrl.text.isEmpty ? null : _emailCtrl.text,
         );
@@ -110,6 +111,8 @@ class _NewBookingScreenState extends ConsumerState<NewBookingScreen> {
 
       ref.invalidate(bookingsByDateProvider);
       ref.invalidate(guestsProvider);
+      // Imposta la data selezionata al giorno della prenotazione
+      ref.read(selectedDateProvider.notifier).state = _selectedDate;
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -168,7 +171,9 @@ class _NewBookingScreenState extends ConsumerState<NewBookingScreen> {
               const SizedBox(height: 12),
 
               if (_newGuest) ...[
-                _buildField(_nameCtrl, 'Nome e cognome *', Icons.person_outline, required: true),
+                _buildField(_nameCtrl, 'Nome *', Icons.person_outline, required: true),
+                const SizedBox(height: 10),
+                _buildField(_surnameCtrl, 'Cognome *', Icons.person_outline, required: true),
                 const SizedBox(height: 10),
                 _buildField(_phoneCtrl, 'Telefono', Icons.phone_outlined, type: TextInputType.phone),
                 const SizedBox(height: 10),

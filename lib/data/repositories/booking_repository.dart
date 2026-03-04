@@ -7,6 +7,7 @@ class BookingRepository {
 
   Future<List<BookingModel>> getBookingsByDate(DateTime date) async {
     final dateStr = date.toIso8601String().split('T')[0];
+    print('DEBUG getBookingsByDate: $dateStr');
     final response = await _client
         .from('bookings')
         .select('*, guests(*)')
