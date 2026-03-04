@@ -54,7 +54,12 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
                 ),
                 child: Column(
                   children: [
-                    Image.asset('assets/images/logo_splash.png', width: 320, fit: BoxFit.contain, filterQuality: FilterQuality.high),
+                    Container(
+                      decoration: BoxDecoration(
+                        boxShadow: [BoxShadow(color: Color(0xFFC9B06E).withOpacity(0.35), blurRadius: 40, spreadRadius: 15)],
+                      ),
+                      child: Image.asset('assets/images/logo_splash.png', width: 320, fit: BoxFit.contain, filterQuality: FilterQuality.high),
+                    ),
                     const SizedBox(height: 12),
                     Text('Gestione prenotazioni', style: TextStyle(color: AppColors.gold.withOpacity(0.7), fontSize: 13, letterSpacing: 3)),
                   ],

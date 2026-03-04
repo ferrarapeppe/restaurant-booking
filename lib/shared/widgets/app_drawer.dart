@@ -29,7 +29,14 @@ class AppDrawer extends StatelessWidget {
                               ],
                   ),
                   const SizedBox(height: 8),
-                  Image.asset('assets/images/logo_drawer.png', height: 60, fit: BoxFit.contain, filterQuality: FilterQuality.high),
+                  Container(
+                    decoration: BoxDecoration(
+                      boxShadow: [
+                        BoxShadow(color: Color(0xFFC9B06E).withOpacity(0.4), blurRadius: 30, spreadRadius: 10),
+                      ],
+                    ),
+                    child: Image.asset('assets/images/logo_drawer.png', height: 60, fit: BoxFit.contain, filterQuality: FilterQuality.high),
+                  ),
                   const SizedBox(height: 8),
                 ],
               ),
@@ -67,7 +74,7 @@ class _DrawerItem extends StatelessWidget {
   Widget build(BuildContext context) {
     return ListTile(
       leading: Icon(icon, color: AppColors.textSecondary, size: 22),
-      title: Text(label, style: const TextStyle(color: AppColors.textPrimary, fontSize: 15)),
+      title: Text(label, style: const TextStyle(color: AppColors.gold, fontSize: 15)),
       onTap: onTap,
       contentPadding: const EdgeInsets.symmetric(horizontal: 24),
       minLeadingWidth: 28,
