@@ -97315,7 +97315,7 @@ m=d.kO(c)
 c=t.s
 l=A.a(n.f.split(":"),c)
 k=A.ce(J.bG(l,0),null)*60+A.ce(J.bG(l,1),null)
-d=n.d.j9("bookings").l_("*, guests(nome, cognome, phone, email)").h4("restaurant_id","2b126a92-24d5-4e83-b38c-dfc82035a0cf").h4("date",m).h4("table_id",a1.i(0,"id")).a0H("status",["confirmed","pending","seated"])
+d=n.d.j9("bookings").l_("*, guests(first_name, surname, email, phone)").h4("restaurant_id","2b126a92-24d5-4e83-b38c-dfc82035a0cf").h4("date",m).h4("table_id",a1.i(0,"id")).a0H("status",["confirmed","pending","seated"])
 s=9
 return A.B(A.QK(d.L5(d.rG("limit","5")),d.$ti.c),$async$vM)
 case 9:j=a4
