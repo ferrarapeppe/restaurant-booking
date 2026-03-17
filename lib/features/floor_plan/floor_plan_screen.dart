@@ -609,10 +609,10 @@ class _TableDetailSheetState extends State<_TableDetailSheet>
     _editSource = widget.booking?['source'] ?? 'phone';
 
     final g = widget.booking?['guests'];
-    _nomeCtrl = TextEditingController(text: (g?['first_name'] ?? '').toString());
-    _cognomeCtrl = TextEditingController(text: (g?['surname'] ?? '').toString().toUpperCase());
-    _telefonoCtrl = TextEditingController(text: (g?['phone'] ?? '').toString());
-    _emailCtrl = TextEditingController(text: (g?['email'] ?? '').toString());
+    _nomeCtrl = TextEditingController(text: g != null ? (g['first_name'] ?? '').toString() : '');
+    _cognomeCtrl = TextEditingController(text: g != null ? (g['surname'] ?? '').toString().toUpperCase() : '');
+    _telefonoCtrl = TextEditingController(text: g != null ? (g['phone'] ?? '').toString() : '');
+    _emailCtrl = TextEditingController(text: g != null ? (g['email'] ?? '').toString() : '');
     _noteCtrl = TextEditingController();
     _msgCtrl = TextEditingController();
   }
