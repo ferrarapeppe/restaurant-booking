@@ -332,54 +332,53 @@ class _FloorPlanScreenState extends State<FloorPlanScreen> {
   }
 
   void _onTableTap(Map<String, dynamic> table, TableStatus status) {
+    // Trova la prenotazione per questo tavolo allo slot selezionato
+    Map<String, dynamic>? booking;
+    // Cerchiamo nei dati già caricati — ricarichiamo le prenotazioni con dettagli ospite
+    _loadBookingForTable(table, status);
+  }
+
+  Future<void> _loadBookingForTable(Map<String, dynamic> table, TableStatus status) async {
+    Map<String, dynamic>? booking;
+    if (status != TableStatus.free) {
+      try {
+        final dateStr = DateFormat('yyyy-MM-dd').format(_selectedDate);
+        final selParts = _selectedTime.split(':');
+        final selMin = int.parse(selParts[0]) * 60 + int.parse(selParts[1]);
+        final res = await _supabase
+            .from('bookings')
+            .select('*, guests(nome, cognome, phone, email)')
+            .eq('restaurant_id', _restaurantId)
+            .eq('date', dateStr)
+            .eq('table_id', table['id'])
+            .inFilter('status', ['confirmed', 'pending', 'seated'])
+            .limit(5);
+        for (final b in res) {
+          final startParts = (b['time_start'] as String).substring(0, 5).split(':');
+          final startMin = int.parse(startParts[0]) * 60 + int.parse(startParts[1]);
+          int endMin = startMin + 120;
+          if (b['time_end'] != null) {
+            final endParts = (b['time_end'] as String).substring(0, 5).split(':');
+            endMin = int.parse(endParts[0]) * 60 + int.parse(endParts[1]);
+          }
+          if (selMin >= startMin && selMin < endMin) { booking = b; break; }
+        }
+      } catch (_) {}
+    }
+    if (!mounted) return;
     showModalBottomSheet(
       context: context,
-      backgroundColor: AppColors.surface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
-      builder: (_) => Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(children: [
-              Container(
-                width: 12, height: 12,
-                decoration: BoxDecoration(color: _statusColor(status), shape: BoxShape.circle),
-              ),
-              const SizedBox(width: 8),
-              Text('Tavolo ${table['name']}',
-                  style: const TextStyle(color: AppColors.textPrimary, fontSize: 18, fontWeight: FontWeight.bold)),
-              const Spacer(),
-              Text('${table['capacity']} posti',
-                  style: const TextStyle(color: AppColors.textSecondary, fontSize: 14)),
-            ]),
-            const SizedBox(height: 16),
-            Text(
-              status == TableStatus.free ? 'Libero alle $_selectedTime' : 'Occupato alle $_selectedTime',
-              style: TextStyle(
-                color: status == TableStatus.free ? const Color(0xFF2E7D52) : const Color(0xFFE65100),
-                fontSize: 14,
-              ),
-            ),
-            const SizedBox(height: 20),
-            if (status == TableStatus.free)
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  onPressed: () {
-                    Navigator.pop(context);
-                    context.push('/bookings/new');
-                  },
-                  icon: const Icon(Icons.add),
-                  label: const Text('Nuova prenotazione'),
-                  style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF2E7D52)),
-                ),
-              ),
-          ],
-        ),
+      backgroundColor: const Color(0xFF1E1E2E),
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
+      builder: (_) => _TableDetailSheet(
+        table: table,
+        status: status,
+        booking: booking,
+        selectedDate: _selectedDate,
+        selectedTime: _selectedTime,
+        statusColor: _statusColor(status),
+        onNewBooking: () { Navigator.pop(context); context.push('/bookings/new'); },
       ),
     );
   }
@@ -549,6 +548,486 @@ class _ZoomButton extends StatelessWidget {
           border: Border.all(color: AppColors.divider),
         ),
         child: Icon(icon, color: AppColors.textPrimary, size: 20),
+      ),
+    );
+  }
+}
+
+// ── Table Detail Sheet ────────────────────────────────────────────────────────
+class _TableDetailSheet extends StatefulWidget {
+  final Map<String, dynamic> table;
+  final TableStatus status;
+  final Map<String, dynamic>? booking;
+  final DateTime selectedDate;
+  final String selectedTime;
+  final Color statusColor;
+  final VoidCallback onNewBooking;
+
+  const _TableDetailSheet({
+    required this.table,
+    required this.status,
+    required this.booking,
+    required this.selectedDate,
+    required this.selectedTime,
+    required this.statusColor,
+    required this.onNewBooking,
+  });
+
+  @override
+  State<_TableDetailSheet> createState() => _TableDetailSheetState();
+}
+
+class _TableDetailSheetState extends State<_TableDetailSheet>
+    with SingleTickerProviderStateMixin {
+  late TabController _tabController;
+  final _noteController = TextEditingController();
+  final _msgController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 2, vsync: this);
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    _noteController.dispose();
+    _msgController.dispose();
+    super.dispose();
+  }
+
+  String get _guestName {
+    final b = widget.booking;
+    if (b == null) return '';
+    final g = b['guests'];
+    if (g != null) {
+      final nome = g['nome'] ?? '';
+      final cognome = g['cognome'] ?? '';
+      return '$nome $cognome'.trim();
+    }
+    return b['guest_name'] ?? '';
+  }
+
+  String get _guestPhone {
+    final b = widget.booking;
+    if (b == null) return '';
+    final g = b['guests'];
+    return g?['phone'] ?? b['guest_phone'] ?? '';
+  }
+
+  String get _timeStart => widget.booking?['time_start']?.toString().substring(0, 5) ?? widget.selectedTime;
+  int get _partySize => widget.booking?['party_size'] ?? 2;
+  String get _status => widget.booking?['status'] ?? 'confirmed';
+  String get _source => widget.booking?['source'] ?? 'phone';
+
+  Color get _statusChipColor {
+    switch (_status) {
+      case 'confirmed': return const Color(0xFF2E7D52);
+      case 'seated': return const Color(0xFF1565C0);
+      case 'pending': return const Color(0xFFE65100);
+      default: return Colors.grey;
+    }
+  }
+
+  String get _statusLabel {
+    switch (_status) {
+      case 'confirmed': return '👍 Accettato';
+      case 'seated': return '🍽️ Al tavolo';
+      case 'pending': return '⏳ In attesa';
+      case 'cancelled': return '❌ Cancellato';
+      default: return _status;
+    }
+  }
+
+  String get _sourceLabel {
+    switch (_source) {
+      case 'phone': return '📞 Telefono';
+      case 'web': return '🌐 Web';
+      case 'walkin': return '🚶 Walk-in';
+      case 'google': return '🔍 Google';
+      default: return _source;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final dateLabel = DateFormat('EEE d MMM yyyy', 'it_IT').format(widget.selectedDate);
+    final isOccupied = widget.status != TableStatus.free;
+
+    return DraggableScrollableSheet(
+      initialChildSize: 0.85,
+      minChildSize: 0.5,
+      maxChildSize: 0.95,
+      expand: false,
+      builder: (_, scrollController) => Column(
+        children: [
+          // Handle
+          Container(
+            margin: const EdgeInsets.symmetric(vertical: 8),
+            width: 40, height: 4,
+            decoration: BoxDecoration(
+              color: Colors.white24,
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+          // Tab bar
+          TabBar(
+            controller: _tabController,
+            indicatorColor: const Color(0xFF2E7D52),
+            labelColor: Colors.white,
+            unselectedLabelColor: Colors.white38,
+            labelStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, letterSpacing: 1),
+            tabs: const [Tab(text: 'DETTAGLI'), Tab(text: 'MESSAGGI, NOTE')],
+          ),
+          Expanded(
+            child: TabBarView(
+              controller: _tabController,
+              children: [
+                // ── TAB DETTAGLI ──
+                ListView(
+                  controller: scrollController,
+                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
+                  children: [
+                    // Data
+                    _DetailRow(
+                      label: 'Data',
+                      child: Row(children: [
+                        Expanded(child: Text(
+                          _capitalize(dateLabel),
+                          style: const TextStyle(color: Colors.white, fontSize: 16),
+                        )),
+                        IconButton(icon: const Icon(Icons.chevron_left, color: Colors.white54, size: 20), onPressed: () {}),
+                        IconButton(icon: const Icon(Icons.chevron_right, color: Colors.white54, size: 20), onPressed: () {}),
+                      ]),
+                    ),
+                    const Divider(color: Colors.white12),
+                    // Ora
+                    _DetailRow(
+                      label: 'Ora',
+                      child: Row(children: [
+                        Expanded(child: Text(_timeStart, style: const TextStyle(color: Colors.white, fontSize: 16))),
+                        IconButton(icon: const Icon(Icons.remove_circle_outline, color: Colors.white54, size: 20), onPressed: () {}),
+                        IconButton(icon: const Icon(Icons.add_circle_outline, color: Colors.white54, size: 20), onPressed: () {}),
+                      ]),
+                    ),
+                    const Divider(color: Colors.white12),
+                    // Persone
+                    _DetailRow(
+                      label: 'Persone',
+                      child: Row(children: [
+                        Expanded(child: Text('$_partySize', style: const TextStyle(color: Colors.white, fontSize: 16))),
+                        IconButton(icon: const Icon(Icons.remove_circle_outline, color: Colors.white54, size: 20), onPressed: () {}),
+                        IconButton(icon: const Icon(Icons.add_circle_outline, color: Colors.white54, size: 20), onPressed: () {}),
+                      ]),
+                    ),
+                    const Divider(color: Colors.white12),
+                    // Tavolo
+                    _DetailRow(
+                      label: 'Tavolo',
+                      child: Row(children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: widget.statusColor.withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(color: widget.statusColor),
+                          ),
+                          child: Text(
+                            '${widget.table['name']}  ${widget.table['capacity']}-${widget.table['min_capacity'] ?? widget.table['capacity']}',
+                            style: TextStyle(color: widget.statusColor, fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                      ]),
+                    ),
+                    const SizedBox(height: 16),
+                    if (isOccupied) ...[
+                      // Nome
+                      _InputField(label: 'Nome (o trova per nome, telefono, email)', value: _guestName),
+                      const SizedBox(height: 8),
+                      // Telefono
+                      _InputField(label: 'Telefono', value: _guestPhone, prefix: 'Italy (+39)'),
+                      const SizedBox(height: 8),
+                      // Email
+                      _InputField(label: 'E-mail', value: ''),
+                      const SizedBox(height: 8),
+                      // Stato
+                      _DetailRow(
+                        label: 'Stato',
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: _statusChipColor.withOpacity(0.15),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(_statusLabel, style: TextStyle(color: _statusChipColor)),
+                        ),
+                      ),
+                      const Divider(color: Colors.white12),
+                      // Sorgente
+                      _DetailRow(
+                        label: 'Sorgente',
+                        child: Text(_sourceLabel, style: const TextStyle(color: Colors.white70)),
+                      ),
+                      const Divider(color: Colors.white12),
+                      // Durata
+                      _DetailRow(
+                        label: 'Durata',
+                        child: const Text('2:00', style: TextStyle(color: Colors.white70)),
+                      ),
+                      const Divider(color: Colors.white12),
+                    ] else ...[
+                      const SizedBox(height: 16),
+                      const Text('Tavolo libero', style: TextStyle(color: Colors.white54, fontSize: 14)),
+                    ],
+                  ],
+                ),
+
+                // ── TAB MESSAGGI, NOTE ──
+                Column(
+                  children: [
+                    Expanded(
+                      child: ListView(
+                        padding: const EdgeInsets.all(16),
+                        children: [
+                          if (isOccupied) ...[
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                CircleAvatar(
+                                  radius: 14,
+                                  backgroundColor: const Color(0xFF2E7D52),
+                                  child: Text(
+                                    _guestName.isNotEmpty ? _guestName[0].toUpperCase() : '?',
+                                    style: const TextStyle(color: Colors.white, fontSize: 12),
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  '${_guestName.isNotEmpty ? _guestName : 'Ospite'}  •  poco fa',
+                                  style: const TextStyle(color: Colors.white54, fontSize: 13),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                              decoration: BoxDecoration(
+                                color: Colors.white10,
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: const Text('Prenotazione creata', style: TextStyle(color: Colors.white70)),
+                            ),
+                          ] else
+                            const Center(
+                              child: Padding(
+                                padding: EdgeInsets.only(top: 40),
+                                child: Text('Nessun messaggio', style: TextStyle(color: Colors.white38)),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                    // Input area
+                    Container(
+                      decoration: const BoxDecoration(
+                        border: Border(top: BorderSide(color: Colors.white12)),
+                      ),
+                      child: Column(
+                        children: [
+                          // Sub-tabs Messaggio / Nota
+                          DefaultTabController(
+                            length: 2,
+                            child: Column(
+                              children: [
+                                const TabBar(
+                                  indicatorColor: Color(0xFF2E7D52),
+                                  labelColor: Colors.white,
+                                  unselectedLabelColor: Colors.white38,
+                                  labelStyle: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+                                  tabs: [Tab(text: 'MESSAGGIO'), Tab(text: 'NOTA')],
+                                ),
+                                SizedBox(
+                                  height: 56,
+                                  child: TabBarView(children: [
+                                    _MessageInput(
+                                      controller: _msgController,
+                                      hint: 'Messaggio all\'ospite...',
+                                      color: const Color(0xFF1A1A2E),
+                                    ),
+                                    _MessageInput(
+                                      controller: _noteController,
+                                      hint: 'Nota interna privata...',
+                                      color: const Color(0xFF1565C0).withOpacity(0.3),
+                                      isNote: true,
+                                    ),
+                                  ]),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          // Bottom action bar
+          Container(
+            color: const Color(0xFF1E1E2E),
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                if (isOccupied) ...[
+                  _ActionButton(icon: Icons.more_horiz, onTap: () {}),
+                  const SizedBox(width: 12),
+                  _ActionButton(icon: Icons.close, onTap: () => Navigator.pop(context)),
+                  const SizedBox(width: 12),
+                  _ActionButton(
+                    icon: Icons.check,
+                    color: const Color(0xFF2E7D52),
+                    onTap: () => Navigator.pop(context),
+                  ),
+                ] else ...[
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: widget.onNewBooking,
+                      icon: const Icon(Icons.add),
+                      label: const Text('Nuova prenotazione'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF2E7D52),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                      ),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _capitalize(String s) => s.isEmpty ? s : s[0].toUpperCase() + s.substring(1);
+}
+
+// ── Helper widgets ────────────────────────────────────────────────────────────
+class _DetailRow extends StatelessWidget {
+  final String label;
+  final Widget child;
+  const _DetailRow({required this.label, required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 10),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(label, style: const TextStyle(color: Colors.white38, fontSize: 12)),
+          const SizedBox(height: 4),
+          child,
+        ],
+      ),
+    );
+  }
+}
+
+class _InputField extends StatelessWidget {
+  final String label;
+  final String value;
+  final String? prefix;
+  const _InputField({required this.label, required this.value, this.prefix});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.05),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.white12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(label, style: const TextStyle(color: Colors.white38, fontSize: 11)),
+          const SizedBox(height: 4),
+          if (prefix != null)
+            Row(children: [
+              Text(prefix!, style: const TextStyle(color: Colors.white54, fontSize: 14)),
+              const Icon(Icons.arrow_drop_down, color: Colors.white38, size: 18),
+            ])
+          else
+            Text(
+              value.isNotEmpty ? value : '',
+              style: const TextStyle(color: Colors.white, fontSize: 15),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _MessageInput extends StatelessWidget {
+  final TextEditingController controller;
+  final String hint;
+  final Color color;
+  final bool isNote;
+  const _MessageInput({required this.controller, required this.hint, required this.color, this.isNote = false});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      color: color,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Row(
+        children: [
+          Expanded(
+            child: TextField(
+              controller: controller,
+              style: const TextStyle(color: Colors.white, fontSize: 14),
+              decoration: InputDecoration(
+                hintText: hint,
+                hintStyle: const TextStyle(color: Colors.white38),
+                border: InputBorder.none,
+                isDense: true,
+              ),
+            ),
+          ),
+          Icon(
+            isNote ? Icons.add_comment_outlined : Icons.send,
+            color: Colors.white38,
+            size: 20,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ActionButton extends StatelessWidget {
+  final IconData icon;
+  final VoidCallback onTap;
+  final Color? color;
+  const _ActionButton({required this.icon, required this.onTap, this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 48, height: 48,
+        decoration: BoxDecoration(
+          color: color ?? Colors.white12,
+          shape: BoxShape.circle,
+        ),
+        child: Icon(icon, color: Colors.white, size: 22),
       ),
     );
   }
