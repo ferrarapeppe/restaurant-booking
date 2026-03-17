@@ -12,7 +12,9 @@ final focusedMonthProvider = StateProvider<DateTime>((ref) => DateTime(DateTime.
 // Provider per i conteggi del mese
 final monthBookingCountsProvider = FutureProvider.autoDispose<Map<String, Map<String, int>>>((ref) async {
   final month = ref.watch(focusedMonthProvider);
+  print('DEBUG provider chiamato per: \${month.year}-\${month.month}');
   final result = await ref.read(bookingRepositoryProvider).getBookingCountsByMonth(month.year, month.month);
+  print('DEBUG result: \$result');
   return result;
 });
 
