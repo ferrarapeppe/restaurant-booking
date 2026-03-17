@@ -598,6 +598,7 @@ class _TableDetailSheetState extends State<_TableDetailSheet>
   bool _saving = false;
   bool _notifyEmail = false;
   int _cenaSel = 1;
+  int _editDurationMinutes = 120;
 
   @override
   void initState() {
@@ -627,6 +628,15 @@ class _TableDetailSheetState extends State<_TableDetailSheet>
     super.dispose();
   }
 
+  String _calcTimeEnd() {
+    final parts = _editTime.split(':');
+    final startMin = int.parse(parts[0]) * 60 + int.parse(parts[1]);
+    final endMin = startMin + _editDurationMinutes;
+    final h = (endMin ~/ 60).toString().padLeft(2, '0');
+    final m = (endMin % 60).toString().padLeft(2, '0');
+    return '\$h:\$m:00';
+  }
+
   Future<void> _save() async {
     if (widget.booking == null) return;
     setState(() => _saving = true);
@@ -649,6 +659,8 @@ class _TableDetailSheetState extends State<_TableDetailSheet>
         'party_size': _editPartySize,
         'status': _editStatus,
         'source': _editSource,
+        'notify_email': _notifyEmail,
+        'time_end': _calcTimeEnd(),
       }).eq('id', widget.booking!['id']);
 
       if (mounted) {
@@ -859,11 +871,19 @@ class _TableDetailSheetState extends State<_TableDetailSheet>
                       _DetailRow(
                         label: 'Durata',
                         child: Row(children: [
-                          const Expanded(child: Text('2:00',
-                              style: TextStyle(color: Colors.white70, fontSize: 15))),
+                          Expanded(child: Text(
+                            '\${_editDurationMinutes ~/ 60}:\${(_editDurationMinutes % 60).toString().padLeft(2, "0")}',
+                            style: const TextStyle(color: Colors.white70, fontSize: 15),
+                          )),
                           const Icon(Icons.arrow_drop_down, color: Colors.white38),
-                          IconButton(icon: const Icon(Icons.remove_circle_outline, color: Colors.white54, size: 20), onPressed: () {}),
-                          IconButton(icon: const Icon(Icons.add_circle_outline, color: Colors.white54, size: 20), onPressed: () {}),
+                          IconButton(
+                            icon: const Icon(Icons.remove_circle_outline, color: Colors.white54, size: 20),
+                            onPressed: () => setState(() => _editDurationMinutes = (_editDurationMinutes - 15).clamp(15, 480)),
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.add_circle_outline, color: Colors.white54, size: 20),
+                            onPressed: () => setState(() => _editDurationMinutes = (_editDurationMinutes + 15).clamp(15, 480)),
+                          ),
                         ]),
                       ),
                       const Divider(color: Colors.white12),
