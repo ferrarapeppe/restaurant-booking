@@ -269,7 +269,7 @@ class _FloorPlanScreenState extends State<FloorPlanScreen> {
 
   Widget _buildFloorGrid() {
     // Se i tavoli hanno position_x/y usiamo posizionamento assoluto, altrimenti griglia
-    final hasPositions = _tables.any((t) => t['position_x'] != null && t['position_y'] != null);
+    final hasPositions = _tables.any((t) => t['pos_x'] != null && t['pos_y'] != null);
     if (hasPositions) {
       return _buildPositionedLayout();
     }
@@ -304,8 +304,8 @@ class _FloorPlanScreenState extends State<FloorPlanScreen> {
       child: Stack(
         children: _tables.map((t) {
           final status = _tableStatuses[t['id']] ?? TableStatus.free;
-          final x = (t['position_x'] as num?)?.toDouble() ?? 50;
-          final y = (t['position_y'] as num?)?.toDouble() ?? 50;
+          final x = (t['pos_x'] as num?)?.toDouble() ?? 50;
+          final y = (t['pos_y'] as num?)?.toDouble() ?? 50;
           return Positioned(
             left: x,
             top: y,
