@@ -634,7 +634,7 @@ class _TableDetailSheetState extends State<_TableDetailSheet>
     final endMin = startMin + _editDurationMinutes;
     final h = (endMin ~/ 60).toString().padLeft(2, '0');
     final m = (endMin % 60).toString().padLeft(2, '0');
-    return '\$h:\$m:00';
+    return h + ':' + m + ':00';
   }
 
   Future<void> _save() async {
