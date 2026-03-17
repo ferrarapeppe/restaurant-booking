@@ -99040,19 +99040,19 @@ s=s==null?n:s.i(0,"source")
 o.ay=s==null?"phone":s
 s=o.a.e
 r=s==null?n:s.i(0,"guests")
-s=r==null
-q=s?n:J.bE(r,"first_name")
-q=J.d9(q==null?"":q)
+s=r!=null
+if(s){q=J.bE(r,"first_name")
+q=J.d9(q==null?"":q)}else q=""
 p=$.a8()
 o.f=new A.ds(new A.cf(q,B.bs,B.aD),p)
-q=s?n:J.bE(r,"surname")
-q=J.d9(q==null?"":q)
-o.r=new A.ds(new A.cf(q.toUpperCase(),B.bs,B.aD),p)
-q=s?n:J.bE(r,"phone")
-q=J.d9(q==null?"":q)
+if(s){q=J.bE(r,"surname")
+q=J.d9(q==null?"":q).toUpperCase()}else q=""
+o.r=new A.ds(new A.cf(q,B.bs,B.aD),p)
+if(s){q=J.bE(r,"phone")
+q=J.d9(q==null?"":q)}else q=""
 o.w=new A.ds(new A.cf(q,B.bs,B.aD),p)
-s=s?n:J.bE(r,"email")
-s=J.d9(s==null?"":s)
+if(s){s=J.bE(r,"email")
+s=J.d9(s==null?"":s)}else s=""
 o.x=new A.ds(new A.cf(s,B.bs,B.aD),p)
 o.y=new A.ds(B.br,p)
 o.z=new A.ds(B.br,p)},
