@@ -95932,7 +95932,7 @@ A.auV.prototype={
 $0(){return A.eP(this.a).q3("/bookings/new",null,t.X)},
 $S:0}
 A.auC.prototype={
-$1(a){return a.i(0,"position_x")!=null&&a.i(0,"position_y")!=null},
+$1(a){return a.i(0,"pos_x")!=null&&a.i(0,"pos_y")!=null},
 $S:640}
 A.auE.prototype={
 $1(a){var s=this.a,r=s.x.i(0,a.i(0,"id"))
@@ -95945,10 +95945,10 @@ $S:0}
 A.auG.prototype={
 $1(a){var s,r,q,p=null,o=this.a,n=o.x.i(0,a.i(0,"id"))
 if(n==null)n=B.fU
-s=A.aCK(a.i(0,"position_x"))
+s=A.aCK(a.i(0,"pos_x"))
 r=s==null?p:s
 if(r==null)r=50
-s=A.aCK(a.i(0,"position_y"))
+s=A.aCK(a.i(0,"pos_y"))
 q=s==null?p:s
 if(q==null)q=50
 return A.Dl(p,new A.pv(a,o.Hh(n),new A.auF(o,a,n),p),p,p,r,p,q,p)},
