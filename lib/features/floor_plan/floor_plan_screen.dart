@@ -597,23 +597,34 @@ class _TableDetailSheetState extends State<_TableDetailSheet>
     super.dispose();
   }
 
-  String get _guestName {
+  String get _guestFirstName {
     final b = widget.booking;
     if (b == null) return '';
     final g = b['guests'];
-    if (g != null) {
-      final nome = g['nome'] ?? '';
-      final cognome = g['cognome'] ?? '';
-      return '$nome $cognome'.trim();
-    }
-    return b['guest_name'] ?? '';
+    return (g?['first_name'] ?? '').toString().trim();
   }
+
+  String get _guestSurname {
+    final b = widget.booking;
+    if (b == null) return '';
+    final g = b['guests'];
+    return (g?['surname'] ?? '').toString().trim();
+  }
+
+  String get _guestName => '$_guestFirstName $_guestSurname'.trim();
 
   String get _guestPhone {
     final b = widget.booking;
     if (b == null) return '';
     final g = b['guests'];
-    return g?['phone'] ?? b['guest_phone'] ?? '';
+    return (g?['phone'] ?? b['guest_phone'] ?? '').toString();
+  }
+
+  String get _guestEmail {
+    final b = widget.booking;
+    if (b == null) return '';
+    final g = b['guests'];
+    return (g?['email'] ?? '').toString();
   }
 
   String get _timeStart => widget.booking?['time_start']?.toString().substring(0, 5) ?? widget.selectedTime;
