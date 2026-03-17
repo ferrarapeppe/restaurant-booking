@@ -604,7 +604,7 @@ class _TableDetailSheetState extends State<_TableDetailSheet>
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
     _editDate = widget.selectedDate;
-    _editTime = widget.booking?['time_start']?.toString().substring(0, 5) ?? widget.selectedTime;
+        'time_start': _editTime + ':00',
     _editPartySize = widget.booking?['party_size'] ?? 2;
     _editStatus = widget.booking?['status'] ?? 'confirmed';
     _editSource = widget.booking?['source'] ?? 'phone';
@@ -645,7 +645,7 @@ class _TableDetailSheetState extends State<_TableDetailSheet>
       final dateStr = DateFormat('yyyy-MM-dd').format(_editDate);
       await _supabase.from('bookings').update({
         'date': dateStr,
-        'time_start': '\$_editTime:00',
+        'time_start': _editTime + ':00',
         'party_size': _editPartySize,
         'status': _editStatus,
         'source': _editSource,
