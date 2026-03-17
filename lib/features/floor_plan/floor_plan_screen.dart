@@ -642,7 +642,7 @@ class _TableDetailSheetState extends State<_TableDetailSheet>
         }).eq('id', guestId);
       }
       // Aggiorna booking
-      final dateStr = '\${_editDate.year}-\${_editDate.month.toString().padLeft(2,"0")}-\${_editDate.day.toString().padLeft(2,"0")}';
+      final dateStr = DateFormat('yyyy-MM-dd').format(_editDate);
       await _supabase.from('bookings').update({
         'date': dateStr,
         'time_start': '\$_editTime:00',
