@@ -133,7 +133,8 @@ class CalendarBodyState extends ConsumerState<CalendarBody> {
                 onTap: () {
                   if (day.month == focusedMonth.month) {
                     ref.read(selectedDateProvider.notifier).state = day;
-                    context.push('/bookings');
+                    final dateStr = '\${day.year}-\${day.month.toString().padLeft(2,'0')}-\${day.day.toString().padLeft(2,'0')}';
+                    context.push('/floor-plan/\$dateStr');
                   }
                 },
                 child: _DayCell(
