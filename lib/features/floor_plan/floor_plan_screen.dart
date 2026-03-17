@@ -871,10 +871,11 @@ class _TableDetailSheetState extends State<_TableDetailSheet>
                       _DetailRow(
                         label: 'Durata',
                         child: Row(children: [
-                          Expanded(child: Text(
-                            '\${_editDurationMinutes ~/ 60}:\${(_editDurationMinutes % 60).toString().padLeft(2, "0")}',
-                            style: const TextStyle(color: Colors.white70, fontSize: 15),
-                          )),
+                          Expanded(child: Builder(builder: (context) {
+                            final h = _editDurationMinutes ~/ 60;
+                            final m = (_editDurationMinutes % 60).toString().padLeft(2, '0');
+                            return Text('$h:$m', style: const TextStyle(color: Colors.white70, fontSize: 15));
+                          })),
                           const Icon(Icons.arrow_drop_down, color: Colors.white38),
                           IconButton(
                             icon: const Icon(Icons.remove_circle_outline, color: Colors.white54, size: 20),
