@@ -46,7 +46,11 @@ class _FloorPlanScreenState extends State<FloorPlanScreen> {
     // Slot predefinito = 20:30 o il più vicino all'ora attuale
     final now = TimeOfDay.now();
     final nowMinutes = now.hour * 60 + now.minute;
-    String best = '20:30';
+    String best = '20:00';
+    // Default fisso 20:00 per ristorante serale
+    _timeSlots = slots;
+    _selectedTime = '20:00';
+    return;
     int bestDiff = 9999;
     for (final s in slots) {
       final parts = s.split(':');
@@ -88,9 +92,15 @@ class _FloorPlanScreenState extends State<FloorPlanScreen> {
       for (final b in bookingsRes) {
         if (b['table_id'] == null) continue;
         final startParts = (b['time_start'] as String).substring(0, 5).split(':');
-        final endParts = (b['time_end'] as String).substring(0, 5).split(':');
         final startMin = int.parse(startParts[0]) * 60 + int.parse(startParts[1]);
-        final endMin = int.parse(endParts[0]) * 60 + int.parse(endParts[1]);
+        // Se time_end è null assumiamo 2 ore di durata
+        int endMin;
+        if (b['time_end'] != null) {
+          final endParts = (b['time_end'] as String).substring(0, 5).split(':');
+          endMin = int.parse(endParts[0]) * 60 + int.parse(endParts[1]);
+        } else {
+          endMin = startMin + 120;
+        }
         if (selMinutes >= startMin && selMinutes < endMin) {
           statuses[b['table_id']] = b['status'] == 'seated'
               ? TableStatus.occupied
