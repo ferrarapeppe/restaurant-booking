@@ -347,7 +347,7 @@ class _FloorPlanScreenState extends State<FloorPlanScreen> {
         final selMin = int.parse(selParts[0]) * 60 + int.parse(selParts[1]);
         final res = await _supabase
             .from('bookings')
-            .select('*, guests(nome, cognome, phone, email)')
+            .select('*, guests(first_name, surname, email, phone)')
             .eq('restaurant_id', _restaurantId)
             .eq('date', dateStr)
             .eq('table_id', table['id'])
