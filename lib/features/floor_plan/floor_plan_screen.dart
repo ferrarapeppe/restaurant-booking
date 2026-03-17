@@ -604,6 +604,7 @@ class _TableDetailSheetState extends State<_TableDetailSheet>
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
     _editDate = widget.selectedDate;
+    _editTime = widget.booking != null && widget.booking!['time_start'] != null ? widget.booking!['time_start'].toString().substring(0, 5) : widget.selectedTime;
     _editPartySize = widget.booking?['party_size'] ?? 2;
     _editStatus = widget.booking?['status'] ?? 'confirmed';
     _editSource = widget.booking?['source'] ?? 'phone';
