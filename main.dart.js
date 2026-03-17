@@ -95779,7 +95779,7 @@ s=q}while(true)switch(s){case 0:o.R(new A.auI(o))
 q=3
 b=o.d
 s=6
-return A.B(b.jM("tables").lM("id, name, capacity, position_x, position_y, shape").il("restaurant_id","2b126a92-24d5-4e83-b38c-dfc82035a0cf").ayF("name"),$async$n4)
+return A.B(b.jM("tables").lM("id, name, capacity, pos_x, pos_y, shape").il("restaurant_id","2b126a92-24d5-4e83-b38c-dfc82035a0cf").ayF("name"),$async$n4)
 case 6:n=a5
 a=A.AL("yyyy-MM-dd",null)
 a0=o.e
