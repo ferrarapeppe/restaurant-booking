@@ -180,9 +180,9 @@ class _DayCell extends StatelessWidget {
         if (isClosed)
           _Pill(label: 'Chiuso', bg: const Color(0xFF3A2A00), fg: const Color(0xFFFFC107))
         else if (counts != null && _isCurrentMonth) ...[
-          _Pill(label: '${counts!['prenotazioni']} pre', bg: const Color(0xFF1A2A1A), fg: const Color(0xFF4CAF50)),
-          const SizedBox(height: 1),
-          _Pill(label: '${counts!['ospiti']} pe', bg: const Color(0xFF1A1A2A), fg: const Color(0xFF90CAF9)),
+          _Pill(label: '${counts!['prenotazioni']} prenotaz.', bg: const Color(0xFF1A3A1A), fg: const Color(0xFF66BB6A)),
+          const SizedBox(height: 2),
+          _Pill(label: '${counts!['ospiti']} persone', bg: const Color(0xFF1A1A3A), fg: const Color(0xFF64B5F6)),
         ],
       ]),
     );
@@ -195,8 +195,8 @@ class _Pill extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Container(
     width: double.infinity, margin: const EdgeInsets.symmetric(horizontal: 2, vertical: 1),
-    padding: const EdgeInsets.symmetric(vertical: 1),
-    decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(20)),
-    child: Text(label, textAlign: TextAlign.center, style: TextStyle(color: fg, fontSize: 9, fontWeight: FontWeight.w700)),
+    padding: const EdgeInsets.symmetric(vertical: 3),
+    decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(4)),
+    child: Text(label, textAlign: TextAlign.center, style: TextStyle(color: fg, fontSize: 10, fontWeight: FontWeight.w700)),
   );
 }
