@@ -99132,11 +99132,9 @@ e===$&&A.b()
 d=m.CW
 c=i.split(":")
 b=A.c1(c[0],null)*60+A.c1(c[1],null)+m.cy
-B.c.c5(B.e.j(B.e.cK(b,60)),2,"0")
-B.c.c5(B.e.j(B.e.aO(b,60)),2,"0")
 a=t.z
 s=10
-return A.C(h.cn(A.ah(["date",k,"time_start",i+":00","party_size",g,"status",f,"source",e,"notify_email",d,"time_end","$h:$m:00"],a,a)).fn("id",m.a.e.i(0,"id")),$async$wo)
+return A.C(h.cn(A.ah(["date",k,"time_start",i+":00","party_size",g,"status",f,"source",e,"notify_email",d,"time_end",B.c.c5(B.e.j(B.e.cK(b,60)),2,"0")+":"+B.c.c5(B.e.j(B.e.aO(b,60)),2,"0")+":00"],a,a)).fn("id",m.a.e.i(0,"id")),$async$wo)
 case 10:i=m.c
 if(i!=null){A.bQ(i,!1).cq(null)
 m.c.a5(t.Pu).f.Ac(B.abJ)}n.push(6)
