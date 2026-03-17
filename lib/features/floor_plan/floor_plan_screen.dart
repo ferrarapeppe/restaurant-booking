@@ -782,7 +782,7 @@ class _TableDetailSheetState extends State<_TableDetailSheet>
                       ),
                       const SizedBox(height: 16),
                       // Toggle notifiche
-                      const Text('Invia notifiche all'ospite',
+                      const Text('Invia notifiche all\'ospite',
                           style: TextStyle(color: Colors.white38, fontSize: 12)),
                       const SizedBox(height: 4),
                       Row(children: [
@@ -1115,6 +1115,72 @@ class _ActionButton extends StatelessWidget {
           shape: BoxShape.circle,
         ),
         child: Icon(icon, color: Colors.white, size: 22),
+      ),
+    );
+  }
+}
+
+// ── Cena Selector ─────────────────────────────────────────────────────────────
+class _CenaSelector extends StatefulWidget {
+  const _CenaSelector();
+  @override
+  State<_CenaSelector> createState() => _CenaSelectorState();
+}
+
+class _CenaSelectorState extends State<_CenaSelector> {
+  int _selected = 1;
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.05),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.white12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text('CENA', style: TextStyle(color: Colors.white38, fontSize: 11, letterSpacing: 1)),
+          const SizedBox(height: 8),
+          _RadioOption(value: 0, groupValue: _selected, label: 'APERTIF/APERITIVO DALLE 18:30\nALLE 20:30', onChanged: (v) => setState(() => _selected = v)),
+          _RadioOption(value: 1, groupValue: _selected, label: 'DINNER/CENA 1° TURNO 20:30  2° TURNO 22:30', onChanged: (v) => setState(() => _selected = v)),
+        ],
+      ),
+    );
+  }
+}
+
+class _RadioOption extends StatelessWidget {
+  final int value, groupValue;
+  final String label;
+  final ValueChanged<int> onChanged;
+  const _RadioOption({required this.value, required this.groupValue, required this.label, required this.onChanged});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () => onChanged(value),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 4),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Radio<int>(
+              value: value, groupValue: groupValue,
+              onChanged: (v) => onChanged(v!),
+              activeColor: const Color(0xFFC9B06E),
+              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            ),
+            const SizedBox(width: 4),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.only(top: 10),
+                child: Text(label, style: const TextStyle(color: Colors.white70, fontSize: 13)),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
