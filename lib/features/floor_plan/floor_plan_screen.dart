@@ -760,36 +760,105 @@ class _TableDetailSheetState extends State<_TableDetailSheet>
                       _InputField(label: 'Telefono', value: _guestPhone, prefix: 'Italy (+39)'),
                       const SizedBox(height: 8),
                       // Email
-                      _InputField(label: 'E-mail', value: ''),
+                      _InputField(label: 'E-mail', value: _guestEmail),
                       const SizedBox(height: 8),
-                      // Stato
-                      _DetailRow(
-                        label: 'Stato',
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                          decoration: BoxDecoration(
-                            color: _statusChipColor.withOpacity(0.15),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Text(_statusLabel, style: TextStyle(color: _statusChipColor)),
+                      // Cognome
+                      _InputField(label: 'COGNOME', value: _guestSurname.toUpperCase()),
+                      const SizedBox(height: 16),
+                      // CENA radio
+                      _CenaSelector(),
+                      const SizedBox(height: 8),
+                      // Regole
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.05),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: Colors.white12),
                         ),
+                        child: const Text('REGOLE DI PRENOTAZIONE',
+                            style: TextStyle(color: Colors.white38, fontSize: 13, letterSpacing: 0.5)),
                       ),
+                      const SizedBox(height: 16),
+                      // Toggle notifiche
+                      const Text('Invia notifiche all'ospite',
+                          style: TextStyle(color: Colors.white38, fontSize: 12)),
+                      const SizedBox(height: 4),
+                      Row(children: [
+                        Switch(value: false, onChanged: (_) {}, activeColor: const Color(0xFF2E7D52)),
+                        const SizedBox(width: 8),
+                        const Text('E-mail', style: TextStyle(color: Colors.white70, fontSize: 15)),
+                      ]),
+                      const SizedBox(height: 8),
                       const Divider(color: Colors.white12),
-                      // Sorgente
+                      // Orari apertura
                       _DetailRow(
-                        label: 'Sorgente',
-                        child: Text(_sourceLabel, style: const TextStyle(color: Colors.white70)),
+                        label: 'Orari di apertura',
+                        child: Row(children: [
+                          const Expanded(child: Text('18:30 - 01:00',
+                              style: TextStyle(color: Colors.white70, fontSize: 15))),
+                          const Icon(Icons.arrow_drop_down, color: Colors.white38),
+                        ]),
                       ),
                       const Divider(color: Colors.white12),
                       // Durata
                       _DetailRow(
                         label: 'Durata',
-                        child: const Text('2:00', style: TextStyle(color: Colors.white70)),
+                        child: Row(children: [
+                          const Expanded(child: Text('2:00',
+                              style: TextStyle(color: Colors.white70, fontSize: 15))),
+                          const Icon(Icons.arrow_drop_down, color: Colors.white38),
+                          IconButton(icon: const Icon(Icons.remove_circle_outline,
+                              color: Colors.white54, size: 20), onPressed: () {}),
+                          IconButton(icon: const Icon(Icons.add_circle_outline,
+                              color: Colors.white54, size: 20), onPressed: () {}),
+                        ]),
                       ),
                       const Divider(color: Colors.white12),
+                      // Stato
+                      _DetailRow(
+                        label: 'Stato',
+                        child: Row(children: [
+                          Expanded(child: Text(_statusLabel,
+                              style: const TextStyle(color: Colors.white70, fontSize: 15))),
+                          const Icon(Icons.arrow_drop_down, color: Colors.white38),
+                        ]),
+                      ),
+                      const Divider(color: Colors.white12),
+                      // Sorgente
+                      _DetailRow(
+                        label: 'Sorgente',
+                        child: Row(children: [
+                          Expanded(child: Text(_sourceLabel,
+                              style: const TextStyle(color: Colors.white70, fontSize: 15))),
+                          const Icon(Icons.arrow_drop_down, color: Colors.white38),
+                        ]),
+                      ),
+                      const Divider(color: Colors.white12),
+                      // Link pagamento
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 10),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text('Stato della prenotazione e link di pagamento',
+                                style: TextStyle(color: Colors.white38, fontSize: 12)),
+                            const SizedBox(height: 8),
+                            Row(children: [
+                              const Icon(Icons.link, color: Colors.white38, size: 18),
+                              const SizedBox(width: 8),
+                              Text('Mostra',
+                                  style: TextStyle(color: Colors.blue.shade300, fontSize: 14)),
+                            ]),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 20),
                     ] else ...[
                       const SizedBox(height: 16),
-                      const Text('Tavolo libero', style: TextStyle(color: Colors.white54, fontSize: 14)),
+                      const Text('Tavolo libero',
+                          style: TextStyle(color: Colors.white54, fontSize: 14)),
                     ],
                   ],
                 ),
@@ -973,6 +1042,13 @@ class _InputField extends StatelessWidget {
             Row(children: [
               Text(prefix!, style: const TextStyle(color: Colors.white54, fontSize: 14)),
               const Icon(Icons.arrow_drop_down, color: Colors.white38, size: 18),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  value,
+                  style: const TextStyle(color: Colors.white, fontSize: 15),
+                ),
+              ),
             ])
           else
             Text(
