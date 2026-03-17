@@ -30,12 +30,17 @@ class BookingsScreen extends ConsumerWidget {
       drawer: const AppDrawer(),
       appBar: AppBar(
         backgroundColor: AppColors.surface,
-        leading: Builder(
-          builder: (context) => IconButton(
-            icon: const Icon(Icons.menu, color: AppColors.textPrimary),
-            onPressed: () => Scaffold.of(context).openDrawer(),
-          ),
-        ),
+        leading: Navigator.of(context).canPop()
+            ? IconButton(
+                icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary),
+                onPressed: () => Navigator.of(context).pop(),
+              )
+            : Builder(
+                builder: (context) => IconButton(
+                  icon: const Icon(Icons.menu, color: AppColors.textPrimary),
+                  onPressed: () => Scaffold.of(context).openDrawer(),
+                ),
+              ),
         title: Text(
           DateFormat('d MMM yyyy', 'it_IT').format(selectedDate),
           style: const TextStyle(

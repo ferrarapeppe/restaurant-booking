@@ -19,7 +19,8 @@ class BookingRepository {
 
   Future<Map<String, Map<String, int>>> getBookingCountsByMonth(int year, int month) async {
     final startDate = '$year-${month.toString().padLeft(2, '0')}-01';
-    final endDate = '$year-${month.toString().padLeft(2, '0')}-31';
+    final lastDay = DateTime(year, month + 1, 0).day;
+    final endDate = '$year-${month.toString().padLeft(2, '0')}-${lastDay.toString().padLeft(2, '0')}';
     final response = await _client
         .from('bookings')
         .select('date, party_size')

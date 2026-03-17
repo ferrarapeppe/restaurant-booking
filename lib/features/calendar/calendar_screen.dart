@@ -12,7 +12,10 @@ final focusedMonthProvider = StateProvider<DateTime>((ref) => DateTime(DateTime.
 // Provider per i conteggi del mese
 final monthBookingCountsProvider = FutureProvider.autoDispose<Map<String, Map<String, int>>>((ref) async {
   final month = ref.watch(focusedMonthProvider);
-  return ref.read(bookingRepositoryProvider).getBookingCountsByMonth(month.year, month.month);
+  print('DEBUG provider chiamato per: \${month.year}-\${month.month}');
+  final result = await ref.read(bookingRepositoryProvider).getBookingCountsByMonth(month.year, month.month);
+  print('DEBUG result: \$result');
+  return result;
 });
 
 class CalendarScreen extends ConsumerWidget {
@@ -33,7 +36,7 @@ class CalendarScreen extends ConsumerWidget {
           IconButton(icon: const Icon(Icons.search, color: AppColors.textSecondary), onPressed: () {}),
         ],
       ),
-      body: const _CalendarBody(),
+      body: const CalendarBody(),
       floatingActionButton: FloatingActionButton(
         backgroundColor: AppColors.accent,
         child: const Icon(Icons.add, color: Colors.white),
@@ -43,13 +46,13 @@ class CalendarScreen extends ConsumerWidget {
   }
 }
 
-class _CalendarBody extends ConsumerStatefulWidget {
-  const _CalendarBody();
+class CalendarBody extends ConsumerStatefulWidget {
+  const CalendarBody();
   @override
-  ConsumerState<_CalendarBody> createState() => _CalendarBodyState();
+  ConsumerState<CalendarBody> createState() => CalendarBodyState();
 }
 
-class _CalendarBodyState extends ConsumerState<_CalendarBody> {
+class CalendarBodyState extends ConsumerState<CalendarBody> {
   final Set<int> _closedWeekdays = {};
 
   bool _isClosed(DateTime day) => _closedWeekdays.contains(day.weekday - 1);
@@ -130,7 +133,7 @@ class _CalendarBodyState extends ConsumerState<_CalendarBody> {
                 onTap: () {
                   if (day.month == focusedMonth.month) {
                     ref.read(selectedDateProvider.notifier).state = day;
-                    context.go('/bookings');
+                    context.push('/bookings');
                   }
                 },
                 child: _DayCell(
@@ -178,9 +181,9 @@ class _DayCell extends StatelessWidget {
         if (isClosed)
           _Pill(label: 'Chiuso', bg: const Color(0xFF3A2A00), fg: const Color(0xFFFFC107))
         else if (counts != null && _isCurrentMonth) ...[
-          _Pill(label: '${counts!['bookings']} pre', bg: const Color(0xFF1A2A1A), fg: const Color(0xFF4CAF50)),
+          _Pill(label: '${counts!['prenotazioni']} pre', bg: const Color(0xFF1A2A1A), fg: const Color(0xFF4CAF50)),
           const SizedBox(height: 1),
-          _Pill(label: '${counts!['guests']} pe', bg: const Color(0xFF1A1A2A), fg: const Color(0xFF90CAF9)),
+          _Pill(label: '${counts!['ospiti']} pe', bg: const Color(0xFF1A1A2A), fg: const Color(0xFF90CAF9)),
         ],
       ]),
     );

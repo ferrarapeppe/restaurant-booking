@@ -6,6 +6,7 @@ import 'package:restaurant_booking/shared/widgets/app_drawer.dart';
 import 'package:restaurant_booking/shared/theme/app_theme.dart';
 import 'package:restaurant_booking/data/models/booking_model.dart';
 import 'package:restaurant_booking/core/providers/booking_providers.dart';
+import 'package:restaurant_booking/features/calendar/calendar_screen.dart';
 import 'package:restaurant_booking/features/bookings/bookings_screen.dart';
 
 
@@ -76,128 +77,14 @@ class _ReservationsScreenState extends ConsumerState<ReservationsScreen>
 }
 
 // ── CALENDARIO ──────────────────────────────────────────────
-class _CalendarTab extends ConsumerStatefulWidget {
+class _CalendarTab extends ConsumerWidget {
   const _CalendarTab();
   @override
-  ConsumerState<_CalendarTab> createState() => _CalendarTabState();
-}
-
-class _CalendarTabState extends ConsumerState<_CalendarTab> {
-  DateTime _focusedMonth = DateTime(DateTime.now().year, DateTime.now().month);
-  DateTime? _selectedDay;
-
-  final Map<DateTime, Map<String, dynamic>> _events = {
-    DateTime(2026, 2, 26): {'prenotazioni': 1, 'ospiti': 2},
-    DateTime(2026, 3, 7): {'prenotazioni': 6, 'ospiti': 23},
-    DateTime(2026, 3, 14): {'prenotazioni': 15, 'ospiti': 57},
-  };
-  final Set<int> _closedWeekdays = {0};
-
-  bool _isClosed(DateTime day) => _closedWeekdays.contains(day.weekday - 1);
-  Map<String, dynamic>? _getEvents(DateTime day) => _events[DateTime(day.year, day.month, day.day)];
-  bool _isSameDay(DateTime a, DateTime b) => a.year == b.year && a.month == b.month && a.day == b.day;
-
-  List<DateTime> _getDaysInMonth() {
-    final firstDay = DateTime(_focusedMonth.year, _focusedMonth.month, 1);
-    final lastDay = DateTime(_focusedMonth.year, _focusedMonth.month + 1, 0);
-    final startWeekday = firstDay.weekday - 1;
-    final days = <DateTime>[];
-    for (int i = 0; i < startWeekday; i++) days.add(firstDay.subtract(Duration(days: startWeekday - i)));
-    for (int i = 0; i < lastDay.day; i++) days.add(DateTime(_focusedMonth.year, _focusedMonth.month, i + 1));
-    final remaining = 7 - (days.length % 7);
-    if (remaining < 7) for (int i = 1; i <= remaining; i++) days.add(lastDay.add(Duration(days: i)));
-    return days;
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final days = _getDaysInMonth();
-    final monthName = DateFormat('MMMM', 'it_IT').format(_focusedMonth);
-    final capitalMonth = monthName[0].toUpperCase() + monthName.substring(1);
-
-    return Column(children: [
-      Container(
-        color: AppColors.surface,
-        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
-        child: Row(children: [
-          IconButton(icon: const Icon(Icons.chevron_left, color: AppColors.textPrimary), onPressed: () => setState(() => _focusedMonth = DateTime(_focusedMonth.year, _focusedMonth.month - 1))),
-          Expanded(child: Text('$capitalMonth ${_focusedMonth.year}', textAlign: TextAlign.center, style: const TextStyle(color: AppColors.textPrimary, fontSize: 17, fontWeight: FontWeight.bold))),
-          IconButton(icon: const Icon(Icons.chevron_right, color: AppColors.textPrimary), onPressed: () => setState(() => _focusedMonth = DateTime(_focusedMonth.year, _focusedMonth.month + 1))),
-          IconButton(icon: const Icon(Icons.today, color: AppColors.textSecondary, size: 20), onPressed: () => setState(() => _focusedMonth = DateTime(DateTime.now().year, DateTime.now().month))),
-        ]),
-      ),
-      Container(
-        color: AppColors.surface,
-        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
-        child: Row(children: ['Lun','Mar','Mer','Gio','Ven','Sab','Dom'].map((d) => Expanded(
-          child: Center(child: Text(d, style: const TextStyle(color: AppColors.textSecondary, fontSize: 12, fontWeight: FontWeight.w600))),
-        )).toList()),
-      ),
-      const Divider(height: 1, color: AppColors.divider),
-      Expanded(
-        child: GridView.builder(
-          padding: const EdgeInsets.all(2),
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 7, childAspectRatio: 0.52),
-          itemCount: days.length,
-          itemBuilder: (context, index) {
-            final day = days[index];
-            final isCurrentMonth = day.month == _focusedMonth.month;
-            final isToday = _isSameDay(day, DateTime.now());
-            final isSelected = _selectedDay != null && _isSameDay(day, _selectedDay!);
-            final events = _getEvents(day);
-            final closed = _isClosed(day) && isCurrentMonth;
-
-            return GestureDetector(
-              onTap: () {
-                setState(() => _selectedDay = day);
-                if (isCurrentMonth) {
-                  ref.read(selectedDateProvider.notifier).state = day;
-                }
-              },
-              child: Container(
-                margin: const EdgeInsets.all(1),
-                decoration: BoxDecoration(
-                  color: isSelected ? AppColors.accentLight : AppColors.surface,
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: isToday ? AppColors.accent : AppColors.divider, width: isToday ? 2 : 0.5),
-                ),
-                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(6, 5, 0, 2),
-                    child: Text('${day.day}', style: TextStyle(
-                      color: !isCurrentMonth ? AppColors.textMuted : isToday ? AppColors.accent : AppColors.textPrimary,
-                      fontSize: 14, fontWeight: isToday ? FontWeight.bold : FontWeight.w500,
-                    )),
-                  ),
-                  if (closed)
-                    _Pill(label: 'Chiuso', bg: const Color(0xFFFFF3CD), fg: const Color(0xFF856404))
-                  else if (events != null && isCurrentMonth) ...[
-                    _Pill(label: "${events['prenotazioni']} pre", bg: const Color(0xFFD4EDDA), fg: const Color(0xFF155724)),
-                    const SizedBox(height: 1),
-                    _Pill(label: "${events['ospiti']} pe", bg: const Color(0xFFE9ECEF), fg: const Color(0xFF495057)),
-                  ],
-                ]),
-              ),
-            );
-          },
-        ),
-      ),
-    ]);
+  Widget build(BuildContext context, WidgetRef ref) {
+    return const CalendarBody();
   }
 }
 
-class _Pill extends StatelessWidget {
-  final String label;
-  final Color bg, fg;
-  const _Pill({required this.label, required this.bg, required this.fg});
-  @override
-  Widget build(BuildContext context) => Container(
-    width: double.infinity, margin: const EdgeInsets.symmetric(horizontal: 2, vertical: 1),
-    padding: const EdgeInsets.symmetric(vertical: 1),
-    decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(20)),
-    child: Text(label, textAlign: TextAlign.center, style: TextStyle(color: fg, fontSize: 9, fontWeight: FontWeight.w700)),
-  );
-}
 
 // ── LISTA ────────────────────────────────────────────────────
 class _ListTab extends ConsumerWidget {
