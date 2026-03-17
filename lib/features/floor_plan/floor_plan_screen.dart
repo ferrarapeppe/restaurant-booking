@@ -64,7 +64,7 @@ class _FloorPlanScreenState extends State<FloorPlanScreen> {
       // Carica tavoli
       final tablesRes = await _supabase
           .from('tables')
-          .select('id, name, capacity, position_x, position_y, shape')
+          .select('id, name, capacity, pos_x, pos_y, shape')
           .eq('restaurant_id', _restaurantId)
           .order('name');
 
