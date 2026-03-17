@@ -743,7 +743,7 @@ class _TableDetailSheetState extends State<_TableDetailSheet>
                     const SizedBox(height: 16),
                     if (isOccupied) ...[
                       // Nome
-                      _InputField(label: 'Nome (o trova per nome, telefono, email)', value: _guestName),
+                      _InputField(label: 'Nome (o trova per nome, telefono, email)', value: _guestFirstName),
                       const SizedBox(height: 8),
                       // Telefono
                       _InputField(label: 'Telefono', value: _guestPhone, prefix: 'Italy (+39)'),
@@ -798,13 +798,13 @@ class _TableDetailSheetState extends State<_TableDetailSheet>
                                   radius: 14,
                                   backgroundColor: const Color(0xFF2E7D52),
                                   child: Text(
-                                    _guestName.isNotEmpty ? _guestName[0].toUpperCase() : '?',
+                                    _guestFirstName.isNotEmpty ? _guestFirstName[0].toUpperCase() : '?',
                                     style: const TextStyle(color: Colors.white, fontSize: 12),
                                   ),
                                 ),
                                 const SizedBox(width: 8),
                                 Text(
-                                  '${_guestName.isNotEmpty ? _guestName : 'Ospite'}  •  poco fa',
+                                  '${_guestFirstName.isNotEmpty ? '$_guestFirstName $_guestSurname'.trim() : 'Ospite'}  •  poco fa',
                                   style: const TextStyle(color: Colors.white54, fontSize: 13),
                                 ),
                               ],
