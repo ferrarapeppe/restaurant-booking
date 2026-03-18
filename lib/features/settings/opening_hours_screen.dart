@@ -30,7 +30,7 @@ class _OpeningHoursScreenState extends State<OpeningHoursScreen> {
           .from('opening_hours')
           .select('*')
           .eq('restaurant_id', _restaurantId)
-          .order('day_of_week');
+          .order('day_of_week', ascending: true);
       final regular = <Map<String, dynamic>>[];
       final special = <Map<String, dynamic>>[];
       for (final h in res) {
