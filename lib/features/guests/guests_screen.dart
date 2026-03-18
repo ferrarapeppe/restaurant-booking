@@ -75,6 +75,35 @@ class GuestsScreen extends ConsumerWidget {
               ),
             ),
           ) ?? const SizedBox(),
+          // Filtro dropdown
+          Container(
+            color: AppColors.surface,
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+            child: Row(children: [
+              const Icon(Icons.filter_list, color: AppColors.textSecondary, size: 18),
+              const SizedBox(width: 8),
+              DropdownButton<String>(
+                value: 'Tutto',
+                dropdownColor: AppColors.surface,
+                underline: Container(height: 1, color: AppColors.divider),
+                style: const TextStyle(color: AppColors.textPrimary),
+                items: const [
+                  DropdownMenuItem(value: 'Tutto', child: Text('Tutto')),
+                  DropdownMenuItem(value: 'VIP', child: Text('VIP')),
+                  DropdownMenuItem(value: 'Regular', child: Text('Regular')),
+                  DropdownMenuItem(value: 'No-show', child: Text('No-show')),
+                ],
+                onChanged: (_) {},
+              ),
+              const Spacer(),
+              TextButton.icon(
+                onPressed: () {},
+                icon: const Icon(Icons.add, size: 16),
+                label: const Text('Aggiungi cliente'),
+                style: TextButton.styleFrom(foregroundColor: AppColors.textPrimary),
+              ),
+            ]),
+          ),
           const Divider(height: 1, color: AppColors.divider),
           // Lista clienti
           Expanded(
@@ -157,18 +186,7 @@ class _GuestCard extends StatelessWidget {
         child: Row(
           children: [
             // Avatar
-            CircleAvatar(
-              radius: 24,
-              backgroundColor: isVip ? const Color(0xFFFFF3CD) : AppColors.accentLight,
-              child: Text(
-                guest.name.isNotEmpty ? guest.name[0].toUpperCase() : '?',
-                style: TextStyle(
-                  color: isVip ? const Color(0xFF856404) : AppColors.accent,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 18,
-                ),
-              ),
-            ),
+            _GuestAvatar(name: guest.name, size: 48, isVip: isVip),
             const SizedBox(width: 12),
             // Info
             Expanded(
@@ -178,7 +196,9 @@ class _GuestCard extends StatelessWidget {
                   Row(
                     children: [
                       Text(guest.name, style: const TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w600, fontSize: 15)),
-                      const SizedBox(width: 6),
+                      const SizedBox(width: 4),
+                      const Text('😊', style: TextStyle(fontSize: 14)),
+                      const SizedBox(width: 4),
                       if (isVip) _TagBadge(label: 'VIP', color: const Color(0xFFFFD700), textColor: const Color(0xFF856404)),
                       if (isNoShow) _TagBadge(label: 'No-show', color: const Color(0xFFFFE0E0), textColor: const Color(0xFFDC3545)),
                     ],
@@ -389,9 +409,12 @@ class _GuestDetailScreenState extends ConsumerState<GuestDetailScreen> {
       appBar: AppBar(
         backgroundColor: AppColors.surface,
         leading: IconButton(icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary), onPressed: () => Navigator.pop(context)),
-        title: const Text('Profilo cliente', style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.bold)),
+        title: Text(widget.guest.name, style: const TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.bold, fontSize: 20)),
         actions: [
-          IconButton(icon: const Icon(Icons.edit_outlined, color: AppColors.accent), onPressed: () => _showEditGuestSheet(context)),
+          IconButton(icon: const Icon(Icons.flag_outlined, color: AppColors.textSecondary), onPressed: () {}),
+          IconButton(icon: const Icon(Icons.edit_outlined, color: AppColors.textSecondary), onPressed: () => _showEditGuestSheet(context)),
+          IconButton(icon: const Icon(Icons.delete_outline, color: AppColors.textSecondary), onPressed: () {}),
+          IconButton(icon: const Icon(Icons.close, color: AppColors.textSecondary), onPressed: () => Navigator.pop(context)),
         ],
       ),
       body: SingleChildScrollView(
@@ -399,51 +422,18 @@ class _GuestDetailScreenState extends ConsumerState<GuestDetailScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Header cliente
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: AppColors.surface,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: isVip ? const Color(0xFFFFD700) : AppColors.divider, width: isVip ? 2 : 1),
-              ),
-              child: Row(
+            // Avatar grande centrale
+            Center(
+              child: Column(
                 children: [
-                  CircleAvatar(
-                    radius: 32,
-                    backgroundColor: isVip ? const Color(0xFFFFF3CD) : AppColors.accentLight,
-                    child: Text(
-                      guest.name[0].toUpperCase(),
-                      style: TextStyle(color: isVip ? const Color(0xFF856404) : AppColors.accent, fontSize: 24, fontWeight: FontWeight.bold),
+                  _GuestAvatar(name: guest.name, size: 80, isVip: isVip),
+                  const SizedBox(height: 12),
+                  if (isVip)
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      decoration: BoxDecoration(color: const Color(0xFFFFD700), borderRadius: BorderRadius.circular(8)),
+                      child: const Text('VIP', style: TextStyle(color: Color(0xFF856404), fontWeight: FontWeight.bold, fontSize: 12)),
                     ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(children: [
-                          Text(guest.name, style: const TextStyle(color: AppColors.textPrimary, fontSize: 20, fontWeight: FontWeight.bold)),
-                          if (isVip) ...[
-                            const SizedBox(width: 8),
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                              decoration: BoxDecoration(color: const Color(0xFFFFD700), borderRadius: BorderRadius.circular(8)),
-                              child: const Text('VIP', style: TextStyle(color: Color(0xFF856404), fontWeight: FontWeight.bold, fontSize: 12)),
-                            ),
-                          ],
-                        ]),
-                        const SizedBox(height: 4),
-                        Row(children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                            decoration: BoxDecoration(color: AppColors.accentLight, borderRadius: BorderRadius.circular(8)),
-                            child: Text('${guest.visitsCount} visite', style: const TextStyle(color: AppColors.accent, fontWeight: FontWeight.w600, fontSize: 13)),
-                          ),
-                        ]),
-                      ],
-                    ),
-                  ),
                 ],
               ),
             ),
@@ -511,7 +501,7 @@ class _GuestDetailScreenState extends ConsumerState<GuestDetailScreen> {
                                     const SizedBox(width: 8),
                                     const Icon(Icons.table_restaurant_outlined, size: 13, color: AppColors.textSecondary),
                                     const SizedBox(width: 3),
-                                    Text(b.tableId!, style: const TextStyle(color: AppColors.textSecondary, fontSize: 12)),
+                                    Text('Tavolo', style: const TextStyle(color: AppColors.textSecondary, fontSize: 12)),
                                   ],
                                   if (b.notes != null) ...[
                                     const SizedBox(width: 8),
@@ -741,6 +731,41 @@ class _InfoRow extends StatelessWidget {
         const Spacer(),
         Text(value, style: const TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w500, fontSize: 14)),
       ]),
+    );
+  }
+}
+
+// ── Guest Avatar ──────────────────────────────────────────────────────────────
+class _GuestAvatar extends StatelessWidget {
+  final String name;
+  final double size;
+  final bool isVip;
+  const _GuestAvatar({required this.name, required this.size, this.isVip = false});
+
+  Color _colorFromName(String name) {
+    final colors = [
+      const Color(0xFF6B4C9A), const Color(0xFF2E7D52), const Color(0xFFB7182A),
+      const Color(0xFF1565C0), const Color(0xFF795548), const Color(0xFF00838F),
+    ];
+    int hash = 0;
+    for (final c in name.codeUnits) hash = (hash * 31 + c) & 0xFFFFFFFF;
+    return colors[hash % colors.length];
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final color = isVip ? const Color(0xFFB8860B) : _colorFromName(name);
+    return CircleAvatar(
+      radius: size / 2,
+      backgroundColor: color,
+      child: Text(
+        name.isNotEmpty ? name[0].toUpperCase() : '?',
+        style: TextStyle(
+          color: Colors.white,
+          fontSize: size * 0.4,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
     );
   }
 }
