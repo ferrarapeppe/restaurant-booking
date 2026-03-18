@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Prenota — Hio Oriental Bar</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #f5f5f5;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    .header {
+      background: #1a1a2e;
+      color: white;
+      text-align: center;
+      padding: 24px 16px 16px;
+    }
+    .header h1 { font-size: 22px; font-weight: 700; }
+    .header p { font-size: 13px; color: #aaa; margin-top: 4px; }
+    .container {
+      max-width: 560px;
+      margin: 24px auto;
+      padding: 0 16px;
+      flex: 1;
+    }
+    .card {
+      background: white;
+      border-radius: 12px;
+      padding: 24px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+    }
+    /* Stepper */
+    .stepper {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 28px;
+      gap: 0;
+    }
+    .step {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+    }
+    .step-circle {
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      background: #e0e0e0;
+      color: #999;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px; font-weight: 700;
+      transition: all 0.3s;
+    }
+    .step.active .step-circle { background: #3b4cc0; color: white; }
+    .step.done .step-circle { background: #3b4cc0; color: white; }
+    .step.done .step-circle::after { content: '✓'; }
+    .step.done .step-number { display: none; }
+    .step-label { font-size: 11px; color: #999; white-space: nowrap; }
+    .step.active .step-label { color: #3b4cc0; font-weight: 600; }
+    .step.done .step-label { color: #3b4cc0; }
+    .step-line {
+      flex: 1; height: 2px;
+      background: #e0e0e0;
+      margin-bottom: 20px;
+      max-width: 60px;
+    }
+    .step-line.done { background: #3b4cc0; }
+    /* Step title */
+    .step-title {
+      text-align: center;
+      font-size: 22px;
+      font-weight: 700;
+      color: #1a1a2e;
+      margin-bottom: 24px;
+    }
+    /* Persone grid */
+    .persons-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+    }
+    .person-btn {
+      aspect-ratio: 1;
+      border-radius: 50%;
+      border: 2px solid #e0e0e0;
+      background: white;
+      font-size: 16px;
+      font-weight: 600;
+      color: #333;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .person-btn:hover { border-color: #3b4cc0; color: #3b4cc0; }
+    .person-btn.selected { background: #3b4cc0; border-color: #3b4cc0; color: white; }
+    /* Calendario */
+    .calendar { width: 100%; }
+    .cal-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 16px;
+    }
+    .cal-header h3 { font-size: 18px; font-weight: 700; color: #1a1a2e; }
+    .cal-nav {
+      background: none; border: none; cursor: pointer;
+      font-size: 20px; color: #666; padding: 4px 8px;
+    }
+    .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
+    .cal-day-name {
+      text-align: center; font-size: 12px; color: #999;
+      padding: 6px 0; font-weight: 600;
+    }
+    .cal-day {
+      text-align: center; padding: 8px 4px;
+      border-radius: 50%; cursor: pointer;
+      font-size: 14px; color: #333;
+      transition: all 0.2s;
+    }
+    .cal-day:hover:not(.disabled):not(.empty) { background: #f0f2ff; color: #3b4cc0; }
+    .cal-day.today { font-weight: 700; color: #3b4cc0; }
+    .cal-day.selected { background: #3b4cc0; color: white; border-radius: 50%; }
+    .cal-day.disabled { color: #ccc; cursor: default; }
+    .cal-day.empty { cursor: default; }
+    /* Aree */
+    .area-accordion {
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      margin-bottom: 8px;
+      overflow: hidden;
+    }
+    .area-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 14px 16px;
+      cursor: pointer;
+      font-weight: 600; color: #1a1a2e;
+      background: white;
+    }
+    .area-header:hover { background: #f9f9f9; }
+    .area-arrow { transition: transform 0.2s; font-size: 12px; color: #666; }
+    .area-arrow.open { transform: rotate(180deg); }
+    .area-body { display: none; padding: 16px; border-top: 1px solid #e0e0e0; }
+    .area-body.open { display: block; }
+    .area-note { font-size: 11px; color: #999; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .time-slots { display: flex; flex-wrap: wrap; gap: 10px; }
+    .time-btn {
+      padding: 10px 18px;
+      border-radius: 50px;
+      border: 2px solid #e0e0e0;
+      background: white;
+      font-size: 14px; font-weight: 500;
+      cursor: pointer; color: #333;
+      transition: all 0.2s;
+    }
+    .time-btn:hover { border-color: #3b4cc0; color: #3b4cc0; }
+    .time-btn.selected { background: #3b4cc0; border-color: #3b4cc0; color: white; }
+    .time-btn.unavailable { color: #ccc; border-color: #eee; cursor: default; }
+    /* Form contatti */
+    .form-group { margin-bottom: 16px; }
+    .form-group label {
+      display: block; font-size: 12px; color: #666;
+      margin-bottom: 4px; font-weight: 500;
+    }
+    .form-group input, .form-group textarea, .form-group select {
+      width: 100%; padding: 12px;
+      border: 1px solid #e0e0e0; border-radius: 8px;
+      font-size: 15px; color: #333;
+      outline: none; transition: border-color 0.2s;
+    }
+    .form-group input:focus, .form-group textarea:focus { border-color: #3b4cc0; }
+    .phone-row { display: flex; gap: 8px; }
+    .phone-prefix {
+      width: 130px; flex-shrink: 0;
+    }
+    .radio-group { border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden; }
+    .radio-group label {
+      display: flex; align-items: flex-start; gap: 10px;
+      padding: 14px 16px; cursor: pointer;
+      border-bottom: 1px solid #f0f0f0; margin: 0;
+      font-size: 14px; color: #333; font-weight: 400;
+    }
+    .radio-group label:last-child { border-bottom: none; }
+    .radio-group input[type=radio] { margin-top: 2px; accent-color: #3b4cc0; }
+    .rules-box {
+      border: 1px solid #e0e0e0; border-radius: 8px;
+      padding: 12px; font-size: 13px; color: #555;
+      background: #fafafa; margin-bottom: 16px;
+    }
+    .checkbox-row {
+      display: flex; align-items: center; gap: 10px;
+      font-size: 14px; color: #333; margin-bottom: 20px;
+    }
+    .checkbox-row input { accent-color: #3b4cc0; width: 18px; height: 18px; }
+    .checkbox-row a { color: #3b4cc0; }
+    /* Bottoni */
+    .btn-primary {
+      width: 100%; padding: 15px;
+      background: #3b4cc0; color: white;
+      border: none; border-radius: 8px;
+      font-size: 16px; font-weight: 600;
+      cursor: pointer; transition: background 0.2s;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+    }
+    .btn-primary:hover { background: #2d3ba0; }
+    .btn-primary:disabled { background: #ccc; cursor: default; }
+    /* Success */
+    .success-box {
+      text-align: center; padding: 40px 20px;
+    }
+    .success-icon { font-size: 60px; margin-bottom: 16px; }
+    .success-box h2 { font-size: 22px; color: #1a1a2e; margin-bottom: 8px; }
+    .success-box p { color: #666; font-size: 15px; }
+    /* Loading */
+    .loading { text-align: center; padding: 40px; color: #666; }
+    /* Footer */
+    footer {
+      text-align: center; padding: 20px;
+      font-size: 12px; color: #999;
+    }
+    footer a { color: #3b4cc0; text-decoration: none; }
+    @media (max-width: 480px) {
+      .persons-grid { grid-template-columns: repeat(4, 1fr); }
+      .step-label { font-size: 10px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <h1 id="rest-name">Prenota un tavolo da <strong>Hio Oriental Bar</strong></h1>
+  <p id="rest-address">Via Giuseppe Mazzini 5, 90139 Palermo</p>
+</div>
+
+<div class="container">
+  <div class="card" id="booking-card">
+    <div class="loading">Caricamento...</div>
+  </div>
+</div>
+
+<footer>
+  <p>Hio Oriental Bar · <a href="#" id="footer-address">Via Giuseppe Mazzini 5, Palermo</a></p>
+</footer>
+
+<script>
+const SUPABASE_URL = 'https://jxdnldyabhzmfnterzil.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp4ZG5sZHlhYmh6bWZudGVyemlsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4NDY2ODYsImV4cCI6MjA4NzQyMjY4Nn0.1oBMQj7EDpRfYrf3_lb4dOVQy29I2JOC8Hjr2IV_q1s';
+const RESTAURANT_ID = '2b126a92-24d5-4e83-b38c-dfc82035a0cf';
+
+const { createClient } = supabase;
+const db = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// Stato
+let state = {
+  step: 1,
+  persons: null,
+  date: null,
+  area: null,
+  time: null,
+  restaurant: null,
+  openingHours: [],
+  areas: [],
+};
+
+const DAYS_IT = ['lun','mar','mer','gio','ven','sab','dom'];
+const MONTHS_IT = ['gennaio','febbraio','marzo','aprile','maggio','giugno','luglio','agosto','settembre','ottobre','novembre','dicembre'];
+const MONTHS_IT_CAP = ['Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno','Luglio','Agosto','Settembre','Ottobre','Novembre','Dicembre'];
+const DAYS_FULL = ['Lunedì','Martedì','Mercoledì','Giovedì','Venerdì','Sabato','Domenica'];
+
+async function init() {
+  // Carica dati ristorante
+  const { data: rest } = await db.from('restaurants').select('*').eq('id', RESTAURANT_ID).single();
+  const { data: hours } = await db.from('opening_hours').select('*').eq('restaurant_id', RESTAURANT_ID).is('special_date', null).order('day_of_week');
+  const { data: areas } = await db.from('areas').select('*').eq('restaurant_id', RESTAURANT_ID).order('sort_order');
+
+  state.restaurant = rest;
+  state.openingHours = hours || [];
+  state.areas = areas || [];
+
+  if (rest) {
+    document.getElementById('rest-name').innerHTML = 'Prenota un tavolo da <strong>' + rest.name + '</strong>';
+    const addr = [rest.address, rest.city].filter(Boolean).join(', ');
+    document.getElementById('rest-address').textContent = addr;
+    document.getElementById('footer-address').textContent = addr;
+  }
+
+  renderStep();
+}
+
+function renderStep() {
+  const card = document.getElementById('booking-card');
+  card.innerHTML = renderStepper() + renderCurrentStep();
+  attachEvents();
+}
+
+function renderStepper() {
+  const steps = [
+    { label: 'Persone', val: state.persons ? state.persons + ' persone' : null },
+    { label: 'Data', val: state.date ? formatDateShort(state.date) : null },
+    { label: 'Ora', val: state.time || null },
+    { label: 'Invia', val: null },
+  ];
+  let html = '<div class="stepper">';
+  steps.forEach((s, i) => {
+    const n = i + 1;
+    const isDone = state.step > n;
+    const isActive = state.step === n;
+    const cls = isDone ? 'done' : isActive ? 'active' : '';
+    html += '<div class="step ' + cls + '">';
+    html += '<div class="step-circle"><span class="step-number">' + n + '</span></div>';
+    html += '<div class="step-label">' + (isDone && s.val ? s.val : s.label) + '</div>';
+    html += '</div>';
+    if (i < steps.length - 1) {
+      html += '<div class="step-line ' + (isDone ? 'done' : '') + '"></div>';
+    }
+  });
+  html += '</div>';
+  return html;
+}
+
+function renderCurrentStep() {
+  switch(state.step) {
+    case 1: return renderStep1();
+    case 2: return renderStep2();
+    case 3: return renderStep3();
+    case 4: return renderStep4();
+    case 5: return renderSuccess();
+    default: return '';
+  }
+}
+
+function renderStep1() {
+  // Calcola min/max dal DB
+  const minP = Math.min(...state.openingHours.filter(h => !h.is_closed).map(h => h.min_party_size || 2));
+  const maxP = Math.max(...state.openingHours.filter(h => !h.is_closed).map(h => h.max_party_size || 15));
+  const min = isFinite(minP) ? minP : 2;
+  const max = isFinite(maxP) ? maxP : 15;
+
+  let btns = '';
+  for (let i = min; i <= max; i++) {
+    btns += '<button class="person-btn' + (state.persons === i ? ' selected' : '') + '" data-persons="' + i + '">' + i + '</button>';
+  }
+  return '<div class="step-title">Quante persone?</div><div class="persons-grid">' + btns + '</div>';
+}
+
+function renderStep2() {
+  const today = new Date();
+  const viewDate = state.viewDate || new Date(today.getFullYear(), today.getMonth(), 1);
+  state.viewDate = viewDate;
+
+  const year = viewDate.getFullYear();
+  const month = viewDate.getMonth();
+  const firstDay = new Date(year, month, 1);
+  const lastDay = new Date(year, month + 1, 0);
+  const startDow = (firstDay.getDay() + 6) % 7; // 0=Lunedì
+
+  let html = '<div class="step-title">Che giorno?</div>';
+  html += '<div class="calendar">';
+  html += '<div class="cal-header">';
+  html += '<button class="cal-nav" id="cal-prev">&#8249;</button>';
+  html += '<h3>' + MONTHS_IT_CAP[month] + ' ' + year + '</h3>';
+  html += '<button class="cal-nav" id="cal-next">&#8250;</button>';
+  html += '</div>';
+  html += '<div class="cal-grid">';
+  DAYS_IT.forEach(d => html += '<div class="cal-day-name">' + d + '</div>');
+
+  // Celle vuote prima
+  for (let i = 0; i < startDow; i++) html += '<div class="cal-day empty"></div>';
+
+  for (let d = 1; d <= lastDay.getDate(); d++) {
+    const date = new Date(year, month, d);
+    const dow = (date.getDay() + 6) % 7; // 0=Lunedì
+    const isPast = date < new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    const hour = state.openingHours.find(h => h.day_of_week === dow);
+    const isClosed = !hour || hour.is_closed;
+    const isSelected = state.date && date.toDateString() === state.date.toDateString();
+    const isToday = date.toDateString() === today.toDateString();
+
+    let cls = 'cal-day';
+    if (isPast || isClosed) cls += ' disabled';
+    else if (isSelected) cls += ' selected';
+    else if (isToday) cls += ' today';
+
+    const dataDate = isPast || isClosed ? '' : 'data-date="' + date.toISOString() + '"';
+    html += '<div class="' + cls + '" ' + dataDate + '>' + d + '</div>';
+  }
+  html += '</div></div>';
+  return html;
+}
+
+function renderStep3() {
+  const dow = state.date ? (state.date.getDay() + 6) % 7 : 0;
+  const hour = state.openingHours.find(h => h.day_of_week === dow);
+
+  let html = '<div class="step-title">Area Ristorante e Orario?</div>';
+
+  if (!hour || hour.is_closed) {
+    html += '<p style="text-align:center;color:#666">Chiuso in questo giorno</p>';
+    return html;
+  }
+
+  // Genera slot ogni 30 min tra open e close-2h
+  const slots = generateSlots(hour.open_time, hour.close_time);
+
+  state.areas.forEach(area => {
+    const isOpen = state.area === area.id;
+    html += '<div class="area-accordion">';
+    html += '<div class="area-header" data-area="' + area.id + '">';
+    html += '<span>' + area.name.toUpperCase() + '</span>';
+    html += '<span class="area-arrow' + (isOpen ? ' open' : '') + '">&#9660;</span>';
+    html += '</div>';
+    html += '<div class="area-body' + (isOpen ? ' open' : '') + '" id="area-' + area.id + '">';
+    if (hour.min_party_size && state.persons < hour.min_party_size) {
+      html += '<div class="area-note">MINIMO ' + hour.min_party_size + ' PERSONE</div>';
+    }
+    html += '<div class="time-slots">';
+    slots.forEach(slot => {
+      const isSel = state.time === slot && state.area === area.id;
+      html += '<button class="time-btn' + (isSel ? ' selected' : '') + '" data-area="' + area.id + '" data-time="' + slot + '">' + slot + '</button>';
+    });
+    html += '</div></div></div>';
+  });
+  return html;
+}
+
+function renderStep4() {
+  const rules = state.restaurant?.booking_rules || '';
+  let html = '<div class="step-title">Le tue informazioni di contatto</div>';
+  html += '<div class="form-group"><label>Nome *</label><input id="f-nome" type="text" placeholder="Il tuo nome"></div>';
+  html += '<div class="form-group"><label>Cognome</label><input id="f-cognome" type="text" placeholder="Il tuo cognome"></div>';
+  html += '<div class="form-group"><label>E-mail</label><input id="f-email" type="email" placeholder="La tua email"></div>';
+  html += '<div class="form-group"><label>Telefono</label>';
+  html += '<div class="phone-row">';
+  html += '<select class="phone-prefix"><option value="+39">🇮🇹 Italy (+39)</option><option value="+1">🇺🇸 USA (+1)</option><option value="+44">🇬🇧 UK (+44)</option><option value="+33">🇫🇷 France (+33)</option><option value="+49">🇩🇪 Germany (+49)</option></select>';
+  html += '<input id="f-phone" type="tel" placeholder="Numero di telefono" style="flex:1">';
+  html += '</div></div>';
+  html += '<div class="form-group"><label>Messaggio (opzionale)</label><textarea id="f-notes" rows="3" placeholder="Allergie, occasioni speciali..."></textarea></div>';
+
+  // SCEGLI turno
+  const dow = state.date ? (state.date.getDay() + 6) % 7 : 0;
+  const hour = state.openingHours.find(h => h.day_of_week === dow);
+  if (hour && hour.title) {
+    html += '<div class="form-group"><label>SCEGLI</label>';
+    html += '<div class="radio-group">';
+    html += '<label><input type="radio" name="turno" value="aperitivo"> APERTIF/APERITIVO DALLE 18:30 ALLE 20:30</label>';
+    html += '<label><input type="radio" name="turno" value="cena" checked> DINNER/CENA 1° TURNO 20:30  2° TURNO 22:30</label>';
+    html += '</div></div>';
+  }
+
+  if (rules) {
+    html += '<div class="form-group"><label>REGOLE DI PRENOTAZIONE</label>';
+    html += '<div class="rules-box">' + rules + '</div></div>';
+  }
+
+  html += '<div class="checkbox-row"><input type="checkbox" id="f-terms"><label for="f-terms">Accetto i <a href="#">termini e condizioni</a></label></div>';
+  html += '<button class="btn-primary" id="btn-submit" disabled>Invia Richiesta di Prenotazione ➤</button>';
+  return html;
+}
+
+function renderSuccess() {
+  return '<div class="success-box"><div class="success-icon">✅</div><h2>Prenotazione inviata!</h2><p>Riceverai una conferma via email o telefono.<br>Grazie e a presto da <strong>' + (state.restaurant?.name || 'Hio Oriental Bar') + '</strong>!</p></div>';
+}
+
+function generateSlots(openTime, closeTime) {
+  const slots = [];
+  const [oh, om] = openTime.substring(0,5).split(':').map(Number);
+  let [ch, cm] = closeTime.substring(0,5).split(':').map(Number);
+  let openMin = oh * 60 + om;
+  let closeMin = ch * 60 + cm;
+  if (closeMin <= openMin) closeMin += 24 * 60; // gestione mezzanotte
+  closeMin -= 120; // ultimo slot 2h prima della chiusura
+
+  for (let m = openMin; m <= closeMin; m += 30) {
+    const hh = Math.floor(m / 60) % 24;
+    const mm = m % 60;
+    slots.push(hh.toString().padLeft(2,'0') + ':' + mm.toString().padLeft(2,'0'));
+  }
+  return slots;
+}
+
+String.prototype.padLeft = function(len, char) {
+  let s = this;
+  while (s.length < len) s = char + s;
+  return s;
+};
+
+function formatDateShort(date) {
+  const dow = (date.getDay() + 6) % 7;
+  return DAYS_IT[dow] + ' ' + date.getDate() + ' ' + MONTHS_IT[date.getMonth()].substring(0,3).charAt(0).toUpperCase() + MONTHS_IT[date.getMonth()].substring(1,3);
+}
+
+function attachEvents() {
+  // Step 1 — persone
+  document.querySelectorAll('.person-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      state.persons = parseInt(btn.dataset.persons);
+      state.step = 2;
+      renderStep();
+    });
+  });
+
+  // Step 2 — data
+  document.querySelectorAll('.cal-day[data-date]').forEach(cell => {
+    cell.addEventListener('click', () => {
+      state.date = new Date(cell.dataset.date);
+      state.step = 3;
+      renderStep();
+    });
+  });
+  const prevBtn = document.getElementById('cal-prev');
+  const nextBtn = document.getElementById('cal-next');
+  if (prevBtn) prevBtn.addEventListener('click', () => {
+    const v = state.viewDate;
+    state.viewDate = new Date(v.getFullYear(), v.getMonth() - 1, 1);
+    renderStep();
+  });
+  if (nextBtn) nextBtn.addEventListener('click', () => {
+    const v = state.viewDate;
+    state.viewDate = new Date(v.getFullYear(), v.getMonth() + 1, 1);
+    renderStep();
+  });
+
+  // Step 3 — area accordion
+  document.querySelectorAll('.area-header').forEach(header => {
+    header.addEventListener('click', () => {
+      const areaId = header.dataset.area;
+      state.area = state.area === areaId ? null : areaId;
+      renderStep();
+    });
+  });
+
+  // Step 3 — slot orario
+  document.querySelectorAll('.time-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      state.area = btn.dataset.area;
+      state.time = btn.dataset.time;
+      state.step = 4;
+      renderStep();
+    });
+  });
+
+  // Step 4 — terms checkbox
+  const terms = document.getElementById('f-terms');
+  const submitBtn = document.getElementById('btn-submit');
+  if (terms && submitBtn) {
+    terms.addEventListener('change', () => {
+      submitBtn.disabled = !terms.checked;
+    });
+    submitBtn.addEventListener('click', submitBooking);
+  }
+}
+
+async function submitBooking() {
+  const nome = document.getElementById('f-nome')?.value?.trim();
+  const cognome = document.getElementById('f-cognome')?.value?.trim();
+  const email = document.getElementById('f-email')?.value?.trim();
+  const phone = document.getElementById('f-phone')?.value?.trim();
+  const notes = document.getElementById('f-notes')?.value?.trim();
+
+  if (!nome) { alert('Il nome è obbligatorio'); return; }
+
+  const btn = document.getElementById('btn-submit');
+  btn.disabled = true;
+  btn.textContent = 'Invio in corso...';
+
+  try {
+    // Crea o trova guest
+    let guestId = null;
+    if (email || phone) {
+      const query = db.from('guests').select('id');
+      if (email) query.eq('email', email);
+      const { data: existing } = await query.eq('restaurant_id', RESTAURANT_ID).limit(1);
+      if (existing && existing.length > 0) {
+        guestId = existing[0].id;
+        await db.from('guests').update({
+          name: nome + (cognome ? ' ' + cognome : ''),
+          first_name: nome, surname: cognome || '',
+          phone: phone || undefined, email: email || undefined,
+        }).eq('id', guestId);
+      } else {
+        const { data: newGuest } = await db.from('guests').insert({
+          restaurant_id: RESTAURANT_ID,
+          name: nome + (cognome ? ' ' + cognome : ''),
+          first_name: nome, surname: cognome || '',
+          phone: phone || null, email: email || null,
+          visits_count: 0, tags: [],
+        }).select().single();
+        guestId = newGuest?.id;
+      }
+    }
+
+    // Formatta data
+    const dateStr = state.date.getFullYear() + '-' +
+      String(state.date.getMonth()+1).padStart(2,'0') + '-' +
+      String(state.date.getDate()).padStart(2,'0');
+
+    // Crea prenotazione
+    await db.from('bookings').insert({
+      restaurant_id: RESTAURANT_ID,
+      guest_id: guestId,
+      date: dateStr,
+      time_start: state.time + ':00',
+      time_end: calcEndTime(state.time) + ':00',
+      party_size: state.persons,
+      status: 'pending',
+      source: 'web',
+      notes: notes || null,
+    });
+
+    state.step = 5;
+    renderStep();
+  } catch(e) {
+    alert('Errore durante la prenotazione: ' + e.message);
+    btn.disabled = false;
+    btn.textContent = 'Invia Richiesta di Prenotazione ➤';
+  }
+}
+
+function calcEndTime(timeStr) {
+  const [h, m] = timeStr.split(':').map(Number);
+  const endMin = h * 60 + m + 120;
+  return String(Math.floor(endMin/60) % 24).padStart(2,'0') + ':' + String(endMin%60).padStart(2,'0');
+}
+
+init();
+</script>
+</body>
+</html>
