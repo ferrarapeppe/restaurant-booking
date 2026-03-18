@@ -42,7 +42,7 @@ class SettingsScreen extends StatelessWidget {
                 icon: Icons.access_time,
                 title: 'Orari di apertura',
                 description: 'Gestisci gli orari di apertura e aggiungi le impostazioni di gestione delle prenotazioni per orario di apertura.',
-                onTap: () {},
+                onTap: () => context.push('/settings/opening-hours'),
               ),
               _SettingsCard(
                 icon: Icons.chair_outlined,

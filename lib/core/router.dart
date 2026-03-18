@@ -7,6 +7,7 @@ import 'package:restaurant_booking/features/bookings/new_booking_screen.dart';
 import 'package:restaurant_booking/features/guests/guests_screen.dart';
 import 'package:restaurant_booking/features/reports/reports_screen.dart';
 import 'package:restaurant_booking/features/settings/settings_screen.dart';
+import 'package:restaurant_booking/features/settings/opening_hours_screen.dart';
 import 'package:restaurant_booking/features/settings/tables_screen.dart';
 import 'package:restaurant_booking/features/floor_plan/floor_plan_screen.dart';
 
@@ -33,6 +34,7 @@ final router = GoRouter(
       builder: (context, state) => const SettingsScreen(),
       routes: [
         GoRoute(path: 'tables', builder: (context, state) => const TablesScreen()),
+        GoRoute(path: 'opening-hours', builder: (context, state) => const OpeningHoursScreen()),
       ],
     ),
   ],
