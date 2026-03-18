@@ -116,7 +116,7 @@ class _FloorPlanScreenState extends State<FloorPlanScreen> {
           .eq('restaurant_id', _restaurantId)
           .eq('date', dateStr)
           .eq('status', 'pending')
-          .is_('table_id', null);
+          .isFilter('table_id', null);
 
       setState(() {
         _tables = List<Map<String, dynamic>>.from(tablesRes);
