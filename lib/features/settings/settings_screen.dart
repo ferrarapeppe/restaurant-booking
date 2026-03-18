@@ -81,7 +81,7 @@ class SettingsScreen extends StatelessWidget {
                 icon: Icons.restaurant_outlined,
                 title: 'Profilo ristorante',
                 description: 'Modifica le informazioni del tuo ristorante visibili agli ospiti.',
-                onTap: () {},
+                onTap: () => context.push('/settings/profile'),
               ),
               _SettingsCard(
                 icon: Icons.people_outline,
