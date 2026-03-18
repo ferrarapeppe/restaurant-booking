@@ -25,6 +25,7 @@ class _FloorPlanScreenState extends State<FloorPlanScreen> {
   List<String> _timeSlots = [];
   List<Map<String, dynamic>> _tables = [];
   Map<String, TableStatus> _tableStatuses = {};
+  List<Map<String, dynamic>> _pendingBookings = [];
   bool _loading = true;
   double _scale = 1.0;
 
@@ -108,9 +109,19 @@ class _FloorPlanScreenState extends State<FloorPlanScreen> {
         }
       }
 
+      // Carica prenotazioni pending senza tavolo
+      final pendingRes = await _supabase
+          .from('bookings')
+          .select('*, guests(first_name, surname, name)')
+          .eq('restaurant_id', _restaurantId)
+          .eq('date', dateStr)
+          .eq('status', 'pending')
+          .is_('table_id', null);
+
       setState(() {
         _tables = List<Map<String, dynamic>>.from(tablesRes);
         _tableStatuses = statuses;
+        _pendingBookings = List<Map<String, dynamic>>.from(pendingRes);
         _loading = false;
       });
     } catch (e) {
@@ -227,6 +238,33 @@ class _FloorPlanScreenState extends State<FloorPlanScreen> {
                   selected: _selectedTime,
                   onSelected: _onTimeSelected,
                 ),
+                // Barra prenotazioni pending senza tavolo
+                if (_pendingBookings.isNotEmpty)
+                  Container(
+                    color: const Color(0xFFE65100).withOpacity(0.15),
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                    child: Row(children: [
+                      const Icon(Icons.pending_actions, color: Color(0xFFE65100), size: 18),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          '\${_pendingBookings.length} prenotazion\${_pendingBookings.length == 1 ? "e" : "i"} in attesa senza tavolo',
+                          style: const TextStyle(color: Color(0xFFE65100), fontSize: 13, fontWeight: FontWeight.w600),
+                        ),
+                      ),
+                      GestureDetector(
+                        onTap: () => _showPendingBookings(),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFE65100),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: const Text('Assegna', style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
+                        ),
+                      ),
+                    ]),
+                  ),
                 // Canvas tavoli
                 Expanded(
                   child: Stack(
@@ -1291,6 +1329,159 @@ class _EditField extends StatelessWidget {
             ),
           ]),
         ],
+      ),
+    );
+  }
+}
+
+// ── Pending Bookings Extension ────────────────────────────────────────────────
+extension FloorPlanPending on _FloorPlanScreenState {
+  void _showPendingBookings() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: const Color(0xFF1E1E2E),
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
+      builder: (_) => DraggableScrollableSheet(
+        initialChildSize: 0.6,
+        minChildSize: 0.4,
+        maxChildSize: 0.9,
+        expand: false,
+        builder: (_, sc) => Column(children: [
+          Container(
+            margin: const EdgeInsets.symmetric(vertical: 8),
+            width: 40, height: 4,
+            decoration: BoxDecoration(color: Colors.white24, borderRadius: BorderRadius.circular(2)),
+          ),
+          const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: Text('Prenotazioni senza tavolo',
+                style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+          ),
+          const Divider(color: Colors.white12),
+          Expanded(
+            child: ListView.builder(
+              controller: sc,
+              padding: const EdgeInsets.all(16),
+              itemCount: _pendingBookings.length,
+              itemBuilder: (_, i) {
+                final b = _pendingBookings[i];
+                final g = b['guests'];
+                final guestName = g != null
+                    ? '${g['first_name'] ?? ''} ${g['surname'] ?? ''}'.trim()
+                    : 'Ospite';
+                final time = b['time_start']?.toString().substring(0, 5) ?? '';
+                final persons = b['party_size'] ?? 0;
+                return Container(
+                  margin: const EdgeInsets.only(bottom: 8),
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.white10,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: const Color(0xFFE65100).withOpacity(0.5)),
+                  ),
+                  child: Row(children: [
+                    Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                      Text(guestName.isEmpty ? 'Ospite' : guestName,
+                          style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+                      const SizedBox(height: 4),
+                      Row(children: [
+                        const Icon(Icons.access_time, size: 14, color: Colors.white54),
+                        const SizedBox(width: 4),
+                        Text(time, style: const TextStyle(color: Colors.white54, fontSize: 13)),
+                        const SizedBox(width: 12),
+                        const Icon(Icons.people_outline, size: 14, color: Colors.white54),
+                        const SizedBox(width: 4),
+                        Text('$persons persone', style: const TextStyle(color: Colors.white54, fontSize: 13)),
+                      ]),
+                    ])),
+                    ElevatedButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                        _assignBookingToTable(b);
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF2E7D52),
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      ),
+                      child: const Text('Assegna tavolo', style: TextStyle(fontSize: 12)),
+                    ),
+                  ]),
+                );
+              },
+            ),
+          ),
+        ]),
+      ),
+    );
+  }
+
+  void _assignBookingToTable(Map<String, dynamic> booking) {
+    // Mostra planimetria in modalità selezione tavolo
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: const Color(0xFF1E1E2E),
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
+      builder: (_) => DraggableScrollableSheet(
+        initialChildSize: 0.8,
+        expand: false,
+        builder: (_, sc) => Column(children: [
+          Container(
+            margin: const EdgeInsets.symmetric(vertical: 8),
+            width: 40, height: 4,
+            decoration: BoxDecoration(color: Colors.white24, borderRadius: BorderRadius.circular(2)),
+          ),
+          const Padding(
+            padding: EdgeInsets.all(16),
+            child: Text('Seleziona un tavolo libero',
+                style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+          ),
+          const Divider(color: Colors.white12),
+          Expanded(
+            child: SingleChildScrollView(
+              controller: sc,
+              padding: const EdgeInsets.all(16),
+              child: Wrap(
+                spacing: 10, runSpacing: 10,
+                children: _tables.where((t) {
+                  final status = _tableStatuses[t['id']] ?? TableStatus.free;
+                  return status == TableStatus.free;
+                }).map((t) {
+                  return GestureDetector(
+                    onTap: () async {
+                      Navigator.pop(context);
+                      await _supabase.from('bookings').update({
+                        'table_id': t['id'],
+                        'status': 'confirmed',
+                      }).eq('id', booking['id']);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Tavolo ${t['name']} assegnato!'),
+                          backgroundColor: const Color(0xFF2E7D52),
+                        ),
+                      );
+                      _loadData();
+                    },
+                    child: Container(
+                      width: 72, height: 72,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF2E7D52),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+                        Text(t['name'].toString(),
+                            style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+                        Text('${t['capacity']} posti',
+                            style: const TextStyle(color: Colors.white70, fontSize: 10)),
+                      ]),
+                    ),
+                  );
+                }).toList(),
+              ),
+            ),
+          ),
+        ]),
       ),
     );
   }
