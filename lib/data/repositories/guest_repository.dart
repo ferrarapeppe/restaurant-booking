@@ -27,6 +27,8 @@ class GuestRepository {
 
   Future<GuestModel> createGuest({
     required String name,
+    String? firstName,
+    String? surname,
     String? email,
     String? phone,
     String? notes,
@@ -37,6 +39,8 @@ class GuestRepository {
         .insert({
           'restaurant_id': _restaurantId,
           'name': name,
+          'first_name': firstName ?? name.split(' ').first,
+          'surname': surname ?? (name.contains(' ') ? name.split(' ').sublist(1).join(' ') : ''),
           'email': email,
           'phone': phone,
           'notes': notes,

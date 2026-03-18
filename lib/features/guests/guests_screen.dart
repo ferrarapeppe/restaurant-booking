@@ -336,6 +336,8 @@ class _AddGuestSheetState extends State<_AddGuestSheet> {
                   if (_nameCtrl.text.isNotEmpty) {
                     await widget.ref.read(guestRepositoryProvider).createGuest(
                       name: _nameCtrl.text + (_surnameCtrl.text.isNotEmpty ? ' ' + _surnameCtrl.text : ''),
+                      firstName: _nameCtrl.text.trim(),
+                      surname: _surnameCtrl.text.trim(),
                       phone: _phoneCtrl.text.isEmpty ? null : _phoneCtrl.text,
                       email: _emailCtrl.text.isEmpty ? null : _emailCtrl.text,
                       notes: _notesCtrl.text.isEmpty ? null : _notesCtrl.text,
