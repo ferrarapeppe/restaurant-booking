@@ -2,16 +2,27 @@ class GuestModel {
   final String id;
   final String restaurantId;
   final String name;
+  final String? firstName;
+  final String? surname;
   final String? email;
   final String? phone;
   final String? notes;
   final List<String> tags;
   final int visitsCount;
 
+  String get displayName {
+    if (firstName != null && firstName!.isNotEmpty) {
+      return surname != null && surname!.isNotEmpty ? "$firstName $surname" : firstName!;
+    }
+    return name;
+  }
+
   const GuestModel({
     required this.id,
     required this.restaurantId,
     required this.name,
+    this.firstName,
+    this.surname,
     this.email,
     this.phone,
     this.notes,
