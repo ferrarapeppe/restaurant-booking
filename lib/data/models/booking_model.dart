@@ -20,10 +20,15 @@ class GuestModel {
   });
 
   factory GuestModel.fromJson(Map<String, dynamic> json) {
+    final firstName = (json['first_name'] ?? '').toString().trim();
+    final surname = (json['surname'] ?? '').toString().trim();
+    final fullName = [firstName, surname].where((s) => s.isNotEmpty).join(' ');
     return GuestModel(
       id: json['id'],
-      restaurantId: json['restaurant_id'],
-      name: json['name'],
+      restaurantId: json['restaurant_id'] ?? '',
+      name: fullName.isNotEmpty ? fullName : (json['name'] ?? ''),
+      firstName: firstName.isNotEmpty ? firstName : null,
+      surname: surname.isNotEmpty ? surname : null,
       email: json['email'],
       phone: json['phone'],
       notes: json['notes'],

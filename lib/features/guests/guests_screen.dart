@@ -195,7 +195,7 @@ class _GuestCard extends StatelessWidget {
                 children: [
                   Row(
                     children: [
-                      Text(guest.name, style: const TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w600, fontSize: 15)),
+                      Text(guest.displayName, style: const TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w600, fontSize: 15)),
                       const SizedBox(width: 4),
                       const Text('😊', style: TextStyle(fontSize: 14)),
                       const SizedBox(width: 4),
@@ -278,6 +278,7 @@ class _AddGuestSheet extends StatefulWidget {
 
 class _AddGuestSheetState extends State<_AddGuestSheet> {
   final _nameCtrl = TextEditingController();
+  final _surnameCtrl = TextEditingController();
   final _phoneCtrl = TextEditingController();
   final _emailCtrl = TextEditingController();
   final _notesCtrl = TextEditingController();
@@ -301,7 +302,9 @@ class _AddGuestSheetState extends State<_AddGuestSheet> {
               ],
             ),
             const SizedBox(height: 16),
-            _buildField(_nameCtrl, 'Nome e cognome *', Icons.person_outline),
+            _buildField(_nameCtrl, 'Nome *', Icons.person_outline),
+            const SizedBox(height: 10),
+            _buildField(_surnameCtrl, 'Cognome', Icons.person_outline),
             const SizedBox(height: 10),
             _buildField(_phoneCtrl, 'Telefono', Icons.phone_outlined, type: TextInputType.phone),
             const SizedBox(height: 10),
@@ -332,7 +335,7 @@ class _AddGuestSheetState extends State<_AddGuestSheet> {
                 onPressed: () async {
                   if (_nameCtrl.text.isNotEmpty) {
                     await widget.ref.read(guestRepositoryProvider).createGuest(
-                      name: _nameCtrl.text,
+                      name: _nameCtrl.text + (_surnameCtrl.text.isNotEmpty ? ' ' + _surnameCtrl.text : ''),
                       phone: _phoneCtrl.text.isEmpty ? null : _phoneCtrl.text,
                       email: _emailCtrl.text.isEmpty ? null : _emailCtrl.text,
                       notes: _notesCtrl.text.isEmpty ? null : _notesCtrl.text,
@@ -441,8 +444,11 @@ class _GuestDetailScreenState extends ConsumerState<GuestDetailScreen> {
 
             // Contatti
             _InfoCard(title: 'Contatti', children: [
+              _InfoRow(icon: Icons.person_outline, label: 'Nome', value: guest.firstName ?? guest.name),
+              if (guest.surname != null && guest.surname!.isNotEmpty)
+                _InfoRow(icon: Icons.person_outline, label: 'Cognome', value: guest.surname!.toUpperCase()),
               if (guest.phone != null) _InfoRow(icon: Icons.phone_outlined, label: 'Telefono', value: guest.phone!),
-              if (guest.email != null) _InfoRow(icon: Icons.email_outlined, label: 'Email', value: guest.email!),
+              if (guest.email != null) _InfoRow(icon: Icons.email_outlined, label: 'E-mail', value: guest.email!),
               if (guest.notes != null) _InfoRow(icon: Icons.note_outlined, label: 'Note', value: guest.notes!),
             ]),
             const SizedBox(height: 12),
