@@ -18,7 +18,7 @@ const RESOURCES = {"favicon.png": "5dcef449791fa27946b3d35ad8803796",
 "index.html": "838ff0fc06958290f928dbf43844092f",
 "/": "838ff0fc06958290f928dbf43844092f",
 "manifest.json": "2d43a3998fb27d5b655493dd358f6863",
-"flutter_bootstrap.js": "e2a9e1e67279489c6ddeb3c3e71284f7",
+"flutter_bootstrap.js": "3a49a5728d7628ae295c0aca897272fe",
 "main.dart.js": "832c0424f8af8d1425e9916bcede24e1",
 "flutter.js": "4b2350e14c6650ba82871f60906437ea",
 "canvaskit/skwasm.js.symbols": "96263e00e3c9bd9cd878ead867c04f3c",
@@ -35,7 +35,8 @@ const RESOURCES = {"favicon.png": "5dcef449791fa27946b3d35ad8803796",
 "icons/Icon-maskable-512.png": "301a7604d45b3e739efc881eb04896ea",
 "icons/Icon-maskable-192.png": "c457ef57daa1d16f64b27b786ec2ea3c",
 "icons/Icon-192.png": "ac9a721a12bbc803b44f645561ecb1e1",
-"icons/Icon-512.png": "96e752610906ba2a93c65f8abe1645f1"};
+"icons/Icon-512.png": "96e752610906ba2a93c65f8abe1645f1",
+"booking.html": "46f99ab4e86400354fe8cf08aef43bca"};
 // The application shell files that are downloaded before a service worker can
 // start.
 const CORE = ["main.dart.js",
