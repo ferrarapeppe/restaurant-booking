@@ -18,7 +18,14 @@ final router = GoRouter(
     GoRoute(path: '/splash', builder: (context, state) => const SplashScreen()),
     GoRoute(path: '/', builder: (context, state) => const DashboardScreen()),
     GoRoute(path: '/calendar', builder: (context, state) => const CalendarScreen()),
-    GoRoute(path: '/bookings', builder: (context, state) => const BookingsScreen()),
+    GoRoute(
+      path: '/bookings',
+      builder: (context, state) {
+        final dateStr = state.uri.queryParameters['date'];
+        final date = dateStr != null ? DateTime.tryParse(dateStr) : null;
+        return BookingsScreen(initialDate: date);
+      },
+    ),
     GoRoute(path: '/bookings/new', builder: (context, state) => const NewBookingScreen()),
     GoRoute(
       path: '/floor-plan/:date',

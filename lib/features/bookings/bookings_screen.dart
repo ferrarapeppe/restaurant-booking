@@ -2,236 +2,688 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:go_router/go_router.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:restaurant_booking/shared/widgets/app_drawer.dart';
 import 'package:restaurant_booking/shared/theme/app_theme.dart';
-import 'package:restaurant_booking/data/models/booking_model.dart';
 import 'package:restaurant_booking/core/providers/booking_providers.dart';
 
-class BookingsScreen extends ConsumerWidget {
-  const BookingsScreen({super.key});
+class BookingsScreen extends ConsumerStatefulWidget {
+  final DateTime? initialDate;
+  const BookingsScreen({super.key, this.initialDate});
+  @override
+  ConsumerState<BookingsScreen> createState() => _BookingsScreenState();
+}
+
+class _BookingsScreenState extends ConsumerState<BookingsScreen> {
+  static const _restaurantId = '2b126a92-24d5-4e83-b38c-dfc82035a0cf';
+  final _supabase = Supabase.instance.client;
+  String _statusFilter = 'attivo';
+  List<Map<String, dynamic>> _bookingsWithDetails = [];
+  bool _loading = false;
+
+  final _statusOptions = [
+    {'value': 'attivo', 'label': 'Attivo', 'icon': Icons.play_arrow},
+    {'value': 'tutti', 'label': 'Qualsiasi stato', 'icon': Icons.filter_list},
+    {'value': 'confirmed', 'label': 'Accettato', 'icon': Icons.thumb_up_outlined},
+    {'value': 'pending', 'label': 'In attesa di conferma', 'icon': Icons.help_outline},
+    {'value': 'seated', 'label': 'Accomodato', 'icon': Icons.chair_outlined},
+    {'value': 'cancelled', 'label': 'Annullato', 'icon': Icons.close},
+    {'value': 'noshow', 'label': 'No-show', 'icon': Icons.block_outlined},
+  ];
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (widget.initialDate != null) {
+        ref.read(selectedDateProvider.notifier).state = widget.initialDate!;
+      }
+      _loadBookings();
+    });
+  }
+
+  Future<void> _loadBookings() async {
+    setState(() => _loading = true);
+    try {
+      final date = ref.read(selectedDateProvider);
+      final dateStr = DateFormat('yyyy-MM-dd').format(date);
+      debugPrint('BOOKINGS LOAD date=$dateStr status=$_statusFilter');
+      var query = _supabase
+          .from('bookings')
+          .select('*, guests(first_name, surname, name, phone, email), tables(name, capacity, area_id, areas(name))')
+          .eq('restaurant_id', _restaurantId)
+          .eq('date', dateStr);
+
+      if (_statusFilter != 'tutti' && _statusFilter != 'attivo') {
+        query = query.eq('status', _statusFilter);
+      } else if (_statusFilter == 'attivo') {
+        query = query.inFilter('status', ['confirmed', 'pending', 'seated']);
+      }
+
+      final res = await query.order('time_start');
+      debugPrint('BOOKINGS RESULT count=${res.length}');
+      setState(() {
+        _bookingsWithDetails = List<Map<String, dynamic>>.from(res);
+        _loading = false;
+      });
+    } catch (e, st) {
+      debugPrint('BOOKINGS ERROR: $e\n$st');
+      setState(() => _loading = false);
+    }
+  }
+
+  String _guestName(Map<String, dynamic> b) {
+    final g = b['guests'];
+    if (g == null) return 'Ospite';
+    final fn = (g['first_name'] ?? '').toString().trim();
+    final sn = (g['surname'] ?? '').toString().trim();
+    if (fn.isNotEmpty || sn.isNotEmpty) return '$fn $sn'.trim().toUpperCase();
+    return (g['name'] ?? 'Ospite').toString().toUpperCase();
+  }
+
+  String _tableName(Map<String, dynamic> b) {
+    final t = b['tables'];
+    return t?['name']?.toString() ?? '';
+  }
+
+  Color _statusColor(String status) {
+    switch (status) {
+      case 'confirmed': return const Color(0xFFFFC107);
+      case 'seated': return const Color(0xFF2E7D52);
+      case 'pending': return const Color(0xFFE65100);
+      case 'cancelled': return Colors.red;
+      case 'noshow': return Colors.grey;
+      default: return Colors.grey;
+    }
+  }
+
+  void _changeDate(int delta) {
+    final current = ref.read(selectedDateProvider);
+    ref.read(selectedDateProvider.notifier).state = current.add(Duration(days: delta));
+    _loadBookings();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    ref.listen<DateTime>(selectedDateProvider, (previous, next) {
+      if (previous != next) _loadBookings();
+    });
+
     final selectedDate = ref.watch(selectedDateProvider);
-    final filteredBookings = ref.watch(filteredBookingsProvider);
-    final filterStatus = ref.watch(statusFilterProvider);
-    final bookingsAsync = ref.watch(bookingsByDateProvider);
-
-    final totalGuests = bookingsAsync.whenOrNull(
-          data: (list) => list.fold<int>(0, (sum, b) => sum + b.partySize),
-        ) ??
-        0;
-
-    final totalBookings =
-        bookingsAsync.whenOrNull(data: (list) => list.length) ?? 0;
+    final dayLabel = DateFormat('EEEE d MMM yyyy', 'it_IT').format(selectedDate);
+    final capitalDay = dayLabel[0].toUpperCase() + dayLabel.substring(1);
+    final total = _bookingsWithDetails.length;
+    final totalGuests = _bookingsWithDetails.fold<int>(0, (s, b) => s + ((b['party_size'] as int?) ?? 0));
+    final currentFilter = _statusOptions.firstWhere((s) => s['value'] == _statusFilter, orElse: () => _statusOptions[0]);
 
     return Scaffold(
       backgroundColor: AppColors.background,
       drawer: const AppDrawer(),
       appBar: AppBar(
         backgroundColor: AppColors.surface,
-        leading: Navigator.of(context).canPop()
-            ? IconButton(
-                icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary),
-                onPressed: () => Navigator.of(context).pop(),
-              )
-            : Builder(
-                builder: (context) => IconButton(
-                  icon: const Icon(Icons.menu, color: AppColors.textPrimary),
-                  onPressed: () => Scaffold.of(context).openDrawer(),
+        leading: Builder(builder: (ctx) => IconButton(
+          icon: const Icon(Icons.menu, color: Color(0xFFB8860B)),
+          onPressed: () => Scaffold.of(ctx).openDrawer(),
+        )),
+        title: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            IconButton(
+              icon: const Icon(Icons.chevron_left, color: AppColors.textPrimary),
+              onPressed: () => _changeDate(-1),
+              padding: EdgeInsets.zero, constraints: const BoxConstraints(),
+            ),
+            const SizedBox(width: 4),
+            GestureDetector(
+              onTap: () async {
+                final picked = await showDatePicker(
+                  context: context,
+                  initialDate: selectedDate,
+                  firstDate: DateTime(2024),
+                  lastDate: DateTime(2027),
+                  builder: (ctx, child) => Theme(data: ThemeData.dark(), child: child!),
+                );
+                if (picked != null) {
+                  ref.read(selectedDateProvider.notifier).state = picked;
+                  _loadBookings();
+                }
+              },
+              child: Text(
+                DateFormat('EEE d MMM', 'it_IT').format(selectedDate),
+                style: const TextStyle(color: AppColors.textPrimary, fontSize: 16, fontWeight: FontWeight.w600),
+              ),
+            ),
+            const SizedBox(width: 4),
+            IconButton(
+              icon: const Icon(Icons.chevron_right, color: AppColors.textPrimary),
+              onPressed: () => _changeDate(1),
+              padding: EdgeInsets.zero, constraints: const BoxConstraints(),
+            ),
+          ],
+        ),
+        centerTitle: true,
+        actions: [
+          IconButton(icon: const Icon(Icons.calendar_today_outlined, color: AppColors.textPrimary), onPressed: () {}),
+          IconButton(icon: const Icon(Icons.search, color: AppColors.textPrimary), onPressed: () {}),
+          IconButton(icon: const Icon(Icons.notifications_outlined, color: AppColors.textPrimary), onPressed: () {}),
+        ],
+      ),
+      body: Column(children: [
+        Container(
+          color: AppColors.surface,
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Row(children: [
+              Text(capitalDay, style: const TextStyle(color: AppColors.textPrimary, fontSize: 20, fontWeight: FontWeight.bold)),
+              const SizedBox(width: 10),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+                decoration: BoxDecoration(color: const Color(0xFF2E7D52), borderRadius: BorderRadius.circular(12)),
+                child: const Text('Aperto', style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
+              ),
+              const Spacer(),
+              IconButton(icon: const Icon(Icons.more_vert, color: AppColors.textSecondary), onPressed: () {}),
+            ]),
+            const SizedBox(height: 8),
+            Row(children: [
+              GestureDetector(
+                onTap: () => _showStatusFilter(context),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: AppColors.background,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: AppColors.divider),
+                  ),
+                  child: Row(mainAxisSize: MainAxisSize.min, children: [
+                    Icon(currentFilter['icon'] as IconData, color: AppColors.textPrimary, size: 16),
+                    const SizedBox(width: 6),
+                    Text('${currentFilter['label']}  $total \u2022 $totalGuests',
+                        style: const TextStyle(color: AppColors.textPrimary, fontSize: 13)),
+                    const SizedBox(width: 4),
+                    const Icon(Icons.arrow_drop_down, color: AppColors.textSecondary, size: 18),
+                  ]),
                 ),
               ),
-        title: Text(
-          DateFormat('d MMM yyyy', 'it_IT').format(selectedDate),
-          style: const TextStyle(
-              color: AppColors.textPrimary,
-              fontWeight: FontWeight.bold),
+              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                  color: AppColors.background,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: AppColors.divider),
+                ),
+                child: const Row(mainAxisSize: MainAxisSize.min, children: [
+                  Icon(Icons.calendar_today_outlined, color: AppColors.textPrimary, size: 14),
+                  SizedBox(width: 6),
+                  Text('Tutto il giorno', style: TextStyle(color: AppColors.textPrimary, fontSize: 13)),
+                  SizedBox(width: 4),
+                  Icon(Icons.arrow_drop_down, color: AppColors.textSecondary, size: 18),
+                ]),
+              ),
+            ]),
+            const SizedBox(height: 8),
+            Text('Totale $total \u2022 $totalGuests',
+                style: const TextStyle(color: AppColors.textSecondary, fontSize: 12)),
+          ]),
         ),
-      ),
-      body: Column(
-        children: [
-          Container(
-            color: AppColors.surface,
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-            child: Row(
-              children: [
-                _StatChip(
-                    label: '$totalBookings prenotazioni',
-                    color: AppColors.accent),
-                const SizedBox(width: 8),
-                _StatChip(
-                    label: '$totalGuests ospiti',
-                    color: AppColors.badgeGrey),
-              ],
-            ),
-          ),
-          const Divider(height: 1),
-          Expanded(
-            child: filteredBookings.when(
-              loading: () => const Center(
-                  child:
-                      CircularProgressIndicator(color: AppColors.accent)),
-              error: (e, _) =>
-                  Center(child: Text('Errore: $e')),
-              data: (bookings) => bookings.isEmpty
-                  ? const Center(
-                      child: Text('Nessuna prenotazione'))
-                  : ListView.builder(
-                      padding: const EdgeInsets.all(16),
-                      itemCount: bookings.length,
+        const Divider(height: 1, color: AppColors.divider),
+        Container(
+          color: AppColors.surface,
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          child: const Row(children: [
+            SizedBox(width: 56, child: Text('Ora', style: TextStyle(color: AppColors.textSecondary, fontSize: 12))),
+            Expanded(child: Text('Nome', style: TextStyle(color: AppColors.textSecondary, fontSize: 12))),
+            SizedBox(width: 32, child: Text('P', style: TextStyle(color: AppColors.textSecondary, fontSize: 12))),
+            SizedBox(width: 80, child: Text('Tavolo/i', style: TextStyle(color: AppColors.textSecondary, fontSize: 12))),
+            SizedBox(width: 40),
+          ]),
+        ),
+        const Divider(height: 1, color: AppColors.divider),
+        Expanded(
+          child: _loading
+              ? const Center(child: CircularProgressIndicator(color: Color(0xFF2E7D52)))
+              : _bookingsWithDetails.isEmpty
+                  ? Center(
+                      child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+                        Icon(Icons.event_busy, size: 64, color: AppColors.textMuted.withOpacity(0.3)),
+                        const SizedBox(height: 12),
+                        const Text('Nessuna prenotazione', style: TextStyle(color: AppColors.textSecondary, fontSize: 16)),
+                      ]),
+                    )
+                  : ListView.separated(
+                      itemCount: _bookingsWithDetails.length,
+                      separatorBuilder: (_, __) => const Divider(height: 1, color: AppColors.divider),
                       itemBuilder: (context, index) {
-                        final booking = bookings[index];
-                        return Card(
-                          child: ListTile(
-                            title: Text(booking.guestName),
-                            subtitle: Text(
-                                '${booking.timeStart.substring(0, 5)} • ${booking.partySize} persone'),
-                            trailing: Text(booking.status),
-                            onTap: () => context.push(
-                              '/bookings/detail',
-                              extra: booking,
-                            ),
-                          ),
+                        final b = _bookingsWithDetails[index];
+                        return _BookingRow(
+                          booking: b,
+                          guestName: _guestName(b),
+                          tableName: _tableName(b),
+                          statusColor: _statusColor(b['status'] ?? ''),
+                          onTap: () => _showBookingDetail(context, b),
                         );
                       },
                     ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _StatChip extends StatelessWidget {
-  final String label;
-  final Color color;
-  const _StatChip({required this.label, required this.color});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding:
-          const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: BoxDecoration(
-          color: color.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(8)),
-      child: Text(label,
-          style: TextStyle(
-              color: color,
-              fontWeight: FontWeight.w600,
-              fontSize: 13)),
-    );
-  }
-}
-
-
-
-class BookingCard extends StatelessWidget {
-  final BookingModel booking;
-  final Future<void> Function(String) onStatusChange;
-
-  const BookingCard({super.key, required this.booking, required this.onStatusChange});
-
-  Color _statusColor(String status) {
-    switch (status) {
-      case 'confirmed': return const Color(0xFF28A745);
-      case 'seated': return const Color(0xFF007BFF);
-      case 'left': return const Color(0xFF6C757D);
-      case 'noshow': return const Color(0xFFDC3545);
-      case 'walkin': return const Color(0xFF6F42C1);
-      default: return const Color(0xFFFFC107);
-    }
-  }
-
-  String _statusLabel(String status) {
-    switch (status) {
-      case 'confirmed': return 'Confermato';
-      case 'seated': return 'Seduto';
-      case 'left': return 'Partito';
-      case 'noshow': return 'No-show';
-      case 'walkin': return 'Walk-in';
-      default: return 'In attesa';
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final color = _statusColor(booking.status);
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.divider),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 4, offset: const Offset(0, 2))],
-      ),
-      child: Row(children: [
-        Container(
-          width: 48, height: 48,
-          decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(12)),
-          child: Center(child: Text(
-            booking.guestName.isNotEmpty ? booking.guestName[0].toUpperCase() : '?',
-            style: TextStyle(color: color, fontWeight: FontWeight.bold, fontSize: 20),
-          )),
-        ),
-        const SizedBox(width: 12),
-        Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text(booking.guestName, style: const TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w600, fontSize: 15)),
-          const SizedBox(height: 4),
-          Row(children: [
-            const Icon(Icons.access_time, size: 13, color: AppColors.textSecondary),
-            const SizedBox(width: 3),
-            Text(booking.timeStart.substring(0, 5), style: const TextStyle(color: AppColors.textSecondary, fontSize: 13)),
-            const SizedBox(width: 10),
-            const Icon(Icons.people_outline, size: 13, color: AppColors.textSecondary),
-            const SizedBox(width: 3),
-            Text('${booking.partySize} persone', style: const TextStyle(color: AppColors.textSecondary, fontSize: 13)),
-            if (booking.guestPhone != null) ...[
-              const SizedBox(width: 10),
-              const Icon(Icons.phone_outlined, size: 13, color: AppColors.textSecondary),
-              const SizedBox(width: 3),
-              Text(booking.guestPhone!, style: const TextStyle(color: AppColors.textSecondary, fontSize: 13)),
-            ],
-          ]),
-          if (booking.notes != null && booking.notes!.isNotEmpty) ...[
-            const SizedBox(height: 3),
-            Text(booking.notes!, style: const TextStyle(color: AppColors.textMuted, fontSize: 12), overflow: TextOverflow.ellipsis),
-          ],
-        ])),
-        const SizedBox(width: 8),
-        GestureDetector(
-          onTap: () => _showStatusMenu(context),
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(8)),
-            child: Text(_statusLabel(booking.status), style: TextStyle(color: color, fontSize: 12, fontWeight: FontWeight.w600)),
-          ),
         ),
       ]),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => context.push('/bookings/new'),
+        backgroundColor: const Color(0xFF2E7D52),
+        child: const Icon(Icons.add, color: Colors.white),
+      ),
     );
   }
 
-  void _showStatusMenu(BuildContext context) {
+  void _showStatusFilter(BuildContext context) {
     showModalBottomSheet(
       context: context,
       backgroundColor: AppColors.surface,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-      builder: (context) => Column(mainAxisSize: MainAxisSize.min, children: [
-        const SizedBox(height: 12),
-        Container(width: 40, height: 4, decoration: BoxDecoration(color: AppColors.divider, borderRadius: BorderRadius.circular(2))),
-        const SizedBox(height: 12),
-        const Text('Cambia stato', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-        const SizedBox(height: 8),
-        for (final s in [('confirmed','Confermato'),('seated','Seduto'),('left','Partito'),('noshow','No-show')])
-          ListTile(
-            leading: CircleAvatar(radius: 8, backgroundColor: _statusColor(s.$1)),
-            title: Text(s.$2),
-            trailing: booking.status == s.$1 ? const Icon(Icons.check, color: AppColors.accent) : null,
-            onTap: () { Navigator.pop(context); onStatusChange(s.$1); },
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
+      builder: (_) => ListView(
+        shrinkWrap: true,
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        children: _statusOptions.map((opt) {
+          final isSelected = _statusFilter == opt['value'];
+          return ListTile(
+            leading: Icon(opt['icon'] as IconData,
+                color: isSelected ? const Color(0xFF2E7D52) : AppColors.textSecondary),
+            title: Text(opt['label'] as String,
+                style: TextStyle(
+                  color: isSelected ? const Color(0xFF2E7D52) : AppColors.textPrimary,
+                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                )),
+            trailing: isSelected ? const Icon(Icons.check, color: Color(0xFF2E7D52)) : null,
+            onTap: () {
+              setState(() => _statusFilter = opt['value'] as String);
+              Navigator.pop(context);
+              _loadBookings();
+            },
+          );
+        }).toList(),
+      ),
+    );
+  }
+
+  void _showBookingDetail(BuildContext context, Map<String, dynamic> booking) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: const Color(0xFF1E1E2E),
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
+      builder: (_) => _BookingDetailSheet(
+        booking: booking,
+        onSaved: () { Navigator.pop(context); _loadBookings(); },
+      ),
+    );
+  }
+}
+
+// ── Booking Row ───────────────────────────────────────────────────────────────
+class _BookingRow extends StatelessWidget {
+  final Map<String, dynamic> booking;
+  final String guestName, tableName;
+  final Color statusColor;
+  final VoidCallback onTap;
+
+  const _BookingRow({
+    required this.booking, required this.guestName,
+    required this.tableName, required this.statusColor, required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final timeStart = (booking['time_start'] ?? '').toString().substring(0, 5);
+    final timeEnd = booking['time_end'] != null ? booking['time_end'].toString().substring(0, 5) : '';
+    final partySize = booking['party_size'] ?? 0;
+
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        color: Colors.transparent,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        child: Row(children: [
+          SizedBox(
+            width: 56,
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text(timeStart, style: const TextStyle(color: AppColors.textPrimary, fontSize: 14, fontWeight: FontWeight.w600)),
+              if (timeEnd.isNotEmpty)
+                Text(timeEnd, style: const TextStyle(color: AppColors.textSecondary, fontSize: 12)),
+            ]),
           ),
-        const SizedBox(height: 16),
+          Expanded(
+            child: Text(guestName,
+                style: const TextStyle(color: AppColors.textPrimary, fontSize: 14, fontWeight: FontWeight.w500),
+                overflow: TextOverflow.ellipsis),
+          ),
+          SizedBox(
+            width: 32,
+            child: Container(
+              width: 26, height: 26,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(color: AppColors.textSecondary.withOpacity(0.5)),
+              ),
+              child: Center(
+                child: Text('$partySize',
+                    style: const TextStyle(color: AppColors.textPrimary, fontSize: 12, fontWeight: FontWeight.bold)),
+              ),
+            ),
+          ),
+          SizedBox(
+            width: 80,
+            child: tableName.isEmpty
+                ? Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFE65100).withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: const Text('Nessun tavolo', style: TextStyle(color: Color(0xFFE65100), fontSize: 10)),
+                  )
+                : Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: AppColors.textSecondary.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Text(tableName,
+                        style: const TextStyle(color: AppColors.textPrimary, fontSize: 12, fontWeight: FontWeight.bold)),
+                  ),
+          ),
+          Container(
+            width: 12, height: 12,
+            decoration: BoxDecoration(color: statusColor, shape: BoxShape.circle),
+          ),
+        ]),
+      ),
+    );
+  }
+}
+
+// ── Booking Detail Sheet ──────────────────────────────────────────────────────
+class _BookingDetailSheet extends StatefulWidget {
+  final Map<String, dynamic> booking;
+  final VoidCallback onSaved;
+  const _BookingDetailSheet({required this.booking, required this.onSaved});
+
+  @override
+  State<_BookingDetailSheet> createState() => _BookingDetailSheetState();
+}
+
+class _BookingDetailSheetState extends State<_BookingDetailSheet>
+    with SingleTickerProviderStateMixin {
+  late TabController _tabController;
+  final _supabase = Supabase.instance.client;
+  late TextEditingController _nomeCtrl, _cognomeCtrl, _phoneCtrl, _emailCtrl, _noteCtrl, _msgCtrl;
+  late DateTime _editDate;
+  late String _editTime;
+  late int _editPartySize;
+  late String _editStatus, _editSource;
+  bool _saving = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 2, vsync: this);
+    final b = widget.booking;
+    _editDate = DateTime.tryParse(b['date'] ?? '') ?? DateTime.now();
+    _editTime = b['time_start']?.toString().substring(0, 5) ?? '20:00';
+    _editPartySize = (b['party_size'] as int?) ?? 2;
+    _editStatus = (b['status'] as String?) ?? 'confirmed';
+    _editSource = (b['source'] as String?) ?? 'phone';
+    final g = b['guests'];
+    _nomeCtrl = TextEditingController(text: (g?['first_name'] ?? '').toString());
+    _cognomeCtrl = TextEditingController(text: (g?['surname'] ?? '').toString().toUpperCase());
+    _phoneCtrl = TextEditingController(text: (g?['phone'] ?? '').toString());
+    _emailCtrl = TextEditingController(text: (g?['email'] ?? '').toString());
+    _noteCtrl = TextEditingController(text: (b['notes'] ?? '').toString());
+    _msgCtrl = TextEditingController();
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    _nomeCtrl.dispose(); _cognomeCtrl.dispose(); _phoneCtrl.dispose();
+    _emailCtrl.dispose(); _noteCtrl.dispose(); _msgCtrl.dispose();
+    super.dispose();
+  }
+
+  Future<void> _save() async {
+    setState(() => _saving = true);
+    try {
+      final guestId = widget.booking['guest_id'];
+      if (guestId != null) {
+        await _supabase.from('guests').update({
+          'first_name': _nomeCtrl.text.trim(),
+          'surname': _cognomeCtrl.text.trim(),
+          'phone': _phoneCtrl.text.trim(),
+          'email': _emailCtrl.text.trim(),
+        }).eq('id', guestId);
+      }
+      final dateStr = DateFormat('yyyy-MM-dd').format(_editDate);
+      await _supabase.from('bookings').update({
+        'date': dateStr,
+        'time_start': '$_editTime:00',
+        'party_size': _editPartySize,
+        'status': _editStatus,
+        'source': _editSource,
+        'notes': _noteCtrl.text.trim(),
+      }).eq('id', widget.booking['id']);
+      widget.onSaved();
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Prenotazione salvata'), backgroundColor: Color(0xFF2E7D52)),
+      );
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Errore: $e'), backgroundColor: Colors.red),
+      );
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
+  }
+
+  void _changeTime(int deltaMinutes) {
+    final parts = _editTime.split(':');
+    int minutes = int.parse(parts[0]) * 60 + int.parse(parts[1]) + deltaMinutes;
+    minutes = minutes.clamp(0, 23 * 60 + 45);
+    final h = (minutes ~/ 60).toString().padLeft(2, '0');
+    final m = (minutes % 60).toString().padLeft(2, '0');
+    setState(() => _editTime = '$h:$m');
+  }
+
+  String _cap(String s) => s.isEmpty ? s : s[0].toUpperCase() + s.substring(1);
+
+  @override
+  Widget build(BuildContext context) {
+    final dateLabel = DateFormat('EEE d MMM yyyy', 'it_IT').format(_editDate);
+    final t = widget.booking['tables'];
+    final tableName = t?['name']?.toString() ?? '';
+    final tableCapacity = t?['capacity']?.toString() ?? '';
+
+    return DraggableScrollableSheet(
+      initialChildSize: 0.9, minChildSize: 0.5, maxChildSize: 0.95, expand: false,
+      builder: (_, sc) => Column(children: [
+        Container(margin: const EdgeInsets.symmetric(vertical: 8), width: 40, height: 4,
+            decoration: BoxDecoration(color: Colors.white24, borderRadius: BorderRadius.circular(2))),
+        TabBar(
+          controller: _tabController,
+          indicatorColor: const Color(0xFF2E7D52),
+          labelColor: Colors.white, unselectedLabelColor: Colors.white38,
+          labelStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, letterSpacing: 1),
+          tabs: const [Tab(text: 'DETTAGLI'), Tab(text: 'MESSAGGI, NOTE')],
+        ),
+        Expanded(
+          child: TabBarView(controller: _tabController, children: [
+            ListView(controller: sc, padding: const EdgeInsets.fromLTRB(16, 16, 16, 100), children: [
+              _DetailRow(label: 'Data', child: Row(children: [
+                Expanded(child: Text(_cap(dateLabel), style: const TextStyle(color: Colors.white, fontSize: 16))),
+                IconButton(icon: const Icon(Icons.chevron_left, color: Colors.white54, size: 20),
+                    onPressed: () => setState(() => _editDate = _editDate.subtract(const Duration(days: 1)))),
+                IconButton(icon: const Icon(Icons.chevron_right, color: Colors.white54, size: 20),
+                    onPressed: () => setState(() => _editDate = _editDate.add(const Duration(days: 1)))),
+              ])),
+              const Divider(color: Colors.white12),
+              _DetailRow(label: 'Ora', child: Row(children: [
+                Expanded(child: Text(_editTime, style: const TextStyle(color: Colors.white, fontSize: 16))),
+                IconButton(icon: const Icon(Icons.remove_circle_outline, color: Colors.white54, size: 20), onPressed: () => _changeTime(-15)),
+                IconButton(icon: const Icon(Icons.add_circle_outline, color: Colors.white54, size: 20), onPressed: () => _changeTime(15)),
+              ])),
+              const Divider(color: Colors.white12),
+              _DetailRow(label: 'Persone', child: Row(children: [
+                Expanded(child: Text('$_editPartySize', style: const TextStyle(color: Colors.white, fontSize: 16))),
+                IconButton(icon: const Icon(Icons.remove_circle_outline, color: Colors.white54, size: 20),
+                    onPressed: () => setState(() => _editPartySize = (_editPartySize - 1).clamp(1, 20))),
+                IconButton(icon: const Icon(Icons.add_circle_outline, color: Colors.white54, size: 20),
+                    onPressed: () => setState(() => _editPartySize = (_editPartySize + 1).clamp(1, 20))),
+              ])),
+              const Divider(color: Colors.white12),
+              if (tableName.isNotEmpty) ...[
+                _DetailRow(label: 'Tavolo', child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFE65100).withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: const Color(0xFFE65100)),
+                  ),
+                  child: Text('$tableName  $tableCapacity posti',
+                      style: const TextStyle(color: Color(0xFFE65100), fontWeight: FontWeight.bold)),
+                )),
+                const SizedBox(height: 16),
+              ],
+              _EditableField(label: 'Nome', controller: _nomeCtrl),
+              const SizedBox(height: 8),
+              _EditableField(label: 'Telefono', controller: _phoneCtrl, prefix: 'Italy (+39)', type: TextInputType.phone),
+              const SizedBox(height: 8),
+              _EditableField(label: 'E-mail', controller: _emailCtrl, type: TextInputType.emailAddress),
+              const SizedBox(height: 8),
+              _EditableField(label: 'Cognome', controller: _cognomeCtrl),
+              const SizedBox(height: 16),
+              const Divider(color: Colors.white12),
+              _DetailRow(label: 'Stato', child: DropdownButton<String>(
+                value: _editStatus,
+                dropdownColor: const Color(0xFF2A2A3E),
+                underline: const SizedBox(), isExpanded: true,
+                items: const [
+                  DropdownMenuItem(value: 'confirmed', child: Text('👍 Accettato', style: TextStyle(color: Colors.white70))),
+                  DropdownMenuItem(value: 'seated', child: Text('🍽️ Al tavolo', style: TextStyle(color: Colors.white70))),
+                  DropdownMenuItem(value: 'pending', child: Text('❓ In attesa', style: TextStyle(color: Colors.white70))),
+                  DropdownMenuItem(value: 'cancelled', child: Text('✕ Annullato', style: TextStyle(color: Colors.white70))),
+                  DropdownMenuItem(value: 'noshow', child: Text('🚫 No-show', style: TextStyle(color: Colors.white70))),
+                ],
+                onChanged: (v) => setState(() => _editStatus = v!),
+              )),
+              const Divider(color: Colors.white12),
+              _DetailRow(label: 'Sorgente', child: DropdownButton<String>(
+                value: _editSource,
+                dropdownColor: const Color(0xFF2A2A3E),
+                underline: const SizedBox(), isExpanded: true,
+                items: const [
+                  DropdownMenuItem(value: 'phone', child: Text('📞 Telefono', style: TextStyle(color: Colors.white70))),
+                  DropdownMenuItem(value: 'web', child: Text('🌐 Web', style: TextStyle(color: Colors.white70))),
+                  DropdownMenuItem(value: 'walkin', child: Text('🚶 Walk-in', style: TextStyle(color: Colors.white70))),
+                ],
+                onChanged: (v) => setState(() => _editSource = v!),
+              )),
+              const Divider(color: Colors.white12),
+              _DetailRow(label: 'Note', child: TextField(
+                controller: _noteCtrl, maxLines: 3,
+                style: const TextStyle(color: Colors.white),
+                decoration: const InputDecoration(border: InputBorder.none, isDense: true),
+              )),
+              const SizedBox(height: 20),
+            ]),
+            Column(children: [
+              Expanded(child: ListView(padding: const EdgeInsets.all(16), children: [
+                Container(padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(color: Colors.white10, borderRadius: BorderRadius.circular(8)),
+                    child: const Text('Prenotazione creata', style: TextStyle(color: Colors.white70))),
+              ])),
+              Container(
+                decoration: const BoxDecoration(border: Border(top: BorderSide(color: Colors.white12))),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                child: Row(children: [
+                  Expanded(child: TextField(
+                    controller: _msgCtrl,
+                    style: const TextStyle(color: Colors.white),
+                    decoration: const InputDecoration(
+                      hintText: 'Nota interna...',
+                      hintStyle: TextStyle(color: Colors.white38),
+                      border: InputBorder.none, isDense: true,
+                    ),
+                  )),
+                  const Icon(Icons.send, color: Colors.white38, size: 20),
+                ]),
+              ),
+            ]),
+          ]),
+        ),
+        Container(
+          color: const Color(0xFF1E1E2E),
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+          child: Row(mainAxisAlignment: MainAxisAlignment.end, children: [
+            _ActionBtn(icon: Icons.more_horiz, onTap: () {}),
+            const SizedBox(width: 12),
+            _ActionBtn(icon: Icons.close, onTap: () => Navigator.pop(context)),
+            const SizedBox(width: 12),
+            _saving
+                ? const CircularProgressIndicator(color: Color(0xFF2E7D52))
+                : _ActionBtn(icon: Icons.check, color: const Color(0xFF2E7D52), onTap: _save),
+          ]),
+        ),
       ]),
     );
   }
+}
+
+class _DetailRow extends StatelessWidget {
+  final String label; final Widget child;
+  const _DetailRow({required this.label, required this.child});
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.symmetric(vertical: 10),
+    child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      Text(label, style: const TextStyle(color: Colors.white38, fontSize: 12)),
+      const SizedBox(height: 4), child,
+    ]),
+  );
+}
+
+class _EditableField extends StatelessWidget {
+  final String label; final TextEditingController controller;
+  final String? prefix; final TextInputType? type;
+  const _EditableField({required this.label, required this.controller, this.prefix, this.type});
+  @override
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.fromLTRB(14, 8, 14, 8),
+    decoration: BoxDecoration(color: Colors.white.withOpacity(0.05), borderRadius: BorderRadius.circular(8), border: Border.all(color: Colors.white12)),
+    child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      Text(label, style: const TextStyle(color: Colors.white38, fontSize: 11)),
+      const SizedBox(height: 2),
+      Row(children: [
+        if (prefix != null) ...[
+          Text(prefix!, style: const TextStyle(color: Colors.white54, fontSize: 14)),
+          const Icon(Icons.arrow_drop_down, color: Colors.white38, size: 18),
+          const SizedBox(width: 6),
+        ],
+        Expanded(child: TextField(controller: controller, keyboardType: type,
+            style: const TextStyle(color: Colors.white, fontSize: 15),
+            decoration: const InputDecoration(border: InputBorder.none, isDense: true, contentPadding: EdgeInsets.zero))),
+      ]),
+    ]),
+  );
+}
+
+class _ActionBtn extends StatelessWidget {
+  final IconData icon; final VoidCallback onTap; final Color? color;
+  const _ActionBtn({required this.icon, required this.onTap, this.color});
+  @override
+  Widget build(BuildContext context) => GestureDetector(
+    onTap: onTap,
+    child: Container(
+      width: 48, height: 48,
+      decoration: BoxDecoration(color: color ?? Colors.white12, shape: BoxShape.circle),
+      child: Icon(icon, color: Colors.white, size: 22),
+    ),
+  );
 }

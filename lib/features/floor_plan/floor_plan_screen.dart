@@ -248,7 +248,7 @@ class _FloorPlanScreenState extends State<FloorPlanScreen> {
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
-                          '\${_pendingBookings.length} prenotazion\${_pendingBookings.length == 1 ? "e" : "i"} in attesa senza tavolo',
+                          '${_pendingBookings.length} prenotazion${_pendingBookings.length == 1 ? "e" : "i"} in attesa senza tavolo',
                           style: const TextStyle(color: Color(0xFFE65100), fontSize: 13, fontWeight: FontWeight.w600),
                         ),
                       ),
