@@ -26,6 +26,8 @@ class _FloorPlanScreenState extends State<FloorPlanScreen> {
   List<Map<String, dynamic>> _tables = [];
   Map<String, TableStatus> _tableStatuses = {};
   List<Map<String, dynamic>> _pendingBookings = [];
+  List<Map<String, dynamic>> _areas = [];
+  String? _selectedAreaId;
   bool _loading = true;
   double _scale = 1.0;
 
@@ -69,7 +71,14 @@ class _FloorPlanScreenState extends State<FloorPlanScreen> {
       // Carica tavoli
       final tablesRes = await _supabase
           .from('tables')
-          .select('id, name, capacity, pos_x, pos_y, shape')
+          .select('id, name, capacity, pos_x, pos_y, shape, area_id')
+          .eq('restaurant_id', _restaurantId)
+          .order('name');
+
+      // Carica aree
+      final areasRes = await _supabase
+          .from('areas')
+          .select('id, name')
           .eq('restaurant_id', _restaurantId)
           .order('name');
 
@@ -118,10 +127,13 @@ class _FloorPlanScreenState extends State<FloorPlanScreen> {
           .eq('status', 'pending')
           .isFilter('table_id', null);
 
+      final areas = List<Map<String, dynamic>>.from(areasRes);
       setState(() {
         _tables = List<Map<String, dynamic>>.from(tablesRes);
         _tableStatuses = statuses;
         _pendingBookings = List<Map<String, dynamic>>.from(pendingRes);
+        _areas = areas;
+        _selectedAreaId ??= areas.isNotEmpty ? areas.first['id'] as String : null;
         _loading = false;
       });
     } catch (e) {
@@ -238,6 +250,41 @@ class _FloorPlanScreenState extends State<FloorPlanScreen> {
                   selected: _selectedTime,
                   onSelected: _onTimeSelected,
                 ),
+                // Tab aree
+                if (_areas.isNotEmpty)
+                  Container(
+                    height: 44,
+                    color: AppColors.surface,
+                    child: ListView.builder(
+                      scrollDirection: Axis.horizontal,
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                      itemCount: _areas.length,
+                      itemBuilder: (_, i) {
+                        final area = _areas[i];
+                        final isSelected = area['id'] == _selectedAreaId;
+                        return GestureDetector(
+                          onTap: () => setState(() => _selectedAreaId = area['id'] as String),
+                          child: Container(
+                            margin: const EdgeInsets.only(right: 8),
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: isSelected ? AppColors.accent : AppColors.background,
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(color: isSelected ? AppColors.accent : AppColors.divider),
+                            ),
+                            child: Text(
+                              area['name'] as String,
+                              style: TextStyle(
+                                color: isSelected ? Colors.white : AppColors.textSecondary,
+                                fontSize: 13,
+                                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                              ),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
                 // Barra prenotazioni pending senza tavolo
                 if (_pendingBookings.isNotEmpty)
                   Container(
@@ -345,24 +392,40 @@ class _FloorPlanScreenState extends State<FloorPlanScreen> {
 
   Widget _buildPositionedLayout() {
     const canvasW = 800.0;
-    const canvasH = 600.0;
+    const canvasH = 700.0;
+    final filteredTables = _selectedAreaId != null
+        ? _tables.where((t) => t['area_id'] == _selectedAreaId).toList()
+        : _tables;
     return SizedBox(
       width: canvasW,
       height: canvasH,
       child: Stack(
-        children: _tables.map((t) {
+        children: filteredTables.map((t) {
           final status = _tableStatuses[t['id']] ?? TableStatus.free;
           final x = (t['pos_x'] as num?)?.toDouble() ?? 50;
           final y = (t['pos_y'] as num?)?.toDouble() ?? 50;
-          return Positioned(
-            left: x,
-            top: y,
-            child: _TableWidget(
-              table: t,
-              status: status,
-              color: _statusColor(status),
-              onTap: () => _onTableTap(t, status),
-            ),
+          return _DraggableTable(
+            key: ValueKey(t['id']),
+            table: t,
+            x: x,
+            y: y,
+            status: status,
+            color: _statusColor(status),
+            onTap: () => _onTableTap(t, status),
+            onDragEnd: (newX, newY) async {
+              setState(() {
+                t['pos_x'] = newX;
+                t['pos_y'] = newY;
+              });
+              try {
+                await _supabase.from('tables').update({
+                  'pos_x': newX,
+                  'pos_y': newY,
+                }).eq('id', t['id'] as String);
+              } catch (e) {
+                debugPrint('Drag save error: $e');
+              }
+            },
           );
         }).toList(),
       ),
@@ -592,6 +655,81 @@ class _ZoomButton extends StatelessWidget {
 }
 
 // ── Table Detail Sheet ────────────────────────────────────────────────────────
+
+// ── Draggable Table ───────────────────────────────────────────────────────────
+class _DraggableTable extends StatefulWidget {
+  final Map<String, dynamic> table;
+  final double x, y;
+  final TableStatus status;
+  final Color color;
+  final VoidCallback onTap;
+  final void Function(double x, double y) onDragEnd;
+
+  const _DraggableTable({
+    super.key,
+    required this.table,
+    required this.x,
+    required this.y,
+    required this.status,
+    required this.color,
+    required this.onTap,
+    required this.onDragEnd,
+  });
+
+  @override
+  State<_DraggableTable> createState() => _DraggableTableState();
+}
+
+class _DraggableTableState extends State<_DraggableTable> {
+  late double _x, _y;
+  bool _dragging = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _x = widget.x;
+    _y = widget.y;
+  }
+
+  @override
+  void didUpdateWidget(_DraggableTable old) {
+    super.didUpdateWidget(old);
+    if (!_dragging) {
+      _x = widget.x;
+      _y = widget.y;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Positioned(
+      left: _x,
+      top: _y,
+      child: GestureDetector(
+        onTap: _dragging ? null : widget.onTap,
+        onPanStart: (_) => setState(() => _dragging = true),
+        onPanUpdate: (d) => setState(() {
+          _x = (_x + d.delta.dx).clamp(0, 740);
+          _y = (_y + d.delta.dy).clamp(0, 640);
+        }),
+        onPanEnd: (_) {
+          setState(() => _dragging = false);
+          widget.onDragEnd(_x, _y);
+        },
+        child: Opacity(
+          opacity: _dragging ? 0.7 : 1.0,
+          child: _TableWidget(
+            table: widget.table,
+            status: widget.status,
+            color: _dragging ? widget.color.withOpacity(0.8) : widget.color,
+            onTap: widget.onTap,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _TableDetailSheet extends StatefulWidget {
   final Map<String, dynamic> table;
   final TableStatus status;
