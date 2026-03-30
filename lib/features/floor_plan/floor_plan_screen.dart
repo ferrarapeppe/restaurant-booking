@@ -1383,7 +1383,6 @@ class _MessageInputState extends State<_MessageInput> {
           GestureDetector(
             behavior: HitTestBehavior.opaque,
             onTap: () {
-              debugPrint('SEND TAP text=${widget.controller.text}');
               widget.onSend?.call();
             },
             child: Container(
