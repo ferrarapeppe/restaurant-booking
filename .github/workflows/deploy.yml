@@ -1,9 +1,7 @@
 name: Deploy Flutter Web
-
 on:
   push:
     branches: [main]
-
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
@@ -27,7 +25,8 @@ jobs:
         run: flutter pub get
 
       - name: Build Web
-        run: flutter build web --release
+        run: flutter build web --release --base-href "/restaurant-booking/"
+
       - name: Copy booking page
         run: cp web/booking.html build/web/booking.html
 
