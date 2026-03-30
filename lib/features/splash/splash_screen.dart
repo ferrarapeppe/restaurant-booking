@@ -39,7 +39,7 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: Colors.white,
       body: Center(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 48),
@@ -56,7 +56,7 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
                   children: [
                     Image.asset('assets/images/logo_splash.png', width: 320, fit: BoxFit.contain, filterQuality: FilterQuality.high),
                     const SizedBox(height: 12),
-                    Text('Gestione prenotazioni', style: TextStyle(color: AppColors.gold.withOpacity(0.7), fontSize: 13, letterSpacing: 3)),
+                    Text('Gestione prenotazioni', style: TextStyle(color: AppColors.textPrimary.withOpacity(0.7), fontSize: 13, letterSpacing: 3)),
                   ],
                 ),
               ),
@@ -69,16 +69,12 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
                       borderRadius: BorderRadius.circular(8),
                       child: LinearProgressIndicator(
                         value: _progress.value,
-                        backgroundColor: AppColors.surface,
-                        valueColor: const AlwaysStoppedAnimation<Color>(AppColors.gold),
+                        backgroundColor: AppColors.divider,
+                        valueColor: const AlwaysStoppedAnimation<Color>(AppColors.textPrimary),
                         minHeight: 6,
                       ),
                     ),
                     const SizedBox(height: 14),
-                    Text(
-                      _progress.value < 0.4 ? 'Inizializzazione...' : _progress.value < 0.8 ? 'Connessione al database...' : 'Quasi pronto...',
-                      style: const TextStyle(color: AppColors.textSecondary, fontSize: 13),
-                    ),
                   ],
                 ),
               ),

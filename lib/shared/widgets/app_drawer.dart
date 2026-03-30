@@ -15,7 +15,7 @@ class AppDrawer extends StatelessWidget {
             children: [
               // Header logo
               Container(
-                color: Colors.black,
+                color: Colors.white,
                 padding: const EdgeInsets.fromLTRB(12, 16, 12, 12),
                 child: Column(
                   children: [
@@ -76,8 +76,8 @@ class _DrawerItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListTile(
-      leading: Icon(icon, color: AppColors.gold, size: 24),
-      title: Text(label, style: const TextStyle(color: AppColors.gold, fontSize: 15)),
+      leading: Icon(icon, color: AppColors.textPrimary, size: 24),
+      title: Text(label, style: const TextStyle(color: AppColors.textPrimary, fontSize: 15)),
       onTap: onTap,
       contentPadding: const EdgeInsets.symmetric(horizontal: 24),
       minLeadingWidth: 28,

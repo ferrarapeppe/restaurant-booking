@@ -175,7 +175,7 @@ class _FloorPlanScreenState extends State<FloorPlanScreen> {
         backgroundColor: AppColors.surface,
         elevation: 0,
         leading: Builder(builder: (ctx) => IconButton(
-          icon: const Icon(Icons.menu, color: Color(0xFFB8860B)),
+          icon: const Icon(Icons.menu, color: AppColors.textPrimary),
           onPressed: () => Scaffold.of(ctx).openDrawer(),
         )),
         title: Row(
@@ -469,7 +469,7 @@ class _FloorPlanScreenState extends State<FloorPlanScreen> {
     if (!mounted) return;
     showModalBottomSheet(
       context: context,
-      backgroundColor: const Color(0xFF1E1E2E),
+      backgroundColor: Colors.white,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
       builder: (_) => _TableDetailSheet(
@@ -567,7 +567,7 @@ class _TimelineBarState extends State<_TimelineBar> {
                         Container(
                           width: 6, height: 6,
                           decoration: BoxDecoration(
-                            color: isSelected ? Colors.white70 : Colors.transparent,
+                            color: isSelected ? AppColors.textSecondary : Colors.transparent,
                             shape: BoxShape.circle,
                           ),
                         ),
@@ -623,7 +623,7 @@ class _TableWidget extends StatelessWidget {
           children: [
             Text(name, style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold)),
             if (cap.isNotEmpty)
-              Text(cap, style: const TextStyle(color: Colors.white70, fontSize: 10)),
+              Text(cap, style: const TextStyle(color: AppColors.textSecondary, fontSize: 10)),
           ],
         ),
       ),
@@ -960,13 +960,13 @@ class _TableDetailSheetState extends State<_TableDetailSheet>
           Container(
             margin: const EdgeInsets.symmetric(vertical: 8),
             width: 40, height: 4,
-            decoration: BoxDecoration(color: Colors.white24, borderRadius: BorderRadius.circular(2)),
+            decoration: BoxDecoration(color: AppColors.divider, borderRadius: BorderRadius.circular(2)),
           ),
           TabBar(
             controller: _tabController,
             indicatorColor: const Color(0xFF2E7D52),
-            labelColor: Colors.white,
-            unselectedLabelColor: Colors.white38,
+            labelColor: AppColors.textPrimary,
+            unselectedLabelColor: AppColors.textMuted,
             labelStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, letterSpacing: 1),
             tabs: const [Tab(text: 'DETTAGLI'), Tab(text: 'MESSAGGI, NOTE')],
           ),
@@ -984,44 +984,44 @@ class _TableDetailSheetState extends State<_TableDetailSheet>
                       label: 'Data',
                       child: Row(children: [
                         Expanded(child: Text(_capitalize(dateLabel),
-                            style: const TextStyle(color: Colors.white, fontSize: 16))),
+                            style: const TextStyle(color: AppColors.textPrimary, fontSize: 16))),
                         IconButton(
-                          icon: const Icon(Icons.chevron_left, color: Colors.white54, size: 20),
+                          icon: const Icon(Icons.chevron_left, color: AppColors.textSecondary, size: 20),
                           onPressed: () => setState(() => _editDate = _editDate.subtract(const Duration(days: 1))),
                         ),
                         IconButton(
-                          icon: const Icon(Icons.chevron_right, color: Colors.white54, size: 20),
+                          icon: const Icon(Icons.chevron_right, color: AppColors.textSecondary, size: 20),
                           onPressed: () => setState(() => _editDate = _editDate.add(const Duration(days: 1))),
                         ),
                       ]),
                     ),
-                    const Divider(color: Colors.white12),
+                    const Divider(color: AppColors.divider),
                     // Ora
                     _DetailRow(
                       label: 'Ora',
                       child: Row(children: [
                         Expanded(child: Text(_editTime,
-                            style: const TextStyle(color: Colors.white, fontSize: 16))),
-                        IconButton(icon: const Icon(Icons.remove_circle_outline, color: Colors.white54, size: 20),
+                            style: const TextStyle(color: AppColors.textPrimary, fontSize: 16))),
+                        IconButton(icon: const Icon(Icons.remove_circle_outline, color: AppColors.textSecondary, size: 20),
                             onPressed: () => _changeTime(-15)),
-                        IconButton(icon: const Icon(Icons.add_circle_outline, color: Colors.white54, size: 20),
+                        IconButton(icon: const Icon(Icons.add_circle_outline, color: AppColors.textSecondary, size: 20),
                             onPressed: () => _changeTime(15)),
                       ]),
                     ),
-                    const Divider(color: Colors.white12),
+                    const Divider(color: AppColors.divider),
                     // Persone
                     _DetailRow(
                       label: 'Persone',
                       child: Row(children: [
                         Expanded(child: Text('$_editPartySize',
-                            style: const TextStyle(color: Colors.white, fontSize: 16))),
-                        IconButton(icon: const Icon(Icons.remove_circle_outline, color: Colors.white54, size: 20),
+                            style: const TextStyle(color: AppColors.textPrimary, fontSize: 16))),
+                        IconButton(icon: const Icon(Icons.remove_circle_outline, color: AppColors.textSecondary, size: 20),
                             onPressed: () => setState(() => _editPartySize = (_editPartySize - 1).clamp(1, 20))),
-                        IconButton(icon: const Icon(Icons.add_circle_outline, color: Colors.white54, size: 20),
+                        IconButton(icon: const Icon(Icons.add_circle_outline, color: AppColors.textSecondary, size: 20),
                             onPressed: () => setState(() => _editPartySize = (_editPartySize + 1).clamp(1, 20))),
                       ]),
                     ),
-                    const Divider(color: Colors.white12),
+                    const Divider(color: AppColors.divider),
                     // Tavolo chip
                     _DetailRow(
                       label: 'Tavolo',
@@ -1060,17 +1060,17 @@ class _TableDetailSheetState extends State<_TableDetailSheet>
                         width: double.infinity,
                         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.05),
+                          color: AppColors.cardLight,
                           borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: Colors.white12),
+                          border: Border.all(color: AppColors.divider),
                         ),
                         child: const Text('REGOLE DI PRENOTAZIONE',
-                            style: TextStyle(color: Colors.white38, fontSize: 13, letterSpacing: 0.5)),
+                            style: TextStyle(color: AppColors.textMuted, fontSize: 13, letterSpacing: 0.5)),
                       ),
                       const SizedBox(height: 16),
                       // Toggle notifiche
                       const Text('Invia notifiche all\'ospite',
-                          style: TextStyle(color: Colors.white38, fontSize: 12)),
+                          style: TextStyle(color: AppColors.textMuted, fontSize: 12)),
                       const SizedBox(height: 4),
                       Row(children: [
                         Switch(
@@ -1079,20 +1079,20 @@ class _TableDetailSheetState extends State<_TableDetailSheet>
                           activeColor: const Color(0xFF2E7D52),
                         ),
                         const SizedBox(width: 8),
-                        const Text('E-mail', style: TextStyle(color: Colors.white70, fontSize: 15)),
+                        const Text('E-mail', style: TextStyle(color: AppColors.textSecondary, fontSize: 15)),
                       ]),
                       const SizedBox(height: 8),
-                      const Divider(color: Colors.white12),
+                      const Divider(color: AppColors.divider),
                       // Orari apertura
                       _DetailRow(
                         label: 'Orari di apertura',
                         child: Row(children: [
                           const Expanded(child: Text('18:30 - 01:00',
-                              style: TextStyle(color: Colors.white70, fontSize: 15))),
-                          const Icon(Icons.arrow_drop_down, color: Colors.white38),
+                              style: TextStyle(color: AppColors.textSecondary, fontSize: 15))),
+                          const Icon(Icons.arrow_drop_down, color: AppColors.textMuted),
                         ]),
                       ),
-                      const Divider(color: Colors.white12),
+                      const Divider(color: AppColors.divider),
                       // Durata
                       _DetailRow(
                         label: 'Durata',
@@ -1100,57 +1100,57 @@ class _TableDetailSheetState extends State<_TableDetailSheet>
                           Expanded(child: Builder(builder: (context) {
                             final h = _editDurationMinutes ~/ 60;
                             final m = (_editDurationMinutes % 60).toString().padLeft(2, '0');
-                            return Text('$h:$m', style: const TextStyle(color: Colors.white70, fontSize: 15));
+                            return Text('$h:$m', style: const TextStyle(color: AppColors.textSecondary, fontSize: 15));
                           })),
-                          const Icon(Icons.arrow_drop_down, color: Colors.white38),
+                          const Icon(Icons.arrow_drop_down, color: AppColors.textMuted),
                           IconButton(
-                            icon: const Icon(Icons.remove_circle_outline, color: Colors.white54, size: 20),
+                            icon: const Icon(Icons.remove_circle_outline, color: AppColors.textSecondary, size: 20),
                             onPressed: () => setState(() => _editDurationMinutes = (_editDurationMinutes - 15).clamp(15, 480)),
                           ),
                           IconButton(
-                            icon: const Icon(Icons.add_circle_outline, color: Colors.white54, size: 20),
+                            icon: const Icon(Icons.add_circle_outline, color: AppColors.textSecondary, size: 20),
                             onPressed: () => setState(() => _editDurationMinutes = (_editDurationMinutes + 15).clamp(15, 480)),
                           ),
                         ]),
                       ),
-                      const Divider(color: Colors.white12),
+                      const Divider(color: AppColors.divider),
                       // Stato dropdown
                       _DetailRow(
                         label: 'Stato',
                         child: DropdownButton<String>(
                           value: _editStatus,
-                          dropdownColor: const Color(0xFF2A2A3E),
+                          dropdownColor: AppColors.surface,
                           underline: const SizedBox(),
                           isExpanded: true,
                           items: const [
-                            DropdownMenuItem(value: 'confirmed', child: Text('👍 Accettato', style: TextStyle(color: Colors.white70))),
-                            DropdownMenuItem(value: 'seated', child: Text('🍽️ Al tavolo', style: TextStyle(color: Colors.white70))),
-                            DropdownMenuItem(value: 'pending', child: Text('⏳ In attesa', style: TextStyle(color: Colors.white70))),
-                            DropdownMenuItem(value: 'cancelled', child: Text('❌ Cancellato', style: TextStyle(color: Colors.white70))),
-                            DropdownMenuItem(value: 'noshow', child: Text('🚫 No show', style: TextStyle(color: Colors.white70))),
+                            DropdownMenuItem(value: 'confirmed', child: Text('👍 Accettato', style: TextStyle(color: AppColors.textSecondary))),
+                            DropdownMenuItem(value: 'seated', child: Text('🍽️ Al tavolo', style: TextStyle(color: AppColors.textSecondary))),
+                            DropdownMenuItem(value: 'pending', child: Text('⏳ In attesa', style: TextStyle(color: AppColors.textSecondary))),
+                            DropdownMenuItem(value: 'cancelled', child: Text('❌ Cancellato', style: TextStyle(color: AppColors.textSecondary))),
+                            DropdownMenuItem(value: 'noshow', child: Text('🚫 No show', style: TextStyle(color: AppColors.textSecondary))),
                           ],
                           onChanged: (v) => setState(() => _editStatus = v!),
                         ),
                       ),
-                      const Divider(color: Colors.white12),
+                      const Divider(color: AppColors.divider),
                       // Sorgente dropdown
                       _DetailRow(
                         label: 'Sorgente',
                         child: DropdownButton<String>(
                           value: _editSource,
-                          dropdownColor: const Color(0xFF2A2A3E),
+                          dropdownColor: AppColors.surface,
                           underline: const SizedBox(),
                           isExpanded: true,
                           items: const [
-                            DropdownMenuItem(value: 'phone', child: Text('📞 Telefono', style: TextStyle(color: Colors.white70))),
-                            DropdownMenuItem(value: 'web', child: Text('🌐 Web', style: TextStyle(color: Colors.white70))),
-                            DropdownMenuItem(value: 'walkin', child: Text('🚶 Walk-in', style: TextStyle(color: Colors.white70))),
-                            DropdownMenuItem(value: 'google', child: Text('🔍 Google', style: TextStyle(color: Colors.white70))),
+                            DropdownMenuItem(value: 'phone', child: Text('📞 Telefono', style: TextStyle(color: AppColors.textSecondary))),
+                            DropdownMenuItem(value: 'web', child: Text('🌐 Web', style: TextStyle(color: AppColors.textSecondary))),
+                            DropdownMenuItem(value: 'walkin', child: Text('🚶 Walk-in', style: TextStyle(color: AppColors.textSecondary))),
+                            DropdownMenuItem(value: 'google', child: Text('🔍 Google', style: TextStyle(color: AppColors.textSecondary))),
                           ],
                           onChanged: (v) => setState(() => _editSource = v!),
                         ),
                       ),
-                      const Divider(color: Colors.white12),
+                      const Divider(color: AppColors.divider),
                       // Link pagamento
                       Padding(
                         padding: const EdgeInsets.symmetric(vertical: 10),
@@ -1158,10 +1158,10 @@ class _TableDetailSheetState extends State<_TableDetailSheet>
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             const Text('Stato della prenotazione e link di pagamento',
-                                style: TextStyle(color: Colors.white38, fontSize: 12)),
+                                style: TextStyle(color: AppColors.textMuted, fontSize: 12)),
                             const SizedBox(height: 8),
                             Row(children: [
-                              const Icon(Icons.link, color: Colors.white38, size: 18),
+                              const Icon(Icons.link, color: AppColors.textMuted, size: 18),
                               const SizedBox(width: 8),
                               Text('Mostra', style: TextStyle(color: Colors.blue.shade300, fontSize: 14)),
                             ]),
@@ -1198,44 +1198,44 @@ class _TableDetailSheetState extends State<_TableDetailSheet>
                                 const SizedBox(width: 8),
                                 Text(
                                   '${_nomeCtrl.text} ${_cognomeCtrl.text}  •  poco fa'.trim(),
-                                  style: const TextStyle(color: Colors.white54, fontSize: 13),
+                                  style: const TextStyle(color: AppColors.textSecondary, fontSize: 13),
                                 ),
                               ],
                             ),
                             const SizedBox(height: 8),
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                              decoration: BoxDecoration(color: Colors.white10, borderRadius: BorderRadius.circular(8)),
-                              child: const Text('Prenotazione creata', style: TextStyle(color: Colors.white70)),
+                              decoration: BoxDecoration(color: AppColors.cardLight, borderRadius: BorderRadius.circular(8)),
+                              child: const Text('Prenotazione creata', style: TextStyle(color: AppColors.textSecondary)),
                             ),
                           ] else
                             const Center(
                               child: Padding(
                                 padding: EdgeInsets.only(top: 40),
-                                child: Text('Nessun messaggio', style: TextStyle(color: Colors.white38)),
+                                child: Text('Nessun messaggio', style: TextStyle(color: AppColors.textMuted)),
                               ),
                             ),
                         ],
                       ),
                     ),
                     Container(
-                      decoration: const BoxDecoration(border: Border(top: BorderSide(color: Colors.white12))),
+                      decoration: const BoxDecoration(border: Border(top: BorderSide(color: AppColors.divider))),
                       child: DefaultTabController(
                         length: 2,
                         child: Column(children: [
                           const TabBar(
                             indicatorColor: Color(0xFF2E7D52),
                             labelColor: Colors.white,
-                            unselectedLabelColor: Colors.white38,
+                            unselectedLabelColor: AppColors.textMuted,
                             labelStyle: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
                             tabs: [Tab(text: 'MESSAGGIO'), Tab(text: 'NOTA')],
                           ),
                           SizedBox(
                             height: 56,
                             child: TabBarView(children: [
-                              _MessageInput(controller: _msgCtrl, hint: 'Messaggio all\'ospite...', color: const Color(0xFF1A1A2E), onSend: () async { debugPrint('SEND MSG booking=${widget.booking?["id"]} text=${_msgCtrl.text}'); if (_msgCtrl.text.trim().isEmpty) return; if (widget.booking != null) { try { await Supabase.instance.client.from('bookings').update({'notes': _msgCtrl.text.trim()}).eq('id', widget.booking!['id'] as String); debugPrint('SEND OK'); } catch(e) { debugPrint('SEND ERR: \$e'); } } else { debugPrint('SEND: booking is null'); } }),
+                              _MessageInput(controller: _msgCtrl, hint: 'Messaggio all\'ospite...', color: AppColors.surface, onSend: () async { debugPrint('SEND MSG booking=${widget.booking?["id"]} text=${_msgCtrl.text}'); if (_msgCtrl.text.trim().isEmpty) return; if (widget.booking != null) { try { await Supabase.instance.client.from('bookings').update({'notes': _msgCtrl.text.trim()}).eq('id', widget.booking!['id'] as String); debugPrint('SEND OK'); } catch(e) { debugPrint('SEND ERR: \$e'); } } else { debugPrint('SEND: booking is null'); } }),
 
-                              _MessageInput(controller: _noteCtrl, hint: 'Nota interna privata...', color: const Color(0xFF1565C0), isNote: true, onSend: () async { if (_noteCtrl.text.trim().isEmpty) return; if (widget.booking != null) { await Supabase.instance.client.from('bookings').update({'internal_notes': _noteCtrl.text.trim()}).eq('id', widget.booking!['id'] as String); } }),
+                              _MessageInput(controller: _noteCtrl, hint: 'Nota interna privata...', color: const Color(0xFFE3F2FD), isNote: true, onSend: () async { if (_noteCtrl.text.trim().isEmpty) return; if (widget.booking != null) { await Supabase.instance.client.from('bookings').update({'internal_notes': _noteCtrl.text.trim()}).eq('id', widget.booking!['id'] as String); } }),
 
                             ]),
                           ),
@@ -1249,7 +1249,7 @@ class _TableDetailSheetState extends State<_TableDetailSheet>
           ),
           // Bottom action bar
           Container(
-            color: const Color(0xFF1E1E2E),
+            color: Colors.white,
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.end,
@@ -1294,7 +1294,7 @@ class _DetailRow extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: const TextStyle(color: Colors.white38, fontSize: 12)),
+          Text(label, style: const TextStyle(color: AppColors.textSecondary, fontSize: 12)),
           const SizedBox(height: 4),
           child,
         ],
@@ -1314,31 +1314,31 @@ class _InputField extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.05),
+        color: AppColors.cardLight,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.white12),
+        border: Border.all(color: AppColors.divider),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: const TextStyle(color: Colors.white38, fontSize: 11)),
+          Text(label, style: const TextStyle(color: AppColors.textSecondary, fontSize: 11)),
           const SizedBox(height: 4),
           if (prefix != null)
             Row(children: [
-              Text(prefix!, style: const TextStyle(color: Colors.white54, fontSize: 14)),
-              const Icon(Icons.arrow_drop_down, color: Colors.white38, size: 18),
+              Text(prefix!, style: const TextStyle(color: AppColors.textSecondary, fontSize: 14)),
+              const Icon(Icons.arrow_drop_down, color: AppColors.textMuted, size: 18),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
                   value,
-                  style: const TextStyle(color: Colors.white, fontSize: 15),
+                  style: const TextStyle(color: AppColors.textPrimary, fontSize: 15),
                 ),
               ),
             ])
           else
             Text(
               value.isNotEmpty ? value : '',
-              style: const TextStyle(color: Colors.white, fontSize: 15),
+              style: const TextStyle(color: AppColors.textPrimary, fontSize: 15),
             ),
         ],
       ),
@@ -1369,10 +1369,10 @@ class _MessageInputState extends State<_MessageInput> {
           Expanded(
             child: TextField(
               controller: widget.controller,
-              style: const TextStyle(color: Colors.white, fontSize: 14),
+              style: const TextStyle(color: AppColors.textPrimary, fontSize: 14),
               decoration: InputDecoration(
                 hintText: widget.hint,
-                hintStyle: const TextStyle(color: Colors.white38),
+                hintStyle: const TextStyle(color: AppColors.textSecondary),
                 border: InputBorder.none,
                 isDense: true,
               ),
@@ -1417,10 +1417,10 @@ class _ActionButton extends StatelessWidget {
       child: Container(
         width: 48, height: 48,
         decoration: BoxDecoration(
-          color: color ?? Colors.white12,
+          color: color ?? AppColors.divider,
           shape: BoxShape.circle,
         ),
-        child: Icon(icon, color: Colors.white, size: 22),
+        child: Icon(icon, color: AppColors.textPrimary, size: 22),
       ),
     );
   }
@@ -1440,14 +1440,14 @@ class _CenaSelectorState extends State<_CenaSelector> {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.05),
+        color: AppColors.cardLight,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.white12),
+        border: Border.all(color: AppColors.divider),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('CENA', style: TextStyle(color: Colors.white38, fontSize: 11, letterSpacing: 1)),
+          const Text('CENA', style: TextStyle(color: AppColors.textMuted, fontSize: 11, letterSpacing: 1)),
           const SizedBox(height: 8),
           _RadioOption(value: 0, groupValue: _selected, label: 'APERTIF/APERITIVO DALLE 18:30\nALLE 20:30', onChanged: (v) => setState(() => _selected = v)),
           _RadioOption(value: 1, groupValue: _selected, label: 'DINNER/CENA 1° TURNO 20:30  2° TURNO 22:30', onChanged: (v) => setState(() => _selected = v)),
@@ -1482,7 +1482,7 @@ class _RadioOption extends StatelessWidget {
             Expanded(
               child: Padding(
                 padding: const EdgeInsets.only(top: 10),
-                child: Text(label, style: const TextStyle(color: Colors.white70, fontSize: 13)),
+                child: Text(label, style: const TextStyle(color: AppColors.textSecondary, fontSize: 13)),
               ),
             ),
           ],
@@ -1505,26 +1505,26 @@ class _EditField extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.fromLTRB(14, 8, 14, 8),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.05),
+        color: AppColors.cardLight,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.white12),
+        border: Border.all(color: AppColors.divider),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: const TextStyle(color: Colors.white38, fontSize: 11)),
+          Text(label, style: const TextStyle(color: AppColors.textSecondary, fontSize: 11)),
           const SizedBox(height: 2),
           Row(children: [
             if (prefix != null) ...[
-              Text(prefix!, style: const TextStyle(color: Colors.white54, fontSize: 14)),
-              const Icon(Icons.arrow_drop_down, color: Colors.white38, size: 18),
+              Text(prefix!, style: const TextStyle(color: AppColors.textSecondary, fontSize: 14)),
+              const Icon(Icons.arrow_drop_down, color: AppColors.textMuted, size: 18),
               const SizedBox(width: 6),
             ],
             Expanded(
               child: TextField(
                 controller: controller,
                 keyboardType: keyboardType,
-                style: const TextStyle(color: Colors.white, fontSize: 15),
+                style: const TextStyle(color: AppColors.textPrimary, fontSize: 15),
                 decoration: const InputDecoration(
                   border: InputBorder.none,
                   isDense: true,
@@ -1544,7 +1544,7 @@ extension FloorPlanPending on _FloorPlanScreenState {
   void _showPendingBookings() {
     showModalBottomSheet(
       context: context,
-      backgroundColor: const Color(0xFF1E1E2E),
+      backgroundColor: Colors.white,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
       builder: (_) => DraggableScrollableSheet(
@@ -1556,14 +1556,14 @@ extension FloorPlanPending on _FloorPlanScreenState {
           Container(
             margin: const EdgeInsets.symmetric(vertical: 8),
             width: 40, height: 4,
-            decoration: BoxDecoration(color: Colors.white24, borderRadius: BorderRadius.circular(2)),
+            decoration: BoxDecoration(color: AppColors.divider, borderRadius: BorderRadius.circular(2)),
           ),
           const Padding(
             padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             child: Text('Prenotazioni senza tavolo',
                 style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
           ),
-          const Divider(color: Colors.white12),
+          const Divider(color: AppColors.divider),
           Expanded(
             child: ListView.builder(
               controller: sc,
@@ -1581,7 +1581,7 @@ extension FloorPlanPending on _FloorPlanScreenState {
                   margin: const EdgeInsets.only(bottom: 8),
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: Colors.white10,
+                    color: AppColors.cardLight,
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(color: const Color(0xFFE65100).withOpacity(0.5)),
                   ),
@@ -1591,13 +1591,13 @@ extension FloorPlanPending on _FloorPlanScreenState {
                           style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
                       const SizedBox(height: 4),
                       Row(children: [
-                        const Icon(Icons.access_time, size: 14, color: Colors.white54),
+                        const Icon(Icons.access_time, size: 14, color: AppColors.textSecondary),
                         const SizedBox(width: 4),
-                        Text(time, style: const TextStyle(color: Colors.white54, fontSize: 13)),
+                        Text(time, style: const TextStyle(color: AppColors.textSecondary, fontSize: 13)),
                         const SizedBox(width: 12),
-                        const Icon(Icons.people_outline, size: 14, color: Colors.white54),
+                        const Icon(Icons.people_outline, size: 14, color: AppColors.textSecondary),
                         const SizedBox(width: 4),
-                        Text('$persons persone', style: const TextStyle(color: Colors.white54, fontSize: 13)),
+                        Text('$persons persone', style: const TextStyle(color: AppColors.textSecondary, fontSize: 13)),
                       ]),
                     ])),
                     ElevatedButton(
@@ -1625,7 +1625,7 @@ extension FloorPlanPending on _FloorPlanScreenState {
     // Mostra planimetria in modalità selezione tavolo
     showModalBottomSheet(
       context: context,
-      backgroundColor: const Color(0xFF1E1E2E),
+      backgroundColor: Colors.white,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
       builder: (_) => DraggableScrollableSheet(
@@ -1635,14 +1635,14 @@ extension FloorPlanPending on _FloorPlanScreenState {
           Container(
             margin: const EdgeInsets.symmetric(vertical: 8),
             width: 40, height: 4,
-            decoration: BoxDecoration(color: Colors.white24, borderRadius: BorderRadius.circular(2)),
+            decoration: BoxDecoration(color: AppColors.divider, borderRadius: BorderRadius.circular(2)),
           ),
           const Padding(
             padding: EdgeInsets.all(16),
             child: Text('Seleziona un tavolo libero',
                 style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
           ),
-          const Divider(color: Colors.white12),
+          const Divider(color: AppColors.divider),
           Expanded(
             child: SingleChildScrollView(
               controller: sc,
@@ -1678,7 +1678,7 @@ extension FloorPlanPending on _FloorPlanScreenState {
                         Text(t['name'].toString(),
                             style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
                         Text('${t['capacity']} posti',
-                            style: const TextStyle(color: Colors.white70, fontSize: 10)),
+                            style: const TextStyle(color: AppColors.textSecondary, fontSize: 10)),
                       ]),
                     ),
                   );

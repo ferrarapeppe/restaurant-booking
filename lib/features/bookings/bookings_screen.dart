@@ -122,7 +122,7 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
       appBar: AppBar(
         backgroundColor: AppColors.surface,
         leading: Builder(builder: (ctx) => IconButton(
-          icon: const Icon(Icons.menu, color: Color(0xFFB8860B)),
+          icon: const Icon(Icons.menu, color: AppColors.textPrimary),
           onPressed: () => Scaffold.of(ctx).openDrawer(),
         )),
         title: Row(
