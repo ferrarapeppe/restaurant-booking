@@ -791,8 +791,8 @@ class _TableDetailSheetState extends State<_TableDetailSheet>
     _cognomeCtrl = TextEditingController(text: g != null ? (g['surname'] ?? '').toString().toUpperCase() : '');
     _telefonoCtrl = TextEditingController(text: g != null ? (g['phone'] ?? '').toString() : '');
     _emailCtrl = TextEditingController(text: g != null ? (g['email'] ?? '').toString() : '');
-    _noteCtrl = TextEditingController();
-    _msgCtrl = TextEditingController();
+    _noteCtrl = TextEditingController(text: widget.booking?['internal_notes']?.toString() ?? '');
+    _msgCtrl = TextEditingController(text: widget.booking?['notes']?.toString() ?? '');
   }
 
   @override
@@ -836,6 +836,8 @@ class _TableDetailSheetState extends State<_TableDetailSheet>
         'status': _editStatus,
         'source': _editSource,
         'notify_email': _notifyEmail,
+        'notes': _msgCtrl.text.trim(),
+        'internal_notes': _noteCtrl.text.trim(),
         'time_end': _calcTimeEnd(),
       }).eq('id', widget.booking!['id']);
 
@@ -884,7 +886,9 @@ class _TableDetailSheetState extends State<_TableDetailSheet>
         'party_size': _editPartySize,
         'status': _editStatus,
         'source': _editSource,
-        'notes': _noteCtrl.text.trim(),
+        'notes': _msgCtrl.text.trim(),
+        'internal_notes': _noteCtrl.text.trim(),
+        'notify_email': _notifyEmail,
       });
       if (mounted) {
         Navigator.pop(context);
@@ -1177,7 +1181,7 @@ class _TableDetailSheetState extends State<_TableDetailSheet>
                   children: [
                     Expanded(
                       child: ListView(
-                        padding: const EdgeInsets.all(16),
+                        padding: const EdgeInsets.fromLTRB(16, 16, 16, 80),
                         children: [
                           if (isOccupied) ...[
                             Row(
@@ -1229,10 +1233,10 @@ class _TableDetailSheetState extends State<_TableDetailSheet>
                           SizedBox(
                             height: 56,
                             child: TabBarView(children: [
-                              _MessageInput(controller: _msgCtrl, hint: 'Messaggio all\'ospite...',
-                                  color: const Color(0xFF1A1A2E)),
-                              _MessageInput(controller: _noteCtrl, hint: 'Nota interna privata...',
-                                  color: const Color(0xFF1565C0), isNote: true),
+                              _MessageInput(controller: _msgCtrl, hint: 'Messaggio all\'ospite...', color: const Color(0xFF1A1A2E), onSend: () async { debugPrint('SEND MSG booking=${widget.booking?["id"]} text=${_msgCtrl.text}'); if (_msgCtrl.text.trim().isEmpty) return; if (widget.booking != null) { try { await Supabase.instance.client.from('bookings').update({'notes': _msgCtrl.text.trim()}).eq('id', widget.booking!['id'] as String); debugPrint('SEND OK'); } catch(e) { debugPrint('SEND ERR: \$e'); } } else { debugPrint('SEND: booking is null'); } }),
+
+                              _MessageInput(controller: _noteCtrl, hint: 'Nota interna privata...', color: const Color(0xFF1565C0), isNote: true, onSend: () async { if (_noteCtrl.text.trim().isEmpty) return; if (widget.booking != null) { await Supabase.instance.client.from('bookings').update({'internal_notes': _noteCtrl.text.trim()}).eq('id', widget.booking!['id'] as String); } }),
+
                             ]),
                           ),
                         ]),
@@ -1342,36 +1346,58 @@ class _InputField extends StatelessWidget {
   }
 }
 
-class _MessageInput extends StatelessWidget {
+class _MessageInput extends StatefulWidget {
   final TextEditingController controller;
   final String hint;
   final Color color;
   final bool isNote;
-  const _MessageInput({required this.controller, required this.hint, required this.color, this.isNote = false});
+  final Function()? onSend;
+  const _MessageInput({required this.controller, required this.hint, required this.color, this.isNote = false, this.onSend});
 
+  @override
+  State<_MessageInput> createState() => _MessageInputState();
+}
+
+class _MessageInputState extends State<_MessageInput> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: color,
+      color: widget.color,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Row(
         children: [
           Expanded(
             child: TextField(
-              controller: controller,
+              controller: widget.controller,
               style: const TextStyle(color: Colors.white, fontSize: 14),
               decoration: InputDecoration(
-                hintText: hint,
+                hintText: widget.hint,
                 hintStyle: const TextStyle(color: Colors.white38),
                 border: InputBorder.none,
                 isDense: true,
               ),
+              onSubmitted: (_) => widget.onSend?.call(),
             ),
           ),
-          Icon(
-            isNote ? Icons.add_comment_outlined : Icons.send,
-            color: Colors.white38,
-            size: 20,
+          const SizedBox(width: 8),
+          GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: () {
+              debugPrint('SEND TAP text=${widget.controller.text}');
+              widget.onSend?.call();
+            },
+            child: Container(
+              width: 36, height: 36,
+              decoration: BoxDecoration(
+                color: const Color(0xFF2E7D52),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                widget.isNote ? Icons.add_comment_outlined : Icons.send,
+                color: Colors.white,
+                size: 18,
+              ),
+            ),
           ),
         ],
       ),
