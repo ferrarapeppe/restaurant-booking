@@ -1170,7 +1170,7 @@ class _TableDetailSheetState extends State<_TableDetailSheet>
                       ),
                       const SizedBox(height: 20),
                     ],
-                    ],
+
 
 
 
