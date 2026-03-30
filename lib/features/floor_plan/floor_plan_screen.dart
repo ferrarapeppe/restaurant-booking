@@ -856,6 +856,52 @@ class _TableDetailSheetState extends State<_TableDetailSheet>
     }
   }
 
+  Future<void> _saveNew() async {
+    if (_nomeCtrl.text.trim().isEmpty) return;
+    setState(() => _saving = true);
+    try {
+      final supabase = Supabase.instance.client;
+      const restaurantId = '2b126a92-24d5-4e83-b38c-dfc82035a0cf';
+      // Crea o trova guest
+      final guestRes = await supabase.from('guests').insert({
+        'restaurant_id': restaurantId,
+        'first_name': _nomeCtrl.text.trim(),
+        'surname': _cognomeCtrl.text.trim(),
+        'phone': _telefonoCtrl.text.trim(),
+        'email': _emailCtrl.text.trim(),
+      }).select().single();
+      final guestId = guestRes['id'] as String;
+      // Crea prenotazione
+      final dateStr = DateFormat('yyyy-MM-dd').format(_editDate);
+      final timeEnd = _calcTimeEnd();
+      await supabase.from('bookings').insert({
+        'restaurant_id': restaurantId,
+        'guest_id': guestId,
+        'table_id': widget.table['id'],
+        'date': dateStr,
+        'time_start': '$_editTime:00',
+        'time_end': timeEnd,
+        'party_size': _editPartySize,
+        'status': _editStatus,
+        'source': _editSource,
+        'notes': _noteCtrl.text.trim(),
+      });
+      if (mounted) {
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Prenotazione creata'), backgroundColor: Color(0xFF2E7D52)),
+        );
+      }
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Errore: $e'), backgroundColor: Colors.red),
+      );
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
+  }
+
+
   void _changeTime(int deltaMinutes) {
     final parts = _editTime.split(':');
     int minutes = int.parse(parts[0]) * 60 + int.parse(parts[1]) + deltaMinutes;
@@ -989,7 +1035,7 @@ class _TableDetailSheetState extends State<_TableDetailSheet>
                       ),
                     ),
                     const SizedBox(height: 16),
-                    if (isOccupied) ...[
+                    ...[
                       // Nome editabile
                       _EditField(label: 'Nome (o trova per nome, telefono, email)', controller: _nomeCtrl),
                       const SizedBox(height: 8),
@@ -1119,10 +1165,11 @@ class _TableDetailSheetState extends State<_TableDetailSheet>
                         ),
                       ),
                       const SizedBox(height: 20),
-                    ] else ...[
-                      const SizedBox(height: 16),
-                      const Text('Tavolo libero', style: TextStyle(color: Colors.white54, fontSize: 14)),
                     ],
+                    ],
+
+
+
                   ],
                 ),
                 // ── TAB MESSAGGI, NOTE ──
@@ -1212,18 +1259,13 @@ class _TableDetailSheetState extends State<_TableDetailSheet>
                       ? const CircularProgressIndicator(color: Color(0xFF2E7D52))
                       : _ActionButton(icon: Icons.check, color: const Color(0xFF2E7D52), onTap: _save),
                 ] else ...[
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton.icon(
-                      onPressed: widget.onNewBooking,
-                      icon: const Icon(Icons.add),
-                      label: const Text('Nuova prenotazione'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF2E7D52),
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                      ),
-                    ),
-                  ),
+                  _ActionButton(icon: Icons.more_horiz, onTap: () {}),
+                  const SizedBox(width: 12),
+                  _ActionButton(icon: Icons.close, onTap: () => Navigator.pop(context)),
+                  const SizedBox(width: 12),
+                  _saving
+                      ? const CircularProgressIndicator(color: Color(0xFF2E7D52))
+                      : _ActionButton(icon: Icons.check, color: const Color(0xFF2E7D52), onTap: _saveNew),
                 ],
               ],
             ),
