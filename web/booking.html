@@ -171,10 +171,11 @@
       outline: none; transition: border-color 0.2s;
     }
     .form-group input:focus, .form-group textarea:focus { border-color: #3b4cc0; }
-    .phone-row { display: flex; gap: 8px; }
+    .phone-row { display: flex; gap: 8px; align-items: center; }
     .phone-prefix {
-      width: 130px; flex-shrink: 0;
+      width: 90px; flex-shrink: 0; padding: 10px 8px; font-size: 13px;
     }
+    .phone-row input { flex: 1; min-width: 0; width: 100%; }
     .radio-group { border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden; }
     .radio-group label {
       display: flex; align-items: flex-start; gap: 10px;
@@ -428,13 +429,13 @@ function renderStep3() {
 function renderStep4() {
   const rules = state.restaurant?.booking_rules || '';
   let html = '<div class="step-title">Le tue informazioni di contatto</div>';
-  html += '<div class="form-group"><label>Nome *</label><input id="f-nome" type="text" placeholder="Il tuo nome"></div>';
-  html += '<div class="form-group"><label>Cognome</label><input id="f-cognome" type="text" placeholder="Il tuo cognome"></div>';
+  html += '<div class="form-group"><label>Nome *</label><input id="f-nome" type="text" placeholder="Il tuo nome" required></div>';
+  html += '<div class="form-group"><label>Cognome *</label><input id="f-cognome" type="text" placeholder="Il tuo cognome" required></div>';
   html += '<div class="form-group"><label>E-mail</label><input id="f-email" type="email" placeholder="La tua email"></div>';
-  html += '<div class="form-group"><label>Telefono</label>';
+  html += '<div class="form-group"><label>Cellulare *</label>';
   html += '<div class="phone-row">';
-  html += '<select class="phone-prefix"><option value="+39">🇮🇹 Italy (+39)</option><option value="+1">🇺🇸 USA (+1)</option><option value="+44">🇬🇧 UK (+44)</option><option value="+33">🇫🇷 France (+33)</option><option value="+49">🇩🇪 Germany (+49)</option></select>';
-  html += '<input id="f-phone" type="tel" placeholder="Numero di telefono" style="flex:1">';
+  html += '<select class="phone-prefix"><option value="+39">🇮🇹 +39</option><option value="+1">🇺🇸 +1</option><option value="+44">🇬🇧 +44</option><option value="+33">🇫🇷 +33</option><option value="+49">🇩🇪 +49</option></select>';
+  html += '<input id="f-phone" type="tel" placeholder="Numero di cellulare" required>';
   html += '</div></div>';
   html += '<div class="form-group"><label>Messaggio (opzionale)</label><textarea id="f-notes" rows="3" placeholder="Allergie, occasioni speciali..."></textarea></div>';
 
@@ -559,7 +560,10 @@ async function submitBooking() {
   const phone = document.getElementById('f-phone')?.value?.trim();
   const notes = document.getElementById('f-notes')?.value?.trim();
 
+  const cognome = document.getElementById('f-cognome')?.value?.trim();
   if (!nome) { alert('Il nome è obbligatorio'); return; }
+  if (!cognome) { alert('Il cognome è obbligatorio'); return; }
+  if (!phone) { alert('Il numero di cellulare è obbligatorio'); return; }
 
   const btn = document.getElementById('btn-submit');
   btn.disabled = true;
