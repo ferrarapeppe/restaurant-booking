@@ -309,7 +309,7 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
   void _showBookingDetail(BuildContext context, Map<String, dynamic> booking) {
     showModalBottomSheet(
       context: context,
-      backgroundColor: const Color(0xFF1E1E2E),
+      backgroundColor: AppColors.surface,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
       builder: (_) => _BookingDetailSheet(
@@ -644,7 +644,7 @@ class _DetailRow extends StatelessWidget {
   Widget build(BuildContext context) => Padding(
     padding: const EdgeInsets.symmetric(vertical: 10),
     child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Text(label, style: const TextStyle(color: Colors.white38, fontSize: 12)),
+      Text(label, style: const TextStyle(color: AppColors.textSecondary, fontSize: 12)),
       const SizedBox(height: 4), child,
     ]),
   );
@@ -657,18 +657,18 @@ class _EditableField extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Container(
     padding: const EdgeInsets.fromLTRB(14, 8, 14, 8),
-    decoration: BoxDecoration(color: Colors.white.withOpacity(0.05), borderRadius: BorderRadius.circular(8), border: Border.all(color: Colors.white12)),
+    decoration: BoxDecoration(color: AppColors.cardLight, borderRadius: BorderRadius.circular(8), border: Border.all(color: AppColors.divider)),
     child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Text(label, style: const TextStyle(color: Colors.white38, fontSize: 11)),
+      Text(label, style: const TextStyle(color: AppColors.textSecondary, fontSize: 11)),
       const SizedBox(height: 2),
       Row(children: [
         if (prefix != null) ...[
-          Text(prefix!, style: const TextStyle(color: Colors.white54, fontSize: 14)),
-          const Icon(Icons.arrow_drop_down, color: Colors.white38, size: 18),
+          Text(prefix!, style: const TextStyle(color: AppColors.textSecondary, fontSize: 14)),
+          const Icon(Icons.arrow_drop_down, color: AppColors.textSecondary, size: 18),
           const SizedBox(width: 6),
         ],
         Expanded(child: TextField(controller: controller, keyboardType: type,
-            style: const TextStyle(color: Colors.white, fontSize: 15),
+            style: const TextStyle(color: AppColors.textPrimary, fontSize: 15),
             decoration: const InputDecoration(border: InputBorder.none, isDense: true, contentPadding: EdgeInsets.zero))),
       ]),
     ]),
@@ -683,8 +683,8 @@ class _ActionBtn extends StatelessWidget {
     onTap: onTap,
     child: Container(
       width: 48, height: 48,
-      decoration: BoxDecoration(color: color ?? Colors.white12, shape: BoxShape.circle),
-      child: Icon(icon, color: Colors.white, size: 22),
+      decoration: BoxDecoration(color: color ?? AppColors.divider, shape: BoxShape.circle),
+      child: Icon(icon, color: AppColors.textPrimary, size: 22),
     ),
   );
 }
