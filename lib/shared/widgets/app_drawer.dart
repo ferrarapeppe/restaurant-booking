@@ -41,7 +41,7 @@ class AppDrawer extends StatelessWidget {
 
               // Sezione prenotazioni
               _DrawerItem(icon: Icons.calendar_month_outlined, label: 'Calendario', onTap: () { context.go('/calendar'); Navigator.pop(context); }),
-              _DrawerItem(icon: Icons.view_week_outlined, label: 'Programma', onTap: () { context.go('/bookings'); Navigator.pop(context); }),
+              _DrawerItem(icon: Icons.view_week_outlined, label: 'Programma', onTap: () { context.go('/reservations'); Navigator.pop(context); }),
               _DrawerItem(icon: Icons.list_alt_outlined, label: 'Elenco', onTap: () { context.go('/bookings'); Navigator.pop(context); }),
               _DrawerItem(icon: Icons.table_restaurant_outlined, label: 'Planimetria', onTap: () { Navigator.pop(context); context.go('/floor-plan/' + DateTime.now().toIso8601String().substring(0, 10)); }),
               const Divider(color: AppColors.divider, indent: 16, endIndent: 16),

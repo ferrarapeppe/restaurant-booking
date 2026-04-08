@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:restaurant_booking/data/models/booking_model.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:go_router/go_router.dart';
@@ -472,7 +473,7 @@ class _BookingDetailSheetState extends State<_BookingDetailSheet>
       }).eq('id', widget.booking['id']);
       widget.onSaved();
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Prenotazione salvata'), backgroundColor: Color(0xFF2E7D52)),
+        const SnackBar(content: Text('Prenotazione salvata'), backgroundColor: AppColors.accent),
       );
     } catch (e) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(
@@ -505,11 +506,11 @@ class _BookingDetailSheetState extends State<_BookingDetailSheet>
       initialChildSize: 0.9, minChildSize: 0.5, maxChildSize: 0.95, expand: false,
       builder: (_, sc) => Column(children: [
         Container(margin: const EdgeInsets.symmetric(vertical: 8), width: 40, height: 4,
-            decoration: BoxDecoration(color: Colors.white24, borderRadius: BorderRadius.circular(2))),
+            decoration: BoxDecoration(color: AppColors.divider, borderRadius: BorderRadius.circular(2))),
         TabBar(
           controller: _tabController,
-          indicatorColor: const Color(0xFF2E7D52),
-          labelColor: Colors.white, unselectedLabelColor: Colors.white38,
+          indicatorColor: AppColors.accent,
+          labelColor: AppColors.textPrimary, unselectedLabelColor: AppColors.textSecondary,
           labelStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, letterSpacing: 1),
           tabs: const [Tab(text: 'DETTAGLI'), Tab(text: 'MESSAGGI, NOTE')],
         ),
@@ -517,27 +518,27 @@ class _BookingDetailSheetState extends State<_BookingDetailSheet>
           child: TabBarView(controller: _tabController, children: [
             ListView(controller: sc, padding: const EdgeInsets.fromLTRB(16, 16, 16, 100), children: [
               _DetailRow(label: 'Data', child: Row(children: [
-                Expanded(child: Text(_cap(dateLabel), style: const TextStyle(color: Colors.white, fontSize: 16))),
-                IconButton(icon: const Icon(Icons.chevron_left, color: Colors.white54, size: 20),
+                Expanded(child: Text(_cap(dateLabel), style: const TextStyle(color: AppColors.textPrimary, fontSize: 16))),
+                IconButton(icon: const Icon(Icons.chevron_left, color: AppColors.textSecondary, size: 20),
                     onPressed: () => setState(() => _editDate = _editDate.subtract(const Duration(days: 1)))),
-                IconButton(icon: const Icon(Icons.chevron_right, color: Colors.white54, size: 20),
+                IconButton(icon: const Icon(Icons.chevron_right, color: AppColors.textSecondary, size: 20),
                     onPressed: () => setState(() => _editDate = _editDate.add(const Duration(days: 1)))),
               ])),
-              const Divider(color: Colors.white12),
+              const Divider(color: AppColors.divider),
               _DetailRow(label: 'Ora', child: Row(children: [
-                Expanded(child: Text(_editTime, style: const TextStyle(color: Colors.white, fontSize: 16))),
-                IconButton(icon: const Icon(Icons.remove_circle_outline, color: Colors.white54, size: 20), onPressed: () => _changeTime(-15)),
-                IconButton(icon: const Icon(Icons.add_circle_outline, color: Colors.white54, size: 20), onPressed: () => _changeTime(15)),
+                Expanded(child: Text(_editTime, style: const TextStyle(color: AppColors.textPrimary, fontSize: 16))),
+                IconButton(icon: const Icon(Icons.remove_circle_outline, color: AppColors.textSecondary, size: 20), onPressed: () => _changeTime(-15)),
+                IconButton(icon: const Icon(Icons.add_circle_outline, color: AppColors.textSecondary, size: 20), onPressed: () => _changeTime(15)),
               ])),
-              const Divider(color: Colors.white12),
+              const Divider(color: AppColors.divider),
               _DetailRow(label: 'Persone', child: Row(children: [
-                Expanded(child: Text('$_editPartySize', style: const TextStyle(color: Colors.white, fontSize: 16))),
-                IconButton(icon: const Icon(Icons.remove_circle_outline, color: Colors.white54, size: 20),
+                Expanded(child: Text('$_editPartySize', style: const TextStyle(color: AppColors.textPrimary, fontSize: 16))),
+                IconButton(icon: const Icon(Icons.remove_circle_outline, color: AppColors.textSecondary, size: 20),
                     onPressed: () => setState(() => _editPartySize = (_editPartySize - 1).clamp(1, 20))),
-                IconButton(icon: const Icon(Icons.add_circle_outline, color: Colors.white54, size: 20),
+                IconButton(icon: const Icon(Icons.add_circle_outline, color: AppColors.textSecondary, size: 20),
                     onPressed: () => setState(() => _editPartySize = (_editPartySize + 1).clamp(1, 20))),
               ])),
-              const Divider(color: Colors.white12),
+              const Divider(color: AppColors.divider),
               if (tableName.isNotEmpty) ...[
                 _DetailRow(label: 'Tavolo', child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
@@ -559,36 +560,36 @@ class _BookingDetailSheetState extends State<_BookingDetailSheet>
               const SizedBox(height: 8),
               _EditableField(label: 'Cognome', controller: _cognomeCtrl),
               const SizedBox(height: 16),
-              const Divider(color: Colors.white12),
+              const Divider(color: AppColors.divider),
               _DetailRow(label: 'Stato', child: DropdownButton<String>(
                 value: _editStatus,
-                dropdownColor: const Color(0xFF2A2A3E),
+                dropdownColor: AppColors.surface,
                 underline: const SizedBox(), isExpanded: true,
                 items: const [
-                  DropdownMenuItem(value: 'confirmed', child: Text('👍 Accettato', style: TextStyle(color: Colors.white70))),
-                  DropdownMenuItem(value: 'seated', child: Text('🍽️ Al tavolo', style: TextStyle(color: Colors.white70))),
-                  DropdownMenuItem(value: 'pending', child: Text('❓ In attesa', style: TextStyle(color: Colors.white70))),
-                  DropdownMenuItem(value: 'cancelled', child: Text('✕ Annullato', style: TextStyle(color: Colors.white70))),
-                  DropdownMenuItem(value: 'noshow', child: Text('🚫 No-show', style: TextStyle(color: Colors.white70))),
+                  DropdownMenuItem(value: 'confirmed', child: Text('👍 Accettato', style: TextStyle(color: AppColors.textPrimary))),
+                  DropdownMenuItem(value: 'seated', child: Text('🍽️ Al tavolo', style: TextStyle(color: AppColors.textPrimary))),
+                  DropdownMenuItem(value: 'pending', child: Text('❓ In attesa', style: TextStyle(color: AppColors.textPrimary))),
+                  DropdownMenuItem(value: 'cancelled', child: Text('✕ Annullato', style: TextStyle(color: AppColors.textPrimary))),
+                  DropdownMenuItem(value: 'noshow', child: Text('🚫 No-show', style: TextStyle(color: AppColors.textPrimary))),
                 ],
                 onChanged: (v) => setState(() => _editStatus = v!),
               )),
-              const Divider(color: Colors.white12),
+              const Divider(color: AppColors.divider),
               _DetailRow(label: 'Sorgente', child: DropdownButton<String>(
                 value: _editSource,
-                dropdownColor: const Color(0xFF2A2A3E),
+                dropdownColor: AppColors.surface,
                 underline: const SizedBox(), isExpanded: true,
                 items: const [
-                  DropdownMenuItem(value: 'phone', child: Text('📞 Telefono', style: TextStyle(color: Colors.white70))),
-                  DropdownMenuItem(value: 'web', child: Text('🌐 Web', style: TextStyle(color: Colors.white70))),
-                  DropdownMenuItem(value: 'walkin', child: Text('🚶 Walk-in', style: TextStyle(color: Colors.white70))),
+                  DropdownMenuItem(value: 'phone', child: Text('📞 Telefono', style: TextStyle(color: AppColors.textPrimary))),
+                  DropdownMenuItem(value: 'web', child: Text('🌐 Web', style: TextStyle(color: AppColors.textPrimary))),
+                  DropdownMenuItem(value: 'walkin', child: Text('🚶 Walk-in', style: TextStyle(color: AppColors.textPrimary))),
                 ],
                 onChanged: (v) => setState(() => _editSource = v!),
               )),
-              const Divider(color: Colors.white12),
+              const Divider(color: AppColors.divider),
               _DetailRow(label: 'Note', child: TextField(
                 controller: _noteCtrl, maxLines: 3,
-                style: const TextStyle(color: Colors.white),
+                style: const TextStyle(color: AppColors.textPrimary),
                 decoration: const InputDecoration(border: InputBorder.none, isDense: true),
               )),
               const SizedBox(height: 20),
@@ -596,30 +597,30 @@ class _BookingDetailSheetState extends State<_BookingDetailSheet>
             Column(children: [
               Expanded(child: ListView(padding: const EdgeInsets.all(16), children: [
                 Container(padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(color: Colors.white10, borderRadius: BorderRadius.circular(8)),
-                    child: const Text('Prenotazione creata', style: TextStyle(color: Colors.white70))),
+                    decoration: BoxDecoration(color: AppColors.cardLight, borderRadius: BorderRadius.circular(8)),
+                    child: const Text('Prenotazione creata', style: TextStyle(color: AppColors.textPrimary))),
               ])),
               Container(
-                decoration: const BoxDecoration(border: Border(top: BorderSide(color: Colors.white12))),
+                decoration: const BoxDecoration(border: Border(top: BorderSide(color: AppColors.divider))),
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 child: Row(children: [
                   Expanded(child: TextField(
                     controller: _msgCtrl,
-                    style: const TextStyle(color: Colors.white),
+                    style: const TextStyle(color: AppColors.textPrimary),
                     decoration: const InputDecoration(
                       hintText: 'Nota interna...',
-                      hintStyle: TextStyle(color: Colors.white38),
+                      hintStyle: TextStyle(color: AppColors.textMuted),
                       border: InputBorder.none, isDense: true,
                     ),
                   )),
-                  const Icon(Icons.send, color: Colors.white38, size: 20),
+                  const Icon(Icons.send, color: AppColors.textSecondary, size: 20),
                 ]),
               ),
             ]),
           ]),
         ),
         Container(
-          color: const Color(0xFF1E1E2E),
+          color: AppColors.surface,
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
           child: Row(mainAxisAlignment: MainAxisAlignment.end, children: [
             _ActionBtn(icon: Icons.more_horiz, onTap: () {}),
@@ -628,7 +629,7 @@ class _BookingDetailSheetState extends State<_BookingDetailSheet>
             const SizedBox(width: 12),
             _saving
                 ? const CircularProgressIndicator(color: Color(0xFF2E7D52))
-                : _ActionBtn(icon: Icons.check, color: const Color(0xFF2E7D52), onTap: _save),
+                : _ActionBtn(icon: Icons.check, color: AppColors.accent, onTap: _save),
           ]),
         ),
       ]),
@@ -686,4 +687,65 @@ class _ActionBtn extends StatelessWidget {
       child: Icon(icon, color: Colors.white, size: 22),
     ),
   );
+}
+
+// ── BookingCard (public widget usato da ReservationsScreen) ──────────────────
+class BookingCard extends StatelessWidget {
+  final BookingModel booking;
+  final Future<void> Function(String status) onStatusChange;
+
+  const BookingCard({super.key, required this.booking, required this.onStatusChange});
+
+  Color _statusColor(String status) {
+    switch (status) {
+      case 'confirmed': return const Color(0xFF28A745);
+      case 'pending':   return const Color(0xFFFFC107);
+      case 'seated':    return const Color(0xFF007BFF);
+      case 'left':      return const Color(0xFF6C757D);
+      case 'noshow':    return const Color(0xFFDC3545);
+      case 'walkin':    return const Color(0xFFFF8C00);
+      default:          return AppColors.textSecondary;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final timeStart = booking.timeStart.length >= 5 ? booking.timeStart.substring(0, 5) : booking.timeStart;
+    final partySize = booking.partySize;
+    final statusColor = _statusColor(booking.status);
+
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(12),
+        border: Border(left: BorderSide(color: statusColor, width: 4)),
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      child: Row(children: [
+        SizedBox(
+          width: 48,
+          child: Text(timeStart,
+              style: const TextStyle(color: AppColors.textPrimary, fontSize: 14, fontWeight: FontWeight.w600)),
+        ),
+        Expanded(
+          child: Text(booking.guestName,
+              style: const TextStyle(color: AppColors.textPrimary, fontSize: 14, fontWeight: FontWeight.w500),
+              overflow: TextOverflow.ellipsis),
+        ),
+        Container(
+          width: 26, height: 26,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            border: Border.all(color: AppColors.textSecondary.withOpacity(0.5)),
+          ),
+          child: Center(
+            child: Text('$partySize',
+                style: const TextStyle(color: AppColors.textPrimary, fontSize: 12, fontWeight: FontWeight.bold)),
+          ),
+        ),
+        const SizedBox(width: 8),
+        Container(width: 10, height: 10, decoration: BoxDecoration(color: statusColor, shape: BoxShape.circle)),
+      ]),
+    );
+  }
 }

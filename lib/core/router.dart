@@ -11,6 +11,7 @@ import 'package:restaurant_booking/features/settings/opening_hours_screen.dart';
 import 'package:restaurant_booking/features/settings/restaurant_profile_screen.dart';
 import 'package:restaurant_booking/features/settings/tables_screen.dart';
 import 'package:restaurant_booking/features/floor_plan/floor_plan_screen.dart';
+import 'package:restaurant_booking/features/bookings/reservations_screen.dart';
 
 final router = GoRouter(
   initialLocation: '/splash',

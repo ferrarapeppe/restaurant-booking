@@ -623,7 +623,7 @@ class _TableWidget extends StatelessWidget {
           children: [
             Text(name, style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold)),
             if (cap.isNotEmpty)
-              Text(cap, style: const TextStyle(color: AppColors.textSecondary, fontSize: 10)),
+              Text(cap, style: const TextStyle(color: Colors.white70, fontSize: 10)),
           ],
         ),
       ),
@@ -1561,7 +1561,7 @@ extension FloorPlanPending on _FloorPlanScreenState {
           const Padding(
             padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             child: Text('Prenotazioni senza tavolo',
-                style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+                style: TextStyle(color: AppColors.textPrimary, fontSize: 18, fontWeight: FontWeight.bold)),
           ),
           const Divider(color: AppColors.divider),
           Expanded(
@@ -1588,7 +1588,7 @@ extension FloorPlanPending on _FloorPlanScreenState {
                   child: Row(children: [
                     Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                       Text(guestName.isEmpty ? 'Ospite' : guestName,
-                          style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+                          style: const TextStyle(color: AppColors.textPrimary, fontSize: 16, fontWeight: FontWeight.bold)),
                       const SizedBox(height: 4),
                       Row(children: [
                         const Icon(Icons.access_time, size: 14, color: AppColors.textSecondary),
@@ -1622,7 +1622,6 @@ extension FloorPlanPending on _FloorPlanScreenState {
   }
 
   void _assignBookingToTable(Map<String, dynamic> booking) {
-    // Mostra planimetria in modalità selezione tavolo
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.white,
@@ -1640,7 +1639,7 @@ extension FloorPlanPending on _FloorPlanScreenState {
           const Padding(
             padding: EdgeInsets.all(16),
             child: Text('Seleziona un tavolo libero',
-                style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+                style: TextStyle(color: AppColors.textPrimary, fontSize: 18, fontWeight: FontWeight.bold)),
           ),
           const Divider(color: AppColors.divider),
           Expanded(
@@ -1662,8 +1661,7 @@ extension FloorPlanPending on _FloorPlanScreenState {
                       }).eq('id', booking['id']);
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
-                          content: Text('Tavolo ${t['name']} assegnato!'),
-                          backgroundColor: const Color(0xFF2E7D52),
+                          content: Text('Tavolo ' + t['name'].toString() + ' assegnato!'),
                         ),
                       );
                       _loadData();
@@ -1677,8 +1675,8 @@ extension FloorPlanPending on _FloorPlanScreenState {
                       child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
                         Text(t['name'].toString(),
                             style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
-                        Text('${t['capacity']} posti',
-                            style: const TextStyle(color: AppColors.textSecondary, fontSize: 10)),
+                        Text('\${t["capacity"]} posti',
+                            style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w500)),
                       ]),
                     ),
                   );
