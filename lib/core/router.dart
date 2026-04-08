@@ -27,6 +27,7 @@ final router = GoRouter(
         return BookingsScreen(initialDate: date);
       },
     ),
+    GoRoute(path: '/reservations', builder: (context, state) => const ReservationsScreen()),
     GoRoute(path: '/bookings/new', builder: (context, state) => const NewBookingScreen()),
     GoRoute(
       path: '/floor-plan/:date',
