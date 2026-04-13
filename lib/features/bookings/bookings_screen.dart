@@ -27,11 +27,11 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
   final _statusOptions = [
     {'value': 'attivo', 'label': 'Attivo', 'icon': Icons.play_arrow},
     {'value': 'tutti', 'label': 'Qualsiasi stato', 'icon': Icons.filter_list},
-    {'value': 'confirmed', 'label': 'Accettato', 'icon': Icons.thumb_up_outlined},
+    {'value': 'approved', 'label': 'Accettato', 'icon': Icons.thumb_up_outlined},
     {'value': 'pending', 'label': 'In attesa di conferma', 'icon': Icons.help_outline},
     {'value': 'seated', 'label': 'Accomodato', 'icon': Icons.chair_outlined},
-    {'value': 'cancelled', 'label': 'Annullato', 'icon': Icons.close},
-    {'value': 'noshow', 'label': 'No-show', 'icon': Icons.block_outlined},
+    {'value': 'canceled', 'label': 'Annullato', 'icon': Icons.close},
+    {'value': 'no_show', 'label': 'No-show', 'icon': Icons.block_outlined},
   ];
 
   @override
@@ -66,7 +66,7 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
         if (_statusFilter != 'tutti' && _statusFilter != 'attivo') {
           query = query.eq('status', _statusFilter);
         } else if (_statusFilter == 'attivo') {
-          query = query.inFilter('status', ['confirmed', 'pending', 'seated']);
+          query = query.inFilter('status', ['approved', 'pending', 'seated']);
         }
       }
 
@@ -98,11 +98,11 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
 
   Color _statusColor(String status) {
     switch (status) {
-      case 'confirmed': return const Color(0xFFFFC107);
+      case 'approved': return const Color(0xFFFFC107);
       case 'seated': return const Color(0xFF2E7D52);
       case 'pending': return const Color(0xFFE65100);
-      case 'cancelled': return Colors.red;
-      case 'noshow': return Colors.grey;
+      case 'canceled': return Colors.red;
+      case 'no_show': return Colors.grey;
       default: return Colors.grey;
     }
   }
@@ -361,7 +361,7 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
                     Navigator.pop(context);
                     await supabase.from('bookings').update({
                       'table_id': t['id'],
-                      'status': 'confirmed',
+                      'status': 'approved',
                     }).eq('id', booking['id']);
                     _loadBookings();
                     if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(
@@ -506,7 +506,7 @@ class _BookingDetailSheetState extends State<_BookingDetailSheet>
     _editDate = DateTime.tryParse(b['date'] ?? '') ?? DateTime.now();
     _editTime = b['time_start']?.toString().substring(0, 5) ?? '20:00';
     _editPartySize = (b['party_size'] as int?) ?? 2;
-    _editStatus = (b['status'] as String?) ?? 'confirmed';
+    _editStatus = (b['status'] as String?) ?? 'approved';
     _editSource = (b['source'] as String?) ?? 'phone';
     final g = b['guests'];
     _nomeCtrl = TextEditingController(text: (g?['first_name'] ?? '').toString());
@@ -641,11 +641,11 @@ class _BookingDetailSheetState extends State<_BookingDetailSheet>
                 dropdownColor: AppColors.surface,
                 underline: const SizedBox(), isExpanded: true,
                 items: const [
-                  DropdownMenuItem(value: 'confirmed', child: Text('👍 Accettato', style: TextStyle(color: AppColors.textPrimary))),
+                  DropdownMenuItem(value: 'approved', child: Text('👍 Accettato', style: TextStyle(color: AppColors.textPrimary))),
                   DropdownMenuItem(value: 'seated', child: Text('🍽️ Al tavolo', style: TextStyle(color: AppColors.textPrimary))),
                   DropdownMenuItem(value: 'pending', child: Text('❓ In attesa', style: TextStyle(color: AppColors.textPrimary))),
-                  DropdownMenuItem(value: 'cancelled', child: Text('✕ Annullato', style: TextStyle(color: AppColors.textPrimary))),
-                  DropdownMenuItem(value: 'noshow', child: Text('🚫 No-show', style: TextStyle(color: AppColors.textPrimary))),
+                  DropdownMenuItem(value: 'canceled', child: Text('✕ Annullato', style: TextStyle(color: AppColors.textPrimary))),
+                  DropdownMenuItem(value: 'no_show', child: Text('🚫 No-show', style: TextStyle(color: AppColors.textPrimary))),
                 ],
                 onChanged: (v) => setState(() => _editStatus = v!),
               )),
@@ -724,7 +724,7 @@ class _BookingDetailSheetState extends State<_BookingDetailSheet>
                             onTap: () async {
                               Navigator.pop(ctx);
                               Navigator.pop(context);
-                              await supabase.from('bookings').update({'table_id': t['id'], 'status': 'confirmed'}).eq('id', widget.booking['id']);
+                              await supabase.from('bookings').update({'table_id': t['id'], 'status': 'approved'}).eq('id', widget.booking['id']);
                               widget.onSaved();
                             },
                           );
@@ -812,11 +812,11 @@ class BookingCard extends StatelessWidget {
 
   Color _statusColor(String status) {
     switch (status) {
-      case 'confirmed': return const Color(0xFF28A745);
+      case 'approved': return const Color(0xFF28A745);
       case 'pending':   return const Color(0xFFFFC107);
       case 'seated':    return const Color(0xFF007BFF);
       case 'left':      return const Color(0xFF6C757D);
-      case 'noshow':    return const Color(0xFFDC3545);
+      case 'no_show':    return const Color(0xFFDC3545);
       case 'walkin':    return const Color(0xFFFF8C00);
       default:          return AppColors.textSecondary;
     }

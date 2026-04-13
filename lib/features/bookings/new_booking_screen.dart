@@ -102,7 +102,7 @@ class _NewBookingScreenState extends ConsumerState<NewBookingScreen> {
         timeStart: timeStr,
         timeEnd: endTimeStr,
         partySize: _partySize,
-        status: 'confirmed',
+        status: 'approved',
         source: _source,
         notes: _notesCtrl.text.isEmpty ? null : _notesCtrl.text,
         internalNotes: _internalNotesCtrl.text.isEmpty ? null : _internalNotesCtrl.text,

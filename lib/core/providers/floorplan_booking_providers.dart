@@ -13,7 +13,7 @@ final bookedTableIdsProvider = Provider<Set<String>>((ref) {
 
       for (final b in list) {
         final s = b.status.toLowerCase();
-        final isActive = s == 'confirmed' || s == 'pending' || s == 'seated' || s == 'walkin';
+        final isActive = s == 'approved' || s == 'pending' || s == 'seated' || s == 'walkin';
 
         final tid = b.tableId;
         if (isActive && tid != null && tid.trim().isNotEmpty) {

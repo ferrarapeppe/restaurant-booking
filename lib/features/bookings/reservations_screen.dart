@@ -87,7 +87,7 @@ class _ListTab extends ConsumerWidget {
           scrollDirection: Axis.horizontal,
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
           children: [
-            for (final f in [('Tutti','tutti'),('Confermati','confirmed'),('In attesa','pending'),('Seduti','seated'),('Partiti','left'),('No-show','noshow'),('Walk-in','walkin')])
+            for (final f in [('Tutti','tutti'),('Confermati','approved'),('In attesa','pending'),('Seduti','seated'),('Partiti','left'),('No-show','no_show'),('Walk-in','walkin')])
               GestureDetector(
                 onTap: () => ref.read(statusFilterProvider.notifier).state = f.$2,
                 child: Container(
@@ -176,7 +176,7 @@ class _ScheduleTabState extends ConsumerState<_ScheduleTab> {
       final dateStr = DateFormat('yyyy-MM-dd').format(date);
       final supabase = supabase_flutter.Supabase.instance.client;
       final tablesRes = await supabase.from('tables').select('*, areas(name)').eq('restaurant_id', _restaurantId).order('name');
-      final bookingsRes = await supabase.from('bookings').select('*, guests(first_name, surname, name), tables(name, areas(name))').eq('restaurant_id', _restaurantId).eq('date', dateStr).inFilter('status', ['confirmed', 'pending', 'seated', 'walkin']).order('time_start');
+      final bookingsRes = await supabase.from('bookings').select('*, guests(first_name, surname, name), tables(name, areas(name))').eq('restaurant_id', _restaurantId).eq('date', dateStr).inFilter('status', ['approved', 'pending', 'seated', 'walkin']).order('time_start');
       setState(() {
         _tables = List<Map<String, dynamic>>.from(tablesRes);
         _bookings = List<Map<String, dynamic>>.from(bookingsRes);
@@ -199,7 +199,7 @@ class _ScheduleTabState extends ConsumerState<_ScheduleTab> {
 
   Color _statusColor(String status) {
     switch (status) {
-      case 'confirmed': return AppColors.accent;
+      case 'approved': return AppColors.accent;
       case 'seated':    return const Color(0xFF2E7D52);
       case 'pending':   return const Color(0xFFE65100);
       case 'walkin':    return const Color(0xFF007BFF);

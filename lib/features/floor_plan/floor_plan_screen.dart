@@ -89,7 +89,7 @@ class _FloorPlanScreenState extends State<FloorPlanScreen> {
           .select('table_id, time_start, time_end, status')
           .eq('restaurant_id', _restaurantId)
           .eq('date', dateStr)
-          .inFilter('status', ['confirmed', 'pending', 'seated']);
+          .inFilter('status', ['approved', 'pending', 'seated']);
 
       // Calcola stati tavoli per lo slot selezionato
       final statuses = <String, TableStatus>{};
@@ -452,7 +452,7 @@ class _FloorPlanScreenState extends State<FloorPlanScreen> {
             .eq('restaurant_id', _restaurantId)
             .eq('date', dateStr)
             .eq('table_id', table['id'])
-            .inFilter('status', ['confirmed', 'pending', 'seated'])
+            .inFilter('status', ['approved', 'pending', 'seated'])
             .limit(5);
         for (final b in res) {
           final startParts = (b['time_start'] as String).substring(0, 5).split(':');
@@ -783,7 +783,7 @@ class _TableDetailSheetState extends State<_TableDetailSheet>
     _editDate = widget.selectedDate;
     _editTime = widget.booking != null && widget.booking!['time_start'] != null ? widget.booking!['time_start'].toString().substring(0, 5) : widget.selectedTime;
     _editPartySize = widget.booking?['party_size'] ?? 2;
-    _editStatus = widget.booking?['status'] ?? 'confirmed';
+    _editStatus = widget.booking?['status'] ?? 'approved';
     _editSource = widget.booking?['source'] ?? 'phone';
 
     final g = widget.booking?['guests'];
@@ -917,11 +917,11 @@ class _TableDetailSheetState extends State<_TableDetailSheet>
 
   String get _statusLabel {
     switch (_editStatus) {
-      case 'confirmed': return '👍 Accettato';
+      case 'approved': return '👍 Accettato';
       case 'seated': return '🍽️ Al tavolo';
       case 'pending': return '⏳ In attesa';
-      case 'cancelled': return '❌ Cancellato';
-      case 'noshow': return '🚫 No show';
+      case 'canceled': return '❌ Cancellato';
+      case 'no_show': return '🚫 No show';
       default: return _editStatus;
     }
   }
@@ -938,7 +938,7 @@ class _TableDetailSheetState extends State<_TableDetailSheet>
 
   Color get _statusColor {
     switch (_editStatus) {
-      case 'confirmed': return const Color(0xFF2E7D52);
+      case 'approved': return const Color(0xFF2E7D52);
       case 'seated': return const Color(0xFF1565C0);
       case 'pending': return const Color(0xFFE65100);
       default: return Colors.grey;
@@ -1123,11 +1123,11 @@ class _TableDetailSheetState extends State<_TableDetailSheet>
                           underline: const SizedBox(),
                           isExpanded: true,
                           items: const [
-                            DropdownMenuItem(value: 'confirmed', child: Text('👍 Accettato', style: TextStyle(color: AppColors.textSecondary))),
+                            DropdownMenuItem(value: 'approved', child: Text('👍 Accettato', style: TextStyle(color: AppColors.textSecondary))),
                             DropdownMenuItem(value: 'seated', child: Text('🍽️ Al tavolo', style: TextStyle(color: AppColors.textSecondary))),
                             DropdownMenuItem(value: 'pending', child: Text('⏳ In attesa', style: TextStyle(color: AppColors.textSecondary))),
-                            DropdownMenuItem(value: 'cancelled', child: Text('❌ Cancellato', style: TextStyle(color: AppColors.textSecondary))),
-                            DropdownMenuItem(value: 'noshow', child: Text('🚫 No show', style: TextStyle(color: AppColors.textSecondary))),
+                            DropdownMenuItem(value: 'canceled', child: Text('❌ Cancellato', style: TextStyle(color: AppColors.textSecondary))),
+                            DropdownMenuItem(value: 'no_show', child: Text('🚫 No show', style: TextStyle(color: AppColors.textSecondary))),
                           ],
                           onChanged: (v) => setState(() => _editStatus = v!),
                         ),
@@ -1657,7 +1657,7 @@ extension FloorPlanPending on _FloorPlanScreenState {
                       Navigator.pop(context);
                       await _supabase.from('bookings').update({
                         'table_id': t['id'],
-                        'status': 'confirmed',
+                        'status': 'approved',
                       }).eq('id', booking['id']);
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(

@@ -66,7 +66,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           .select('party_size')
           .eq('restaurant_id', _restaurantId)
           .eq('date', oggiStr)
-          .inFilter('status', ['confirmed', 'pending']);
+          .inFilter('status', ['approved', 'pending']);
 
       // Query prossimi 7 giorni
       final settimanaRes = await supabase
@@ -75,7 +75,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           .eq('restaurant_id', _restaurantId)
           .gte('date', oggiStr)
           .lte('date', tra7Str)
-          .inFilter('status', ['confirmed', 'pending']);
+          .inFilter('status', ['approved', 'pending']);
 
       // Query da assegnare (web, senza tavolo)
       final daAssegnareRes = await supabase

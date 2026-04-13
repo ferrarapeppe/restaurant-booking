@@ -171,7 +171,7 @@ class _GuestCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isVip = guest.tags.contains('vip');
-    final isNoShow = guest.tags.contains('noshow');
+    final isNoShow = guest.tags.contains('no_show');
 
     return GestureDetector(
       onTap: onTap,
@@ -317,7 +317,7 @@ class _AddGuestSheetState extends State<_AddGuestSheet> {
             Wrap(
               spacing: 8,
               children: [
-                for (final tag in ['vip', 'regular', 'noshow', 'allergie', 'compleanno'])
+                for (final tag in ['vip', 'regular', 'no_show', 'allergie', 'compleanno'])
                   FilterChip(
                     label: Text(tag),
                     selected: _tags.contains(tag),
@@ -615,7 +615,7 @@ class _GuestDetailScreenState extends ConsumerState<GuestDetailScreen> {
                 Wrap(
                   spacing: 8,
                   children: [
-                    for (final tag in ['vip', 'regular', 'noshow', 'allergie', 'compleanno'])
+                    for (final tag in ['vip', 'regular', 'no_show', 'allergie', 'compleanno'])
                       FilterChip(
                         label: Text(tag),
                         selected: tags.contains(tag),
@@ -681,20 +681,20 @@ class _GuestDetailScreenState extends ConsumerState<GuestDetailScreen> {
 
   Color _statusColor(String status) {
     switch (status) {
-      case 'confirmed': return const Color(0xFF28A745);
+      case 'approved': return const Color(0xFF28A745);
       case 'seated': return const Color(0xFF007BFF);
       case 'left': return const Color(0xFF6C757D);
-      case 'noshow': return const Color(0xFFDC3545);
+      case 'no_show': return const Color(0xFFDC3545);
       default: return const Color(0xFFFFC107);
     }
   }
 
   String _statusLabel(String status) {
     switch (status) {
-      case 'confirmed': return 'Confermato';
+      case 'approved': return 'Confermato';
       case 'seated': return 'Seduto';
       case 'left': return 'Partito';
-      case 'noshow': return 'No-show';
+      case 'no_show': return 'No-show';
       default: return 'In attesa';
     }
   }

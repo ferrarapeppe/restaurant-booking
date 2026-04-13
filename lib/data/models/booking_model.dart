@@ -98,7 +98,7 @@ class BookingModel {
       timeStart: json['time_start'] ?? '00:00',
       timeEnd: json['time_end'],
       partySize: json['party_size'],
-      status: json['status'] ?? 'confirmed',
+      status: json['status'] ?? 'approved',
       notes: json['notes'],
       internalNotes: json['internal_notes'],
       source: json['source'] ?? 'web',

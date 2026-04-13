@@ -21,11 +21,11 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
 
   Map<String, dynamic> _getStatusInfo(String status) {
     switch (status) {
-      case 'confirmed': return {'label': 'Confermato', 'color': const Color(0xFF28A745)};
+      case 'approved': return {'label': 'Confermato', 'color': const Color(0xFF28A745)};
       case 'pending': return {'label': 'In attesa', 'color': const Color(0xFFFFC107)};
       case 'seated': return {'label': 'Seduto', 'color': const Color(0xFF007BFF)};
       case 'left': return {'label': 'Partito', 'color': const Color(0xFF6C757D)};
-      case 'noshow': return {'label': 'No-show', 'color': const Color(0xFFDC3545)};
+      case 'no_show': return {'label': 'No-show', 'color': const Color(0xFFDC3545)};
       case 'walkin': return {'label': 'Walk-in', 'color': const Color(0xFFFF8C00)};
       default: return {'label': status, 'color': AppColors.textSecondary};
     }
@@ -107,8 +107,8 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
                   icon: Icons.check_circle_outline,
                   label: 'Confermato',
                   color: const Color(0xFF28A745),
-                  active: _status == 'confirmed',
-                  onTap: () => setState(() => _status = 'confirmed'),
+                  active: _status == 'approved',
+                  onTap: () => setState(() => _status = 'approved'),
                 ),
                 const SizedBox(width: 8),
                 _ActionButton(
@@ -131,8 +131,8 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
                   icon: Icons.cancel_outlined,
                   label: 'No-show',
                   color: const Color(0xFFDC3545),
-                  active: _status == 'noshow',
-                  onTap: () => setState(() => _status = 'noshow'),
+                  active: _status == 'no_show',
+                  onTap: () => setState(() => _status = 'no_show'),
                 ),
               ],
             ),
