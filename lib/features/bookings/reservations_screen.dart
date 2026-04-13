@@ -373,6 +373,7 @@ class _ScheduleTabState extends ConsumerState<_ScheduleTab> {
                               return Positioned(
                                 left: x, top: 4, height: _rowHeight - 8, width: w - 2,
                                 child: GestureDetector(
+                                  behavior: HitTestBehavior.opaque,
                                   onTap: () => _showDetail(context, b),
                                   child: Container(
                                     decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(6)),
