@@ -22,6 +22,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   int _oggiOspiti = 0;
   int _settimanaPrenotazioni = 0;
   int _settimanaOspiti = 0;
+  int _daAssegnare = 0;
 
   @override
   void initState() {
@@ -54,6 +55,14 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           .lte('date', tra7Str)
           .inFilter('status', ['confirmed', 'pending']);
 
+      // Query da assegnare (web, senza tavolo)
+      final daAssegnareRes = await supabase
+          .from('bookings')
+          .select('id')
+          .eq('restaurant_id', _restaurantId)
+          .eq('source', 'web')
+          .eq('status', 'pending');
+
       int oggiOspiti = 0;
       for (final r in oggiRes) {
         oggiOspiti += (r['party_size'] as int? ?? 0);
@@ -69,6 +78,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         _oggiOspiti = oggiOspiti;
         _settimanaPrenotazioni = settimanaRes.length;
         _settimanaOspiti = settimanaOspiti;
+        _daAssegnare = daAssegnareRes.length;
         _loading = false;
       });
     } catch (e) {
@@ -150,6 +160,11 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                 prenotazioni: _settimanaPrenotazioni,
                 ospiti: _settimanaOspiti,
                 loading: _loading,
+              ),
+              const SizedBox(height: 12),
+              GestureDetector(
+                onTap: () => context.go('/bookings?filter=da_assegnare'),
+                child: _DaAssegnareCard(count: _daAssegnare, loading: _loading),
               ),
               const SizedBox(height: 80),
             ],
@@ -250,6 +265,48 @@ class _StatsCard extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _DaAssegnareCard extends StatelessWidget {
+  final int count;
+  final bool loading;
+  const _DaAssegnareCard({required this.count, required this.loading});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: count > 0 ? AppColors.accent : AppColors.divider),
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 6, offset: const Offset(0, 2))],
+      ),
+      child: Row(children: [
+        Container(
+          width: 48, height: 48,
+          decoration: BoxDecoration(
+            color: count > 0 ? AppColors.accentLight : AppColors.cardLight,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Icon(Icons.assignment_outlined, color: count > 0 ? AppColors.accent : AppColors.textSecondary, size: 24),
+        ),
+        const SizedBox(width: 16),
+        Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          const Text('Da assegnare', style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.bold, fontSize: 16)),
+          const SizedBox(height: 4),
+          Text('Prenotazioni web senza tavolo', style: const TextStyle(color: AppColors.textSecondary, fontSize: 13)),
+        ])),
+        if (loading)
+          const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.accent))
+        else
+          Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
+            Text('$count', style: TextStyle(color: count > 0 ? AppColors.accent : AppColors.textSecondary, fontSize: 28, fontWeight: FontWeight.bold)),
+            Text(count == 1 ? 'prenotazione' : 'prenotazioni', style: const TextStyle(color: AppColors.textSecondary, fontSize: 12)),
+          ]),
+      ]),
     );
   }
 }

@@ -10,7 +10,8 @@ import 'package:restaurant_booking/core/providers/booking_providers.dart';
 
 class BookingsScreen extends ConsumerStatefulWidget {
   final DateTime? initialDate;
-  const BookingsScreen({super.key, this.initialDate});
+  final String? initialFilter;
+  const BookingsScreen({super.key, this.initialDate, this.initialFilter});
   @override
   ConsumerState<BookingsScreen> createState() => _BookingsScreenState();
 }
@@ -19,6 +20,7 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
   static const _restaurantId = '2b126a92-24d5-4e83-b38c-dfc82035a0cf';
   final _supabase = Supabase.instance.client;
   String _statusFilter = 'attivo';
+  String? _sourceFilter;
   List<Map<String, dynamic>> _bookingsWithDetails = [];
   bool _loading = false;
 
@@ -39,6 +41,10 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
       if (widget.initialDate != null) {
         ref.read(selectedDateProvider.notifier).state = widget.initialDate!;
       }
+      if (widget.initialFilter == 'da_assegnare') {
+        _statusFilter = 'pending';
+        _sourceFilter = 'web';
+      }
       _loadBookings();
     });
   }
@@ -52,13 +58,16 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
       var query = _supabase
           .from('bookings')
           .select('*, guests(first_name, surname, name, phone, email), tables(name, capacity, area_id, areas(name))')
-          .eq('restaurant_id', _restaurantId)
-          .eq('date', dateStr);
-
-      if (_statusFilter != 'tutti' && _statusFilter != 'attivo') {
-        query = query.eq('status', _statusFilter);
-      } else if (_statusFilter == 'attivo') {
-        query = query.inFilter('status', ['confirmed', 'pending', 'seated']);
+          .eq('restaurant_id', _restaurantId);
+      if (_sourceFilter == 'web') {
+        query = query.eq('source', 'web').eq('status', 'pending').isFilter('table_id', null);
+      } else {
+        query = query.eq('date', dateStr);
+        if (_statusFilter != 'tutti' && _statusFilter != 'attivo') {
+          query = query.eq('status', _statusFilter);
+        } else if (_statusFilter == 'attivo') {
+          query = query.inFilter('status', ['confirmed', 'pending', 'seated']);
+        }
       }
 
       final res = await query.order('time_start');
@@ -263,6 +272,7 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
                           tableName: _tableName(b),
                           statusColor: _statusColor(b['status'] ?? ''),
                           onTap: () => _showBookingDetail(context, b),
+                          onAssignTable: _tableName(b).isEmpty ? () => _showAssignTable(context, b) : null,
                         );
                       },
                     ),
@@ -318,18 +328,76 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
       ),
     );
   }
-}
 
+  Future<void> _showAssignTable(BuildContext context, Map<String, dynamic> booking) async {
+    final supabase = Supabase.instance.client;
+    final tablesRes = await supabase
+        .from('tables')
+        .select('*, areas(name)')
+        .eq('restaurant_id', _restaurantId)
+        .order('name');
+    final tables = List<Map<String, dynamic>>.from(tablesRes);
+    if (!context.mounted) return;
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: AppColors.surface,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (_) => SizedBox(
+        height: 420,
+        child: Column(children: [
+          const Padding(
+            padding: EdgeInsets.all(16),
+            child: Text('Seleziona un tavolo libero', style: TextStyle(color: AppColors.textPrimary, fontSize: 18, fontWeight: FontWeight.bold)),
+          ),
+          const Divider(color: AppColors.divider),
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(16),
+              child: Wrap(
+                spacing: 10, runSpacing: 10,
+                children: tables.map((t) => GestureDetector(
+                  onTap: () async {
+                    Navigator.pop(context);
+                    await supabase.from('bookings').update({
+                      'table_id': t['id'],
+                      'status': 'confirmed',
+                    }).eq('id', booking['id']);
+                    _loadBookings();
+                    if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Tavolo ' + t['name'].toString() + ' assegnato!'), backgroundColor: AppColors.accent),
+                    );
+                  },
+                  child: Container(
+                    width: 72, height: 72,
+                    decoration: BoxDecoration(color: const Color(0xFF2E7D52), borderRadius: BorderRadius.circular(8)),
+                    child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+                      Text(t['name'].toString(), style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+                      Text((t['capacity'] ?? '').toString() + ' posti', style: const TextStyle(color: Colors.white, fontSize: 11)),
+                    ]),
+                  ),
+                )).toList(),
+              ),
+            ),
+          ),
+        ]),
+      ),
+    );
+  }
+
+}
 // ── Booking Row ───────────────────────────────────────────────────────────────
 class _BookingRow extends StatelessWidget {
   final Map<String, dynamic> booking;
   final String guestName, tableName;
   final Color statusColor;
   final VoidCallback onTap;
+  final VoidCallback? onAssignTable;
 
   const _BookingRow({
     required this.booking, required this.guestName,
     required this.tableName, required this.statusColor, required this.onTap,
+    this.onAssignTable,
   });
 
   @override
@@ -338,25 +406,32 @@ class _BookingRow extends StatelessWidget {
     final timeEnd = booking['time_end'] != null ? booking['time_end'].toString().substring(0, 5) : '';
     final partySize = booking['party_size'] ?? 0;
 
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        color: Colors.transparent,
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-        child: Row(children: [
-          SizedBox(
-            width: 56,
-            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text(timeStart, style: const TextStyle(color: AppColors.textPrimary, fontSize: 14, fontWeight: FontWeight.w600)),
-              if (timeEnd.isNotEmpty)
-                Text(timeEnd, style: const TextStyle(color: AppColors.textSecondary, fontSize: 12)),
-            ]),
-          ),
-          Expanded(
+    return Container(
+      color: Colors.transparent,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      child: Row(children: [
+        SizedBox(
+          width: 72,
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text(timeStart, style: const TextStyle(color: AppColors.textPrimary, fontSize: 14, fontWeight: FontWeight.w600)),
+            if (timeEnd.isNotEmpty)
+              Text(timeEnd, style: const TextStyle(color: AppColors.textSecondary, fontSize: 12)),
+            if (booking['date'] != null)
+              Text(
+                DateFormat('d MMM', 'it_IT').format(DateTime.parse(booking['date'].toString())),
+                style: const TextStyle(color: AppColors.textMuted, fontSize: 11),
+              ),
+          ]),
+        ),
+        Expanded(
+          child: GestureDetector(
+            onTap: onTap,
             child: Text(guestName,
                 style: const TextStyle(color: AppColors.textPrimary, fontSize: 14, fontWeight: FontWeight.w500),
                 overflow: TextOverflow.ellipsis),
           ),
+        ),
+        if (onAssignTable == null)
           SizedBox(
             width: 32,
             child: Container(
@@ -366,38 +441,38 @@ class _BookingRow extends StatelessWidget {
                 border: Border.all(color: AppColors.textSecondary.withOpacity(0.5)),
               ),
               child: Center(
-                child: Text('$partySize',
+                child: Text('\$partySize',
                     style: const TextStyle(color: AppColors.textPrimary, fontSize: 12, fontWeight: FontWeight.bold)),
               ),
             ),
           ),
-          SizedBox(
-            width: 80,
-            child: tableName.isEmpty
-                ? Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFE65100).withOpacity(0.2),
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                    child: const Text('Nessun tavolo', style: TextStyle(color: Color(0xFFE65100), fontSize: 10)),
-                  )
-                : Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: AppColors.textSecondary.withOpacity(0.2),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Text(tableName,
-                        style: const TextStyle(color: AppColors.textPrimary, fontSize: 12, fontWeight: FontWeight.bold)),
+        const SizedBox(width: 8),
+        onAssignTable != null
+            ? ElevatedButton(
+                onPressed: onAssignTable,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.accent,
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  minimumSize: Size.zero,
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                ),
+                child: const Text('Assegna', style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
+              )
+            : Row(mainAxisSize: MainAxisSize.min, children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: AppColors.textSecondary.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(10),
                   ),
-          ),
-          Container(
-            width: 12, height: 12,
-            decoration: BoxDecoration(color: statusColor, shape: BoxShape.circle),
-          ),
-        ]),
-      ),
+                  child: Text(tableName,
+                      style: const TextStyle(color: AppColors.textPrimary, fontSize: 12, fontWeight: FontWeight.bold)),
+                ),
+                const SizedBox(width: 6),
+                Container(width: 10, height: 10, decoration: BoxDecoration(color: statusColor, shape: BoxShape.circle)),
+              ]),
+      ]),
     );
   }
 }
@@ -623,6 +698,45 @@ class _BookingDetailSheetState extends State<_BookingDetailSheet>
           color: AppColors.surface,
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
           child: Row(mainAxisAlignment: MainAxisAlignment.end, children: [
+            if (widget.booking['table_id'] == null)
+              TextButton.icon(
+                onPressed: () async {
+                  final supabase = Supabase.instance.client;
+                  final tablesRes = await supabase.from('tables').select('*, areas(name)').eq('restaurant_id', '2b126a92-24d5-4e83-b38c-dfc82035a0cf').order('name');
+                  final tables = List<Map<String, dynamic>>.from(tablesRes);
+                  if (!context.mounted) return;
+                  showModalBottomSheet(
+                    context: context,
+                    backgroundColor: AppColors.surface,
+                    shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+                    builder: (ctx) => Column(mainAxisSize: MainAxisSize.min, children: [
+                      const SizedBox(height: 12),
+                      const Text('Assegna tavolo', style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.bold, fontSize: 16)),
+                      const Divider(),
+                      SizedBox(height: 300, child: ListView.builder(
+                        itemCount: tables.length,
+                        itemBuilder: (_, i) {
+                          final t = tables[i];
+                          return ListTile(
+                            leading: CircleAvatar(backgroundColor: AppColors.accentLight, child: Text(t['name'].toString(), style: const TextStyle(color: AppColors.accent, fontSize: 11, fontWeight: FontWeight.bold))),
+                            title: Text(t['name'].toString()),
+                            subtitle: Text('${t['areas']?['name'] ?? ''} • ${t['capacity']} posti', style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+                            onTap: () async {
+                              Navigator.pop(ctx);
+                              Navigator.pop(context);
+                              await supabase.from('bookings').update({'table_id': t['id'], 'status': 'confirmed'}).eq('id', widget.booking['id']);
+                              widget.onSaved();
+                            },
+                          );
+                        },
+                      )),
+                    ]),
+                  );
+                },
+                icon: const Icon(Icons.table_restaurant_outlined, color: AppColors.accent, size: 18),
+                label: const Text('Assegna tavolo', style: TextStyle(color: AppColors.accent, fontSize: 13)),
+              ),
+            const Spacer(),
             _ActionBtn(icon: Icons.more_horiz, onTap: () {}),
             const SizedBox(width: 12),
             _ActionBtn(icon: Icons.close, onTap: () => Navigator.pop(context)),

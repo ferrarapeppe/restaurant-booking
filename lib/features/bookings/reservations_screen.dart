@@ -11,68 +11,25 @@ import 'package:restaurant_booking/features/bookings/bookings_screen.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' as supabase_flutter;
 
 
-class ReservationsScreen extends ConsumerStatefulWidget {
-  final int initialTab;
-  const ReservationsScreen({super.key, this.initialTab = 0});
-
+class ReservationsScreen extends ConsumerWidget {
+  const ReservationsScreen({super.key});
   @override
-  ConsumerState<ReservationsScreen> createState() => _ReservationsScreenState();
-}
-
-class _ReservationsScreenState extends ConsumerState<ReservationsScreen>
-    with SingleTickerProviderStateMixin {
-  late TabController _tabController;
-
-  @override
-  void initState() {
-    super.initState();
-    _tabController = TabController(length: 3, vsync: this, initialIndex: widget.initialTab);
-  }
-
-  @override
-  void dispose() {
-    _tabController.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
       backgroundColor: AppColors.background,
       drawer: const AppDrawer(),
       appBar: AppBar(
         backgroundColor: AppColors.surface,
-        leading: Builder(
-          builder: (context) => IconButton(
-            icon: const Icon(Icons.menu, color: AppColors.textPrimary),
-            onPressed: () => Scaffold.of(context).openDrawer(),
-          ),
-        ),
-        title: const Text('Prenotazioni', style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.bold)),
+        leading: Builder(builder: (context) => IconButton(
+          icon: const Icon(Icons.menu, color: AppColors.textPrimary),
+          onPressed: () => Scaffold.of(context).openDrawer(),
+        )),
+        title: const Text('Programma', style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.bold)),
         actions: [
           IconButton(icon: const Icon(Icons.add, color: AppColors.accent), onPressed: () => context.push('/bookings/new')),
         ],
-        bottom: TabBar(
-          controller: _tabController,
-          labelColor: AppColors.accent,
-          unselectedLabelColor: AppColors.textSecondary,
-          indicatorColor: AppColors.accent,
-          indicatorWeight: 3,
-          tabs: const [
-            Tab(icon: Icon(Icons.calendar_month_outlined, size: 20), text: 'Calendario'),
-            Tab(icon: Icon(Icons.list_outlined, size: 20), text: 'Lista'),
-            Tab(icon: Icon(Icons.view_timeline_outlined, size: 20), text: 'Schedule'),
-          ],
-        ),
       ),
-      body: TabBarView(
-        controller: _tabController,
-        children: const [
-          _CalendarTab(),
-          _ListTab(),
-          _ScheduleTab(),
-        ],
-      ),
+      body: const _ScheduleTab(),
     );
   }
 }
@@ -196,7 +153,15 @@ class _ScheduleTab extends ConsumerStatefulWidget {
 class _ScheduleTabState extends ConsumerState<_ScheduleTab> {
   static const _restaurantId = '2b126a92-24d5-4e83-b38c-dfc82035a0cf';
   List<Map<String, dynamic>> _bookings = [];
+  List<Map<String, dynamic>> _tables = [];
   bool _loading = false;
+
+  static const _startHour = 17;
+  static const _endHour = 23;
+  static const _slotMinutes = 15;
+  static const _slotWidth = 56.0;
+  static const _rowHeight = 48.0;
+  static const _labelWidth = 72.0;
 
   @override
   void initState() {
@@ -210,15 +175,11 @@ class _ScheduleTabState extends ConsumerState<_ScheduleTab> {
       final date = ref.read(selectedDateProvider);
       final dateStr = DateFormat('yyyy-MM-dd').format(date);
       final supabase = supabase_flutter.Supabase.instance.client;
-      final res = await supabase
-          .from('bookings')
-          .select('*, guests(first_name, surname, name), tables(name, areas(name))')
-          .eq('restaurant_id', _restaurantId)
-          .eq('date', dateStr)
-          .inFilter('status', ['confirmed', 'pending', 'seated'])
-          .order('time_start');
+      final tablesRes = await supabase.from('tables').select('*, areas(name)').eq('restaurant_id', _restaurantId).order('name');
+      final bookingsRes = await supabase.from('bookings').select('*, guests(first_name, surname, name), tables(name, areas(name))').eq('restaurant_id', _restaurantId).eq('date', dateStr).inFilter('status', ['confirmed', 'pending', 'seated', 'walkin']).order('time_start');
       setState(() {
-        _bookings = List<Map<String, dynamic>>.from(res);
+        _tables = List<Map<String, dynamic>>.from(tablesRes);
+        _bookings = List<Map<String, dynamic>>.from(bookingsRes);
         _loading = false;
       });
     } catch (e) {
@@ -228,154 +189,243 @@ class _ScheduleTabState extends ConsumerState<_ScheduleTab> {
 
   String _guestName(Map<String, dynamic> b) {
     final g = b['guests'];
-    if (g == null) return 'Ospite';
-    final fn = (g['first_name'] ?? '').toString().trim();
+    if (g == null) return 'OSPITE';
     final sn = (g['surname'] ?? '').toString().trim();
-    if (fn.isNotEmpty || sn.isNotEmpty) return '$fn $sn'.trim();
-    return (g['name'] ?? 'Ospite').toString();
+    if (sn.isNotEmpty) return sn.toUpperCase();
+    final fn = (g['first_name'] ?? '').toString().trim();
+    if (fn.isNotEmpty) return fn.toUpperCase();
+    return (g['name'] ?? 'OSPITE').toString().toUpperCase();
   }
 
   Color _statusColor(String status) {
     switch (status) {
       case 'confirmed': return AppColors.accent;
-      case 'seated': return const Color(0xFF2E7D52);
-      case 'pending': return const Color(0xFFE65100);
-      default: return AppColors.textMuted;
+      case 'seated':    return const Color(0xFF2E7D52);
+      case 'pending':   return const Color(0xFFE65100);
+      case 'walkin':    return const Color(0xFF007BFF);
+      default:          return AppColors.textMuted;
     }
+  }
+
+  double _timeToX(String time) {
+    final parts = time.split(':');
+    final h = int.tryParse(parts[0]) ?? _startHour;
+    final m = int.tryParse(parts[1]) ?? 0;
+    final totalMin = (h - _startHour) * 60 + m;
+    return (totalMin / _slotMinutes) * _slotWidth;
+  }
+
+  double _durationToWidth(String timeStart, String timeEnd) {
+    final p0 = timeStart.split(':');
+    final p1 = timeEnd.split(':');
+    final m0 = (int.tryParse(p0[0]) ?? 0) * 60 + (int.tryParse(p0[1]) ?? 0);
+    final m1 = (int.tryParse(p1[0]) ?? 0) * 60 + (int.tryParse(p1[1]) ?? 0);
+    final diff = (m1 - m0).clamp(30, 240);
+    return (diff / _slotMinutes) * _slotWidth;
+  }
+
+  List<String> get _slots {
+    final slots = <String>[];
+    for (int h = _startHour; h < _endHour; h++) {
+      for (int m = 0; m < 60; m += _slotMinutes) {
+        slots.add('${h.toString().padLeft(2, '0')}:${m.toString().padLeft(2, '0')}');
+      }
+    }
+    return slots;
+  }
+
+  Map<String, int> get _slotCounts {
+    final counts = <String, int>{};
+    for (final b in _bookings) {
+      final t = (b['time_start'] ?? '00:00').toString().substring(0, 5);
+      counts[t] = (counts[t] ?? 0) + 1;
+    }
+    return counts;
+  }
+
+  Map<String, List<Map<String, dynamic>>> get _tablesByArea {
+    final map = <String, List<Map<String, dynamic>>>{};
+    for (final t in _tables) {
+      final area = t['areas']?['name']?.toString() ?? 'Altro';
+      map.putIfAbsent(area, () => []).add(t);
+    }
+    return map;
   }
 
   @override
   Widget build(BuildContext context) {
     ref.listen<DateTime>(selectedDateProvider, (_, __) => _load());
-
-    // Raggruppa per ora (HH:mm)
-    final Map<String, List<Map<String, dynamic>>> grouped = {};
-    for (final b in _bookings) {
-      final time = (b['time_start'] ?? '00:00').toString().substring(0, 5);
-      grouped.putIfAbsent(time, () => []).add(b);
-    }
-    final times = grouped.keys.toList()..sort();
+    final slots = _slots;
+    final totalWidth = _labelWidth + slots.length * _slotWidth;
+    final slotCounts = _slotCounts;
+    final tablesByArea = _tablesByArea;
 
     return Column(children: [
-      // Header data
       Container(
         color: AppColors.surface,
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         child: Row(children: [
+          IconButton(icon: const Icon(Icons.chevron_left, color: AppColors.textSecondary), onPressed: () { ref.read(selectedDateProvider.notifier).state = ref.read(selectedDateProvider).subtract(const Duration(days: 1)); _load(); }, padding: EdgeInsets.zero, constraints: const BoxConstraints()),
+          const SizedBox(width: 8),
           GestureDetector(
             onTap: () async {
-              final picked = await showDatePicker(
-                context: context,
-                initialDate: ref.read(selectedDateProvider),
-                firstDate: DateTime(2024), lastDate: DateTime(2027),
-                locale: const Locale('it', 'IT'),
-              );
-              if (picked != null) ref.read(selectedDateProvider.notifier).state = picked;
+              final picked = await showDatePicker(context: context, initialDate: ref.read(selectedDateProvider), firstDate: DateTime(2024), lastDate: DateTime(2027), locale: const Locale('it', 'IT'));
+              if (picked != null) { ref.read(selectedDateProvider.notifier).state = picked; _load(); }
             },
-            child: Row(children: [
-              Text(
-                DateFormat('d MMM yyyy', 'it_IT').format(ref.watch(selectedDateProvider)),
-                style: const TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.bold, fontSize: 16),
-              ),
-              const Icon(Icons.arrow_drop_down, color: AppColors.textSecondary),
-            ]),
+            child: Text(DateFormat('EEEE d MMM yyyy', 'it_IT').format(ref.watch(selectedDateProvider)), style: const TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.bold, fontSize: 15)),
           ),
+          const SizedBox(width: 4),
+          const Icon(Icons.arrow_drop_down, color: AppColors.textSecondary, size: 18),
           const Spacer(),
-          IconButton(icon: const Icon(Icons.chevron_left, color: AppColors.textSecondary), onPressed: () { ref.read(selectedDateProvider.notifier).state = ref.read(selectedDateProvider).subtract(const Duration(days: 1)); _load(); }, padding: EdgeInsets.zero, constraints: const BoxConstraints()),
           IconButton(icon: const Icon(Icons.chevron_right, color: AppColors.textSecondary), onPressed: () { ref.read(selectedDateProvider.notifier).state = ref.read(selectedDateProvider).add(const Duration(days: 1)); _load(); }, padding: EdgeInsets.zero, constraints: const BoxConstraints()),
         ]),
       ),
-      const Divider(height: 1, color: AppColors.divider),
-      // Lista
-      Expanded(
-        child: _loading
-            ? const Center(child: CircularProgressIndicator(color: AppColors.accent))
-            : times.isEmpty
-                ? const Center(child: Text('Nessuna prenotazione', style: TextStyle(color: AppColors.textSecondary)))
-                : ListView.builder(
-                    padding: const EdgeInsets.all(12),
-                    itemCount: times.length,
-                    itemBuilder: (_, i) {
-                      final time = times[i];
-                      final bookings = grouped[time]!;
-                      return Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // Striscia oraria
-                          Container(
-                            margin: EdgeInsets.only(top: i == 0 ? 0.0 : 16.0, bottom: 8),
-                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-                            decoration: BoxDecoration(
-                              color: AppColors.accent,
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            child: Text(time, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14)),
-                          ),
-                          // Prenotazioni di quell'ora
-                          ...bookings.map((b) {
-                            final partySize = b['party_size'] ?? 0;
-                            final name = _guestName(b);
-                            final tableName = b['tables']?['name']?.toString() ?? '';
-                            final areaName = b['tables']?['areas']?['name']?.toString() ?? '';
-                            final status = b['status'] ?? '';
-                            return Container(
-                              margin: const EdgeInsets.only(bottom: 8),
-                              padding: const EdgeInsets.all(12),
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(color: AppColors.divider),
-                                boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 4, offset: const Offset(0, 2))],
-                              ),
-                              child: Row(children: [
-                                // Numero persone
-                                Container(
-                                  width: 40, height: 40,
-                                  decoration: BoxDecoration(
-                                    color: _statusColor(status).withOpacity(0.1),
-                                    shape: BoxShape.circle,
-                                    border: Border.all(color: _statusColor(status)),
-                                  ),
-                                  child: Center(
-                                    child: Text('$partySize', style: TextStyle(color: _statusColor(status), fontWeight: FontWeight.bold, fontSize: 16)),
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                                // Info prenotazione
-                                Expanded(
-                                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                                    Text(name.toUpperCase(), style: const TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.bold, fontSize: 14)),
-                                    const SizedBox(height: 4),
-                                    Row(children: [
-                                      if (tableName.isNotEmpty) ...[
-                                        const Icon(Icons.table_restaurant_outlined, size: 13, color: AppColors.textSecondary),
-                                        const SizedBox(width: 4),
-                                        Text(tableName, style: const TextStyle(color: AppColors.textSecondary, fontSize: 12)),
-                                        const SizedBox(width: 10),
-                                      ],
-                                      if (areaName.isNotEmpty) ...[
-                                        const Icon(Icons.room_outlined, size: 13, color: AppColors.textSecondary),
-                                        const SizedBox(width: 4),
-                                        Text(areaName, style: const TextStyle(color: AppColors.textSecondary, fontSize: 12)),
-                                      ],
-                                      if (tableName.isEmpty && areaName.isEmpty)
-                                        const Text('Nessun tavolo', style: TextStyle(color: Color(0xFFE65100), fontSize: 12)),
-                                    ]),
-                                  ]),
-                                ),
-                                // Status dot
-                                Container(
-                                  width: 10, height: 10,
-                                  decoration: BoxDecoration(color: _statusColor(status), shape: BoxShape.circle),
-                                ),
-                              ]),
-                            );
-                          }),
-                        ],
-                      );
-                    },
-                  ),
+      Container(
+        color: AppColors.surface,
+        padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+        child: Row(children: [
+          Text('Totale ${_bookings.length}  •  ${_bookings.fold(0, (s, b) => s + ((b['party_size'] as int?) ?? 0))} ospiti', style: const TextStyle(color: AppColors.textSecondary, fontSize: 13)),
+        ]),
       ),
+      const Divider(height: 1, color: AppColors.divider),
+      if (_loading)
+        const Expanded(child: Center(child: CircularProgressIndicator(color: AppColors.accent)))
+      else
+        Expanded(
+          child: SingleChildScrollView(
+            scrollDirection: Axis.vertical,
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: SizedBox(
+                width: totalWidth,
+                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  // Riga orari
+                  Container(
+                    color: AppColors.surface,
+                    height: 36,
+                    child: Row(children: [
+                      SizedBox(width: _labelWidth),
+                      ...slots.map((slot) => SizedBox(
+                        width: _slotWidth,
+                        child: Center(child: slot.endsWith(':00')
+                            ? Transform.rotate(angle: -3.14159 / 2, child: Text(slot, style: TextStyle(color: slot == '18:00' || slot == '20:00' ? AppColors.gold : AppColors.textSecondary, fontSize: 11, fontWeight: slot == '18:00' || slot == '20:00' ? FontWeight.bold : FontWeight.normal)))
+                            : const SizedBox.shrink()),
+                      )),
+                    ]),
+                  ),
+                  // Riga contatori
+                  Container(
+                    color: AppColors.background,
+                    height: 24,
+                    child: Row(children: [
+                      SizedBox(width: _labelWidth),
+                      ...slots.map((slot) {
+                        final count = slotCounts[slot] ?? 0;
+                        return SizedBox(width: _slotWidth, child: Center(child: count > 0
+                            ? Text('$count', style: TextStyle(color: count > 2 ? AppColors.accent : AppColors.textMuted, fontSize: 10, fontWeight: FontWeight.bold))
+                            : Text('·', style: const TextStyle(color: AppColors.divider, fontSize: 10))));
+                      }),
+                    ]),
+                  ),
+                  const Divider(height: 1, color: AppColors.divider),
+                  // Aree e tavoli
+                  ...tablesByArea.entries.map((entry) => Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        color: AppColors.cardLight, height: 32,
+                        child: Row(children: [
+                          SizedBox(width: _labelWidth, child: Padding(padding: const EdgeInsets.only(left: 12), child: Text(entry.key.toUpperCase(), style: const TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.bold, fontSize: 12)))),
+                          ...slots.map((_) => Container(width: _slotWidth, decoration: const BoxDecoration(border: Border(left: BorderSide(color: AppColors.divider, width: 0.5))))),
+                        ]),
+                      ),
+                      ...entry.value.map((table) {
+                        final tableId = table['id']?.toString();
+                        final tableName = table['name']?.toString() ?? '';
+                        final capacity = table['capacity']?.toString() ?? '?';
+                        final tableBookings = _bookings.where((b) => b['table_id']?.toString() == tableId).toList();
+                        return Container(
+                          height: _rowHeight,
+                          decoration: const BoxDecoration(border: Border(bottom: BorderSide(color: AppColors.divider, width: 0.5))),
+                          child: Stack(children: [
+                            Row(children: [
+                              Container(
+                                width: _labelWidth, color: AppColors.surface,
+                                padding: const EdgeInsets.symmetric(horizontal: 8),
+                                child: Row(children: [
+                                  Text(tableName, style: const TextStyle(color: AppColors.textPrimary, fontSize: 13, fontWeight: FontWeight.w600)),
+                                  const Spacer(),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                                    decoration: BoxDecoration(border: Border.all(color: AppColors.divider), borderRadius: BorderRadius.circular(10)),
+                                    child: Text('$capacity-$capacity', style: const TextStyle(color: AppColors.textSecondary, fontSize: 10)),
+                                  ),
+                                ]),
+                              ),
+                              ...slots.map((_) => Container(width: _slotWidth, decoration: const BoxDecoration(border: Border(left: BorderSide(color: AppColors.divider, width: 0.5))))),
+                            ]),
+                            ...tableBookings.map((b) {
+                              final timeStart = (b['time_start'] ?? '${_startHour}:00:00').toString();
+                              final timeEnd = (b['time_end'] ?? '').toString();
+                              final x = _labelWidth + _timeToX(timeStart);
+                              final w = timeEnd.isNotEmpty ? _durationToWidth(timeStart, timeEnd) : _slotWidth * 4;
+                              final color = _statusColor(b['status'] ?? '');
+                              return Positioned(
+                                left: x, top: 4, height: _rowHeight - 8, width: w - 2,
+                                child: GestureDetector(
+                                  onTap: () => _showDetail(context, b),
+                                  child: Container(
+                                    decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(6)),
+                                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                                    child: Center(child: Text(_guestName(b), style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold), overflow: TextOverflow.ellipsis)),
+                                  ),
+                                ),
+                              );
+                            }),
+                          ]),
+                        );
+                      }),
+                    ],
+                  )),
+                ]),
+              ),
+            ),
+          ),
+        ),
     ]);
+  }
+
+  void _showDetail(BuildContext context, Map<String, dynamic> b) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: AppColors.surface,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (_) => Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text(_guestName(b), style: const TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.bold, fontSize: 18)),
+          const SizedBox(height: 8),
+          Row(children: [
+            const Icon(Icons.access_time, size: 16, color: AppColors.textSecondary),
+            const SizedBox(width: 6),
+            Text((b['time_start'] ?? '').toString().substring(0, 5), style: const TextStyle(color: AppColors.textSecondary)),
+            const SizedBox(width: 16),
+            const Icon(Icons.people_outline, size: 16, color: AppColors.textSecondary),
+            const SizedBox(width: 6),
+            Text('${b['party_size'] ?? 0}', style: const TextStyle(color: AppColors.textSecondary)),
+            const SizedBox(width: 16),
+            const Icon(Icons.table_restaurant_outlined, size: 16, color: AppColors.textSecondary),
+            const SizedBox(width: 6),
+            Text(b['tables']?['name']?.toString() ?? 'Nessun tavolo', style: const TextStyle(color: AppColors.textSecondary)),
+          ]),
+          const SizedBox(height: 16),
+          Row(children: [
+            Expanded(child: OutlinedButton(onPressed: () => Navigator.pop(context), child: const Text('Chiudi'))),
+            const SizedBox(width: 12),
+            Expanded(child: ElevatedButton(onPressed: () => Navigator.pop(context), child: const Text('Modifica'))),
+          ]),
+        ]),
+      ),
+    );
   }
 }

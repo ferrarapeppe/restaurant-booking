@@ -24,7 +24,8 @@ final router = GoRouter(
       builder: (context, state) {
         final dateStr = state.uri.queryParameters['date'];
         final date = dateStr != null ? DateTime.tryParse(dateStr) : null;
-        return BookingsScreen(initialDate: date);
+        final filter = state.uri.queryParameters['filter'];
+        return BookingsScreen(initialDate: date, initialFilter: filter);
       },
     ),
     GoRoute(path: '/reservations', builder: (context, state) => const ReservationsScreen()),

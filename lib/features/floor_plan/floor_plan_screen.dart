@@ -1675,7 +1675,7 @@ extension FloorPlanPending on _FloorPlanScreenState {
                       child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
                         Text(t['name'].toString(),
                             style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
-                        Text('\${t["capacity"]} posti',
+                        Text('${t["capacity"]} posti',
                             style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w500)),
                       ]),
                     ),
