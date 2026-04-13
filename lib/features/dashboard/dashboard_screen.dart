@@ -24,10 +24,32 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   int _settimanaOspiti = 0;
   int _daAssegnare = 0;
 
+  RealtimeChannel? _channel;
+
   @override
   void initState() {
     super.initState();
     _loadStats();
+    _channel = Supabase.instance.client
+        .channel('dashboard-bookings')
+        .onPostgresChanges(
+          event: PostgresChangeEvent.insert,
+          schema: 'public',
+          table: 'bookings',
+          filter: PostgresChangeFilter(
+            type: PostgresChangeFilterType.eq,
+            column: 'restaurant_id',
+            value: _restaurantId,
+          ),
+          callback: (_) => _loadStats(),
+        )
+        .subscribe();
+  }
+
+  @override
+  void dispose() {
+    _channel?.unsubscribe();
+    super.dispose();
   }
 
   Future<void> _loadStats() async {
