@@ -180,9 +180,9 @@ class _DayCell extends StatelessWidget {
         if (isClosed)
           _Pill(label: 'Chiuso', bg: const Color(0xFF3A2A00), fg: const Color(0xFFFFC107))
         else if (counts != null && _isCurrentMonth) ...[
-          _Pill(label: '${counts['prenotazioni']} prenotaz.', bg: const Color(0xFF1A3A1A), fg: const Color(0xFF66BB6A)),
+          _Pill(label: '${counts?['prenotazioni'] ?? 0} prenotaz.', bg: const Color(0xFF1A3A1A), fg: const Color(0xFF66BB6A)),
           const SizedBox(height: 2),
-          _Pill(label: '${counts['ospiti']} persone', bg: const Color(0xFF1A1A3A), fg: const Color(0xFF64B5F6)),
+          _Pill(label: '${counts?['ospiti'] ?? 0} persone', bg: const Color(0xFF1A1A3A), fg: const Color(0xFF64B5F6)),
         ],
       ]),
     );
