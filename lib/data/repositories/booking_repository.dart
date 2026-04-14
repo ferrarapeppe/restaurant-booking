@@ -32,8 +32,8 @@ class BookingRepository {
     for (final row in response as List) {
       final d = row['date'] as String;
       counts[d] ??= {'prenotazioni': 0, 'ospiti': 0};
-      counts[d]!['prenotazioni'] = counts[d]!['prenotazioni']! + 1;
-      counts[d]!['ospiti'] = counts[d]!['ospiti']! + (row['party_size'] as int);
+      counts[d]!['prenotazioni'] = (counts[d]?['prenotazioni'] ?? 0) + 1;
+      counts[d]!['ospiti'] = (counts[d]?['ospiti'] ?? 0) + ((row['party_size'] as int?) ?? 0);
     }
     return counts;
   }

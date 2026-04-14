@@ -322,7 +322,7 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
       backgroundColor: AppColors.surface,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
-      builder: (_) => _BookingDetailSheet(
+      builder: (_) => BookingDetailSheet(
         booking: booking,
         onSaved: () { Navigator.pop(context); _loadBookings(); },
       ),
@@ -478,16 +478,16 @@ class _BookingRow extends StatelessWidget {
 }
 
 // ── Booking Detail Sheet ──────────────────────────────────────────────────────
-class _BookingDetailSheet extends StatefulWidget {
+class BookingDetailSheet extends StatefulWidget {
   final Map<String, dynamic> booking;
   final VoidCallback onSaved;
-  const _BookingDetailSheet({required this.booking, required this.onSaved});
+  const BookingDetailSheet({required this.booking, required this.onSaved});
 
   @override
-  State<_BookingDetailSheet> createState() => _BookingDetailSheetState();
+  State<BookingDetailSheet> createState() => _BookingDetailSheetState();
 }
 
-class _BookingDetailSheetState extends State<_BookingDetailSheet>
+class _BookingDetailSheetState extends State<BookingDetailSheet>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
   final _supabase = Supabase.instance.client;
