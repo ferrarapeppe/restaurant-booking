@@ -323,28 +323,17 @@ class _ScheduleTabState extends ConsumerState<_ScheduleTab> {
                         return SizedBox(
                           width: _slotWidth,
                           child: Column(mainAxisAlignment: MainAxisAlignment.end, children: [
-                            if (isHour)
-                              Transform.rotate(
-                                angle: -3.14159 / 2,
-                                child: Text(
-                                  slot,
-                                  style: TextStyle(
-                                    color: isHighlight ? AppColors.gold : AppColors.textSecondary,
-                                    fontSize: 11,
-                                    fontWeight: isHighlight ? FontWeight.bold : FontWeight.normal,
-                                  ),
+                            Transform.rotate(
+                              angle: -3.14159 / 2,
+                              child: Text(
+                                slot,
+                                style: TextStyle(
+                                  color: isHighlight ? AppColors.gold : (isHour ? AppColors.textSecondary : AppColors.textMuted),
+                                  fontSize: isHour ? 11 : 9,
+                                  fontWeight: isHighlight ? FontWeight.bold : FontWeight.normal,
                                 ),
-                              )
-                            else if (isHalf)
-                              Transform.rotate(
-                                angle: -3.14159 / 2,
-                                child: Text(
-                                  slot.substring(3),
-                                  style: const TextStyle(color: AppColors.textMuted, fontSize: 9),
-                                ),
-                              )
-                            else
-                              Container(height: 4, width: 1, color: AppColors.divider),
+                              ),
+                            ),
                             const SizedBox(height: 2),
                           ]),
                         );
