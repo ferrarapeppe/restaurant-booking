@@ -249,7 +249,18 @@ class _ScheduleTabState extends ConsumerState<_ScheduleTab> {
       final area = t['areas']?['name']?.toString() ?? 'Altro';
       map.putIfAbsent(area, () => []).add(t);
     }
-    return map;
+    for (final key in map.keys) {
+      map[key]!.sort((a, b) {
+        final an = int.tryParse(a['name']?.toString() ?? '') ?? 999;
+        final bn = int.tryParse(b['name']?.toString() ?? '') ?? 999;
+        return an.compareTo(bn);
+      });
+    }
+    final order = ['BANCONE', 'DEHORS', 'INTERNO'];
+    final sorted = <String, List<Map<String, dynamic>>>{};
+    for (final area in order) { if (map.containsKey(area)) sorted[area] = map[area]!; }
+    for (final key in map.keys) { if (!sorted.containsKey(key)) sorted[key] = map[key]!; }
+    return sorted;
   }
 
   @override
@@ -302,15 +313,42 @@ class _ScheduleTabState extends ConsumerState<_ScheduleTab> {
                   // Riga orari
                   Container(
                     color: AppColors.surface,
-                    height: 36,
+                    height: 40,
                     child: Row(children: [
                       SizedBox(width: _labelWidth),
-                      ...slots.map((slot) => SizedBox(
-                        width: _slotWidth,
-                        child: Center(child: slot.endsWith(':00')
-                            ? Transform.rotate(angle: -3.14159 / 2, child: Text(slot, style: TextStyle(color: slot == '18:00' || slot == '20:00' ? AppColors.gold : AppColors.textSecondary, fontSize: 11, fontWeight: slot == '18:00' || slot == '20:00' ? FontWeight.bold : FontWeight.normal)))
-                            : const SizedBox.shrink()),
-                      )),
+                      ...slots.map((slot) {
+                        final isHour = slot.endsWith(':00');
+                        final isHalf = slot.endsWith(':30');
+                        final isHighlight = slot == '18:00' || slot == '20:00' || slot == '22:00';
+                        return SizedBox(
+                          width: _slotWidth,
+                          child: Column(mainAxisAlignment: MainAxisAlignment.end, children: [
+                            if (isHour)
+                              Transform.rotate(
+                                angle: -3.14159 / 2,
+                                child: Text(
+                                  slot,
+                                  style: TextStyle(
+                                    color: isHighlight ? AppColors.gold : AppColors.textSecondary,
+                                    fontSize: 11,
+                                    fontWeight: isHighlight ? FontWeight.bold : FontWeight.normal,
+                                  ),
+                                ),
+                              )
+                            else if (isHalf)
+                              Transform.rotate(
+                                angle: -3.14159 / 2,
+                                child: Text(
+                                  slot.substring(3),
+                                  style: const TextStyle(color: AppColors.textMuted, fontSize: 9),
+                                ),
+                              )
+                            else
+                              Container(height: 4, width: 1, color: AppColors.divider),
+                            const SizedBox(height: 2),
+                          ]),
+                        );
+                      }),
                     ]),
                   ),
                   // Riga contatori
