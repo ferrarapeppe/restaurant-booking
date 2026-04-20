@@ -555,9 +555,20 @@ class _GuestDetailScreenState extends ConsumerState<GuestDetailScreen> {
                     ),
                   );
                   if (confirm == true) {
-                    await ref.read(guestRepositoryProvider).deleteGuest(guest.id);
-                    ref.invalidate(guestsProvider);
-                    if (context.mounted) Navigator.pop(context);
+                    try {
+                      await ref.read(guestRepositoryProvider).deleteGuest(guest.id);
+                      ref.invalidate(guestsProvider);
+                      if (context.mounted) Navigator.pop(context);
+                    } catch (e) {
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('Errore eliminazione: $e'),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
+                      }
+                    }
                   }
                 },
                 icon: const Icon(Icons.delete_outline, color: Colors.red),
