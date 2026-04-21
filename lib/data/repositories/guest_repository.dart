@@ -69,6 +69,9 @@ class GuestRepository {
   }
 
   Future<void> deleteGuest(String id) async {
+    // Prima scollega le prenotazioni (evita foreign key constraint)
+    await _client.from('bookings').update({'guest_id': null}).eq('guest_id', id);
+    // Poi elimina il cliente
     await _client.from('guests').delete().eq('id', id);
   }
 
