@@ -1,4 +1,4 @@
-import { SMTPClient } from 'https://deno.land/x/denomailer@1.3.3/mod.ts';
+import nodemailer from 'npm:nodemailer@6.9.9';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -38,26 +38,22 @@ Deno.serve(async (req) => {
 
     const html = buildEmailHtml({ nome, cognome, email, phone, dateFormatted, time, endTime, persons, notes, turno, restName });
 
-    const client = new SMTPClient({
-      connection: {
-        hostname: Deno.env.get('SMTP_HOST') ?? 'smtps.aruba.it',
-        port: parseInt(Deno.env.get('SMTP_PORT') ?? '465'),
-        tls: true,
-        auth: {
-          username: Deno.env.get('SMTP_USER') ?? '',
-          password: Deno.env.get('SMTP_PASS') ?? '',
-        },
+    const transporter = nodemailer.createTransport({
+      host: Deno.env.get('SMTP_HOST') ?? 'smtps.aruba.it',
+      port: parseInt(Deno.env.get('SMTP_PORT') ?? '465'),
+      secure: true,
+      auth: {
+        user: Deno.env.get('SMTP_USER') ?? '',
+        pass: Deno.env.get('SMTP_PASS') ?? '',
       },
     });
 
-    await client.send({
+    await transporter.sendMail({
       from: `${restName} <${Deno.env.get('SMTP_USER')}>`,
       to: email,
       subject,
       html,
     });
-
-    await client.close();
 
     return new Response(JSON.stringify({ success: true }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
