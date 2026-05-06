@@ -266,13 +266,23 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
                       separatorBuilder: (_, __) => const Divider(height: 1, color: AppColors.divider),
                       itemBuilder: (context, index) {
                         final b = _bookingsWithDetails[index];
+                        final isPending = b['status'] == 'pending';
                         return _BookingRow(
                           booking: b,
                           guestName: _guestName(b),
                           tableName: _tableName(b),
                           statusColor: _statusColor(b['status'] ?? ''),
                           onTap: () => _showBookingDetail(context, b),
-                          onAssignTable: _tableName(b).isEmpty ? () => _showAssignTable(context, b) : null,
+                          onAssignTable: !isPending && _tableName(b).isEmpty ? () => _showAssignTable(context, b) : null,
+                          onAccept: isPending ? () async {
+                            await _supabase.from('bookings').update({'status': 'approved'}).eq('id', b['id']);
+                            sendTableAssignedEmail(b, b['tables'] as Map<String, dynamic>? ?? {});
+                            _loadBookings();
+                          } : null,
+                          onReject: isPending ? () async {
+                            await _supabase.from('bookings').update({'status': 'canceled'}).eq('id', b['id']);
+                            _loadBookings();
+                          } : null,
                         );
                       },
                     ),
@@ -394,11 +404,13 @@ class _BookingRow extends StatelessWidget {
   final Color statusColor;
   final VoidCallback onTap;
   final VoidCallback? onAssignTable;
+  final VoidCallback? onAccept;
+  final VoidCallback? onReject;
 
   const _BookingRow({
     required this.booking, required this.guestName,
     required this.tableName, required this.statusColor, required this.onTap,
-    this.onAssignTable,
+    this.onAssignTable, this.onAccept, this.onReject,
   });
 
   @override
@@ -448,7 +460,33 @@ class _BookingRow extends StatelessWidget {
             ),
           ),
         const SizedBox(width: 8),
-        onAssignTable != null
+        onAccept != null && onReject != null
+            ? Row(mainAxisSize: MainAxisSize.min, children: [
+                ElevatedButton(
+                  onPressed: onAccept,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF2E7D52),
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    minimumSize: Size.zero,
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  ),
+                  child: const Text('Accetta', style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
+                ),
+                const SizedBox(width: 6),
+                ElevatedButton(
+                  onPressed: onReject,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFFDC3545),
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    minimumSize: Size.zero,
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  ),
+                  child: const Text('Rifiuta', style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
+                ),
+              ])
+            : onAssignTable != null
             ? ElevatedButton(
                 onPressed: onAssignTable,
                 style: ElevatedButton.styleFrom(
