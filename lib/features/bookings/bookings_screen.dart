@@ -444,7 +444,7 @@ class _BookingRow extends StatelessWidget {
                 overflow: TextOverflow.ellipsis),
           ),
         ),
-        if (onAssignTable == null)
+        if (onAssignTable == null && onAccept == null)
           SizedBox(
             width: 32,
             child: Container(
