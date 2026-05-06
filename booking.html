@@ -171,20 +171,18 @@
       outline: none; transition: border-color 0.2s;
     }
     .form-group input:focus, .form-group textarea:focus { border-color: #3b4cc0; }
-    .phone-row { display: flex; gap: 8px; align-items: center; }
-    .phone-prefix {
-      width: 90px; flex-shrink: 0; padding: 10px 8px; font-size: 13px;
-    }
-    .phone-row input { flex: 1; min-width: 0; width: 100%; }
+    .phone-row { display: flex; gap: 8px; align-items: stretch; }
+    .phone-row select { width: 150px !important; flex-shrink: 0 !important; }
+    .phone-row input { flex: 1 !important; width: auto !important; min-width: 0; }
     .radio-group { border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden; }
     .radio-group label {
-      display: flex; align-items: flex-start; gap: 10px;
+      display: flex !important; align-items: center; gap: 10px;
       padding: 14px 16px; cursor: pointer;
       border-bottom: 1px solid #f0f0f0; margin: 0;
-      font-size: 14px; color: #333; font-weight: 400;
+      font-size: 14px !important; color: #333 !important; font-weight: 400;
     }
     .radio-group label:last-child { border-bottom: none; }
-    .radio-group input[type=radio] { margin-top: 2px; accent-color: #3b4cc0; }
+    .radio-group input[type=radio] { flex-shrink: 0; accent-color: #3b4cc0; width: 16px !important; height: 16px; padding: 0 !important; }
     .rules-box {
       border: 1px solid #e0e0e0; border-radius: 8px;
       padding: 12px; font-size: 13px; color: #555;
@@ -503,9 +501,9 @@ function renderStep4() {
   // SCEGLI — 3 turni fissi
   html += '<div class="form-group"><label>SCEGLI</label>';
   html += '<div class="radio-group">';
-  html += '<label><input type="radio" name="turno" value="aperitivo"> APERTIF/APERITIVO DALLE 18:30 ALLE 20:30</label>';
-  html += '<label><input type="radio" name="turno" value="cena1"> DINNER/CENA 1° TURNO 20:30</label>';
-  html += '<label><input type="radio" name="turno" value="cena2"> DINNER/CENA 2° TURNO 22:30</label>';
+  html += '<label><input type="radio" name="turno" value="aperitivo"><span>APERTIF/APERITIVO DALLE 18:30 ALLE 20:30</span></label>';
+  html += '<label><input type="radio" name="turno" value="cena1"><span>DINNER/CENA 1° TURNO 20:30</span></label>';
+  html += '<label><input type="radio" name="turno" value="cena2"><span>DINNER/CENA 2° TURNO 22:30</span></label>';
   html += '</div></div>';
 
   // Regole di prenotazione
