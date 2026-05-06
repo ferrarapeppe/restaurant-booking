@@ -438,6 +438,7 @@ class GuestDetailScreen extends ConsumerStatefulWidget {
 class _GuestDetailScreenState extends ConsumerState<GuestDetailScreen> {
   List<BookingModel> _bookings = [];
   bool _loading = true;
+  String? _loadError;
 
   @override
   void initState() {
@@ -446,8 +447,12 @@ class _GuestDetailScreenState extends ConsumerState<GuestDetailScreen> {
   }
 
   Future<void> _loadBookings() async {
-    final bookings = await ref.read(guestRepositoryProvider).getGuestBookings(widget.guest.id);
-    setState(() { _bookings = bookings; _loading = false; });
+    try {
+      final bookings = await ref.read(guestRepositoryProvider).getGuestBookings(widget.guest.id);
+      if (mounted) setState(() { _bookings = bookings; _loading = false; });
+    } catch (e) {
+      if (mounted) setState(() { _loading = false; _loadError = e.toString(); });
+    }
   }
 
   @override
@@ -521,9 +526,11 @@ class _GuestDetailScreenState extends ConsumerState<GuestDetailScreen> {
 
             // Storico prenotazioni
             _InfoCard(
-              title: 'Storico prenotazioni',
+              title: 'Storico prenotazioni (${_loading ? "…" : "${_bookings.length}"})',
               children: _loading
                   ? [const Padding(padding: EdgeInsets.all(16), child: Center(child: CircularProgressIndicator(color: AppColors.accent)))]
+                  : _loadError != null
+                      ? [Padding(padding: const EdgeInsets.all(16), child: Text('Errore: $_loadError', style: const TextStyle(color: Colors.red)))]
                   : _bookings.isEmpty
                       ? [const Padding(padding: EdgeInsets.all(16), child: Text('Nessuna prenotazione', style: TextStyle(color: AppColors.textSecondary)))]
                       : _bookings.map((b) => InkWell(
