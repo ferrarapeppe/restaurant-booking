@@ -54,6 +54,8 @@ class GuestRepository {
 
   Future<void> updateGuest(String id, {
     String? name,
+    String? firstName,
+    String? surname,
     String? email,
     String? phone,
     String? notes,
@@ -61,6 +63,8 @@ class GuestRepository {
   }) async {
     final data = <String, dynamic>{};
     if (name != null) data['name'] = name;
+    if (firstName != null) data['first_name'] = firstName;
+    if (surname != null) data['surname'] = surname;
     if (email != null) data['email'] = email;
     if (phone != null) data['phone'] = phone;
     if (notes != null) data['notes'] = notes;

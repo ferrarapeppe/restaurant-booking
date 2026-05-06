@@ -587,7 +587,8 @@ class _GuestDetailScreenState extends ConsumerState<GuestDetailScreen> {
   }
 
   void _showEditGuestSheet(BuildContext context) {
-    final nameCtrl = TextEditingController(text: widget.guest.name);
+    final firstNameCtrl = TextEditingController(text: widget.guest.firstName ?? widget.guest.name);
+    final surnameCtrl = TextEditingController(text: widget.guest.surname ?? '');
     final phoneCtrl = TextEditingController(text: widget.guest.phone ?? '');
     final emailCtrl = TextEditingController(text: widget.guest.email ?? '');
     final notesCtrl = TextEditingController(text: widget.guest.notes ?? '');
@@ -613,7 +614,9 @@ class _GuestDetailScreenState extends ConsumerState<GuestDetailScreen> {
                   IconButton(icon: const Icon(Icons.close), onPressed: () => Navigator.pop(context)),
                 ]),
                 const SizedBox(height: 16),
-                _buildEditField(nameCtrl, 'Nome e cognome *', Icons.person_outline),
+                _buildEditField(firstNameCtrl, 'Nome *', Icons.person_outline),
+                const SizedBox(height: 10),
+                _buildEditField(surnameCtrl, 'Cognome', Icons.person_outline),
                 const SizedBox(height: 10),
                 _buildEditField(phoneCtrl, 'Telefono', Icons.phone_outlined, type: TextInputType.phone),
                 const SizedBox(height: 10),
@@ -642,10 +645,15 @@ class _GuestDetailScreenState extends ConsumerState<GuestDetailScreen> {
                   width: double.infinity,
                   child: ElevatedButton(
                     onPressed: () async {
-                      if (nameCtrl.text.isNotEmpty) {
+                      if (firstNameCtrl.text.isNotEmpty) {
+                        final firstName = firstNameCtrl.text.trim();
+                        final surname = surnameCtrl.text.trim();
+                        final fullName = surname.isNotEmpty ? '$firstName $surname' : firstName;
                         await ref.read(guestRepositoryProvider).updateGuest(
                           widget.guest.id,
-                          name: nameCtrl.text,
+                          name: fullName,
+                          firstName: firstName,
+                          surname: surname.isNotEmpty ? surname : '',
                           phone: phoneCtrl.text.isEmpty ? null : phoneCtrl.text,
                           email: emailCtrl.text.isEmpty ? null : emailCtrl.text,
                           notes: notesCtrl.text.isEmpty ? null : notesCtrl.text,
