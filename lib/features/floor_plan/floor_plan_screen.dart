@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:restaurant_booking/shared/theme/app_theme.dart';
 import 'package:restaurant_booking/shared/widgets/app_drawer.dart';
+import 'package:restaurant_booking/features/bookings/bookings_screen.dart';
 import 'package:intl/intl.dart';
 
 // Stato tavolo
@@ -1674,12 +1675,13 @@ extension FloorPlanPending on _FloorPlanScreenState {
   }
 
   Future<void> _rejectBooking(Map<String, dynamic> booking) async {
-    await _supabase.from('bookings').update({'status': 'canceled'}).eq('id', booking['id']);
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Prenotazione rifiutata'), backgroundColor: Colors.red),
-    );
-    _loadData();
+    Navigator.push(context, MaterialPageRoute(
+      builder: (_) => RejectionScreen(
+        booking: booking,
+        onRejected: _loadData,
+      ),
+    ));
   }
 
   Future<void> _sendTableAssignedEmail(

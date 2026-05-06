@@ -279,9 +279,13 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
                             sendTableAssignedEmail(b, b['tables'] as Map<String, dynamic>? ?? {});
                             _loadBookings();
                           } : null,
-                          onReject: isPending ? () async {
-                            await _supabase.from('bookings').update({'status': 'canceled'}).eq('id', b['id']);
-                            _loadBookings();
+                          onReject: isPending ? () {
+                            Navigator.push(context, MaterialPageRoute(
+                              builder: (_) => RejectionScreen(
+                                booking: b,
+                                onRejected: _loadBookings,
+                              ),
+                            ));
                           } : null,
                         );
                       },
@@ -760,12 +764,14 @@ class _BookingDetailSheetState extends State<BookingDetailSheet>
               ),
               const SizedBox(width: 8),
               ElevatedButton.icon(
-                onPressed: () async {
-                  final supabase = Supabase.instance.client;
-                  await supabase.from('bookings').update({'status': 'canceled'}).eq('id', widget.booking['id']);
-                  if (!context.mounted) return;
+                onPressed: () {
                   Navigator.pop(context);
-                  widget.onSaved();
+                  Navigator.push(context, MaterialPageRoute(
+                    builder: (_) => RejectionScreen(
+                      booking: widget.booking,
+                      onRejected: widget.onSaved,
+                    ),
+                  ));
                 },
                 icon: const Icon(Icons.close, size: 16),
                 label: const Text('Rifiuta'),
@@ -953,5 +959,157 @@ Future<void> sendTableAssignedEmail(
     });
   } catch (e) {
     debugPrint('send-table-assigned-email error: $e');
+  }
+}
+
+// ── Rejection Screen ──────────────────────────────────────────────────────────
+class RejectionScreen extends StatefulWidget {
+  final Map<String, dynamic> booking;
+  final VoidCallback onRejected;
+  const RejectionScreen({super.key, required this.booking, required this.onRejected});
+  @override
+  State<RejectionScreen> createState() => _RejectionScreenState();
+}
+
+class _RejectionScreenState extends State<RejectionScreen> {
+  static const _motivi = [
+    ('Al completo', 'Siamo al completo. Possiamo proporti un giorno o un orario diverso?'),
+    ('Chiuso', 'Quel giorno saremo chiusi. Possiamo proporti un giorno diverso?'),
+    ('Altro', 'Purtroppo non possiamo accettare la tua prenotazione perché'),
+  ];
+
+  String _selectedMotivo = 'Al completo';
+  late TextEditingController _msgCtrl;
+  bool _sending = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _msgCtrl = TextEditingController(text: _motivi[0].$2);
+  }
+
+  @override
+  void dispose() { _msgCtrl.dispose(); super.dispose(); }
+
+  void _onMotivoChanged(String? value) {
+    if (value == null) return;
+    setState(() => _selectedMotivo = value);
+    final match = _motivi.firstWhere((m) => m.$1 == value, orElse: () => _motivi[0]);
+    _msgCtrl.text = match.$2;
+  }
+
+  Future<void> _confirm() async {
+    setState(() => _sending = true);
+    try {
+      final supabase = Supabase.instance.client;
+      await supabase.from('bookings').update({'status': 'canceled'}).eq('id', widget.booking['id']);
+      final g = widget.booking['guests'];
+      final email = g?['email'] as String? ?? '';
+      if (email.isNotEmpty) {
+        try {
+          await supabase.functions.invoke('send-rejection-email', body: {
+            'email': email,
+            'nome': g?['first_name'] ?? '',
+            'cognome': g?['surname'] ?? '',
+            'motivo': _selectedMotivo,
+            'messaggio': _msgCtrl.text.trim(),
+            'restaurantName': 'Hio Oriental Bar',
+          });
+        } catch (e) { debugPrint('send-rejection-email error: $e'); }
+      }
+      if (mounted) { Navigator.pop(context); widget.onRejected(); }
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Errore: $e'), backgroundColor: Colors.red));
+    } finally {
+      if (mounted) setState(() => _sending = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: AppColors.background,
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            const Text('Perché rifiuti la prenotazione?',
+                style: TextStyle(color: AppColors.textPrimary, fontSize: 22, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 12),
+            const Text('Invia un messaggio all\'ospite o utilizza uno dei nostri messaggi standard in base al motivo.',
+                style: TextStyle(color: AppColors.textSecondary, fontSize: 15)),
+            const SizedBox(height: 32),
+            // Dropdown Motivo
+            Container(
+              decoration: BoxDecoration(
+                border: Border.all(color: const Color(0xFF2E7D52), width: 1.5),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                const Padding(
+                  padding: EdgeInsets.fromLTRB(12, 8, 12, 0),
+                  child: Text('Motivo', style: TextStyle(color: Color(0xFF2E7D52), fontSize: 12, fontWeight: FontWeight.w600)),
+                ),
+                DropdownButton<String>(
+                  value: _selectedMotivo,
+                  isExpanded: true,
+                  underline: const SizedBox(),
+                  dropdownColor: AppColors.surface,
+                  padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
+                  items: _motivi.map((m) => DropdownMenuItem(
+                    value: m.$1,
+                    child: Text(m.$1, style: const TextStyle(color: AppColors.textPrimary, fontSize: 16)),
+                  )).toList(),
+                  onChanged: _onMotivoChanged,
+                ),
+              ]),
+            ),
+            const SizedBox(height: 16),
+            // Messaggio editabile
+            Container(
+              decoration: BoxDecoration(
+                border: Border.all(color: AppColors.divider),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                const Padding(
+                  padding: EdgeInsets.fromLTRB(12, 8, 12, 0),
+                  child: Text('Messaggio all\'utente', style: TextStyle(color: AppColors.textSecondary, fontSize: 12)),
+                ),
+                TextField(
+                  controller: _msgCtrl,
+                  maxLines: 4,
+                  style: const TextStyle(color: AppColors.textPrimary, fontSize: 15),
+                  decoration: const InputDecoration(
+                    border: InputBorder.none,
+                    contentPadding: EdgeInsets.fromLTRB(12, 4, 12, 12),
+                  ),
+                ),
+              ]),
+            ),
+            const Spacer(),
+            Row(children: [
+              ElevatedButton.icon(
+                onPressed: _sending ? null : _confirm,
+                icon: const Icon(Icons.thumb_down, size: 18),
+                label: const Text('Rifiuta', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF2E7D52),
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                ),
+              ),
+              const SizedBox(width: 16),
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Annulla', style: TextStyle(color: AppColors.textSecondary, fontSize: 16)),
+              ),
+            ]),
+          ]),
+        ),
+      ),
+    );
   }
 }
