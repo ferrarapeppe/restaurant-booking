@@ -619,6 +619,40 @@ async function submitBooking() {
 
     const bookingId = newBooking?.id || null;
 
+    // Auto-assegna tavolo libero nella zona scelta
+    if (bookingId && state.area) {
+      try {
+        const timeStart = state.time + ':00';
+        const timeEnd = calcEndTime(state.time) + ':00';
+
+        const { data: tables } = await db.from('tables')
+          .select('id, name, capacity')
+          .eq('area_id', state.area)
+          .gte('capacity', state.persons)
+          .order('capacity');
+
+        if (tables && tables.length > 0) {
+          for (const table of tables) {
+            const { data: conflicts } = await db.from('bookings')
+              .select('id')
+              .eq('table_id', table.id)
+              .eq('date', dateStr)
+              .not('status', 'in', '(canceled,no_show)')
+              .lt('time_start', timeEnd)
+              .gt('time_end', timeStart)
+              .limit(1);
+
+            if (!conflicts || conflicts.length === 0) {
+              await db.from('bookings').update({ table_id: table.id }).eq('id', bookingId);
+              break;
+            }
+          }
+        }
+      } catch (tableErr) {
+        console.warn('Auto-assegnazione tavolo fallita:', tableErr);
+      }
+    }
+
     // Invia email di conferma al cliente (se ha fornito email)
     if (email) {
       try {
