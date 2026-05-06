@@ -62,7 +62,7 @@ Deno.serve(async (req) => {
       },
     });
 
-    const subject = `Il tuo tavolo è confermato (${persons} ${persons === 1 ? 'persona' : 'persone'}, ${dateSubject} ${timeShort})`;
+    const subject = `Conferma della prenotazione (${persons} ${persons === 1 ? 'persona' : 'persone'}, ${dateSubject} ${timeShort})`;
 
     await transporter.sendMail({
       from: `${restName} <${smtpUser}>`,
@@ -108,6 +108,7 @@ function row(label: string, value: string): string {
 const GAP = `<tr><td colspan="2" style="height:8px;border-bottom:1px solid #eee;"></td></tr>`;
 
 function buildHtml(d: D): string {
+  const mapsUrl = `https://maps.google.com/?q=${encodeURIComponent(d.restAddress + ', ' + d.restCity)}`;
   return `<!DOCTYPE html>
 <html lang="it">
 <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
@@ -126,11 +127,22 @@ function buildHtml(d: D): string {
   <!-- Body -->
   <tr>
     <td style="background:white;padding:40px 40px 24px;">
-      <h2 style="color:#1a1a2e;font-size:20px;font-weight:700;margin:0 0 8px;">Il tuo tavolo è confermato!</h2>
-      <p style="color:#1a1a2e;font-size:15px;font-weight:700;margin:0 0 24px;">Gentile cliente, ti aspettiamo!</p>
+      <h2 style="color:#1a1a2e;font-size:20px;font-weight:700;margin:0 0 12px;">Conferma della prenotazione</h2>
+      <p style="color:#555;font-size:14px;line-height:1.7;margin:0 0 8px;">
+        Abbiamo accettato la tua richiesta di prenotazione e non vediamo l'ora di servirti.
+      </p>
+      <p style="color:#555;font-size:14px;line-height:1.7;margin:0 0 24px;">
+        Ti preghiamo di <a href="${d.statusUrl}" style="color:#3b4cc0;">visualizzare la tua prenotazione</a> per contattarci o se devi annullarla.
+      </p>
+
+      <!-- Banner turno -->
+      <div style="background:#fff8e1;border-left:4px solid #e6a817;padding:12px 16px;border-radius:4px;margin-bottom:28px;">
+        <p style="color:#b8860b;font-size:13px;font-weight:700;margin:0;letter-spacing:0.5px;">
+          PRENOTAZIONI VALIDE SOLO PER PRENOTAZIONE CENA
+        </p>
+      </div>
 
       <table width="100%" cellpadding="0" cellspacing="0" style="border-top:1px solid #eee;">
-        ${row('Tavolo', d.tableName)}
         ${row('Data', d.dateFormatted)}
         ${row('Tempo', `${d.time} - ${d.endTime} (2:00 ore)`)}
         ${d.area ? row('La zona', d.area) : ''}
@@ -153,19 +165,30 @@ function buildHtml(d: D): string {
     </td>
   </tr>
 
+  <!-- Orario limite -->
+  <tr>
+    <td style="background:white;padding:0 40px 24px;">
+      <p style="color:#e6a817;font-size:13px;line-height:1.6;margin:0;">
+        Orario limite: Il tavolo sarà tenuto per un massimo di 15:30 minuti oltre l'orario prenotato, dopodiché la prenotazione verrà annullata.
+      </p>
+    </td>
+  </tr>
+
   <!-- Footer -->
   <tr>
     <td style="background:white;padding:24px 40px 36px;border-radius:0 0 8px 8px;">
       <div style="border-top:1px solid #eee;padding-top:24px;">
         <p style="color:#555;font-size:13px;margin:0 0 2px;">Distinti saluti</p>
-        <p style="color:#1a1a2e;font-size:13px;font-weight:700;margin:0 0 24px;">${d.restName}</p>
+        <p style="color:#1a1a2e;font-size:13px;font-weight:700;margin:0 0 28px;">${d.restName}</p>
         <p style="color:#bbb;font-size:11px;text-align:center;margin:0 0 2px;">${d.restName}</p>
         <p style="color:#bbb;font-size:11px;text-align:center;margin:0 0 2px;">${d.restAddress}</p>
-        <p style="color:#bbb;font-size:11px;text-align:center;margin:0 0 8px;">${d.restCity}</p>
-        <p style="color:#bbb;font-size:11px;text-align:center;margin:0;">
-          <a href="tel:${d.restPhone}" style="color:#bbb;text-decoration:none;">${d.restPhone}</a>
-          &nbsp;&nbsp;·&nbsp;&nbsp;
-          <a href="mailto:${d.restContactEmail}" style="color:#bbb;text-decoration:none;">${d.restContactEmail}</a>
+        <p style="color:#bbb;font-size:11px;text-align:center;margin:0 0 10px;">${d.restCity}</p>
+        <p style="font-size:11px;text-align:center;margin:0 0 6px;">
+          <a href="${mapsUrl}" style="color:#888;text-decoration:underline;">Mostra sulla mappa</a>
+          &nbsp;&nbsp;
+          <a href="tel:${d.restPhone}" style="color:#888;text-decoration:underline;">${d.restPhone}</a>
+          &nbsp;&nbsp;
+          <a href="mailto:${d.restContactEmail}" style="color:#888;text-decoration:underline;">${d.restContactEmail}</a>
         </p>
       </div>
     </td>
