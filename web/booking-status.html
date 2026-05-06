@@ -90,6 +90,10 @@
     .loading { text-align: center; padding: 60px; color: #888; font-size: 16px; }
     .error { text-align: center; padding: 60px; color: #dc3545; }
 
+    .page-header { margin-bottom: 24px; }
+    .page-header h2 { font-size: 26px; color: #1a1a2e; font-weight: 700; margin-bottom: 8px; }
+    .page-header p { color: #555; font-size: 14px; line-height: 1.6; }
+
     footer {
       text-align: center; padding: 32px 16px;
       font-size: 12px; color: #999; line-height: 1.8;
@@ -109,7 +113,8 @@
 
 <footer id="footer">
   <p>Hio Oriental Bar</p>
-  <p>Via Giuseppe Mazzini 5, 90139 Palermo</p>
+  <p>Via Giuseppe Mazzini 5</p>
+  <p>90139 Palermo</p>
 </footer>
 
 <script>
@@ -172,7 +177,7 @@ async function load() {
   const { data: rest } = await db.from('restaurants').select('name, address, city').eq('id', b.restaurant_id).single();
   if (rest) {
     document.getElementById('rest-name').textContent = rest.name;
-    document.getElementById('footer').innerHTML = `<p>${rest.name}</p><p>${[rest.address, rest.city].filter(Boolean).join(', ')}</p>`;
+    document.getElementById('footer').innerHTML = [rest.name, rest.address, rest.city].filter(Boolean).map(l => `<p>${l}</p>`).join('');
   }
 
   // Parsing internal_notes per turno e area
@@ -208,12 +213,24 @@ async function load() {
   }
   msgs.push(`<div class="msg-status">Stato: <strong>${si.label}</strong></div>`);
 
+  const pageHeaders = {
+    pending:  { title: 'Grazie per la vostra richiesta',  sub: 'Abbiamo ricevuto correttamente la tua richiesta e ti risponderemo il prima possibile.' },
+    approved: { title: 'Prenotazione confermata',         sub: 'La tua prenotazione è stata accettata. Non vediamo l\'ora di accoglierti!' },
+    seated:   { title: 'Benvenuto!',                      sub: 'Buon appetito e buona serata da tutto il nostro staff.' },
+    canceled: { title: 'Prenotazione annullata',          sub: 'La tua prenotazione non è stata confermata. Contattaci per maggiori informazioni.' },
+    no_show:  { title: 'Prenotazione annullata',          sub: 'La tua prenotazione è stata annullata per mancata presentazione.' },
+    left:     { title: 'Grazie per la visita',            sub: 'Speriamo di rivederti presto!' },
+  };
+  const ph = pageHeaders[b.status] || { title: 'La tua prenotazione', sub: '' };
+
   document.getElementById('main').innerHTML = `
+    <div class="page-header">
+      <h2>${ph.title}</h2>
+      ${ph.sub ? `<p>${ph.sub}</p>` : ''}
+    </div>
     <div class="grid">
       <!-- Dettagli prenotazione -->
       <div class="card">
-        <h2>La Tua Prenotazione</h2>
-
         <div class="detail-row">
           <span class="detail-label">Stato</span>
           <span class="detail-value">
@@ -252,15 +269,51 @@ async function load() {
       <!-- Messaggi -->
       <div class="card">
         <h2>Messaggi</h2>
-        <div class="messages">
-          ${msgs.length ? msgs.join('') : '<p style="color:#aaa;font-size:13px;">Nessun messaggio.</p>'}
+        <div class="messages" id="msg-list">
+          ${msgs.length ? msgs.join('') : ''}
+        </div>
+        <div style="margin-top:16px;">
+          <textarea id="msg-input" placeholder="Messaggio al Ristorante"
+            style="width:100%;border:1px solid #ddd;border-radius:6px;padding:12px;font-size:14px;resize:vertical;min-height:80px;font-family:inherit;"></textarea>
+          <button id="msg-send"
+            style="margin-top:8px;width:100%;background:#3b4cc0;color:white;border:none;border-radius:6px;padding:12px;font-size:14px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;">
+            &#9658; Invia messaggio
+          </button>
         </div>
       </div>
     </div>
   `;
+
+  document.getElementById('msg-send')?.addEventListener('click', () => sendMessage(b.id, nome));
 }
 
 load();
+
+async function sendMessage(bookingId, guestName) {
+  const input = document.getElementById('msg-input');
+  const btn = document.getElementById('msg-send');
+  const text = input?.value?.trim();
+  if (!text) return;
+  btn.disabled = true;
+  btn.textContent = 'Invio...';
+  try {
+    await db.from('booking_messages').insert({
+      booking_id: bookingId,
+      sender: 'guest',
+      message: text,
+    });
+    const list = document.getElementById('msg-list');
+    if (list) {
+      list.innerHTML += `<div class="msg-bubble client">${text}</div>`;
+    }
+    input.value = '';
+  } catch(e) {
+    alert('Errore invio messaggio: ' + e.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '▶ Invia messaggio';
+  }
+}
 </script>
 </body>
 </html>

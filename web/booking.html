@@ -773,8 +773,12 @@ async function submitBooking() {
       }
     }
 
-    state.step = 5;
-    renderStep();
+    if (bookingId) {
+      window.location.href = 'booking-status.html?id=' + bookingId;
+    } else {
+      state.step = 5;
+      renderStep();
+    }
   } catch(e) {
     alert('Errore durante la prenotazione: ' + e.message);
     btn.disabled = false;
