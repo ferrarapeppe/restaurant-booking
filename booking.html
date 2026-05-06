@@ -639,6 +639,10 @@ async function submitBooking() {
             turno: turnoVal || '',
             area: areaName || '',
             restaurantName: state.restaurant?.name || 'Hio Oriental Bar',
+            restaurantAddress: state.restaurant?.address || '',
+            restaurantCity: [state.restaurant?.zip_code, state.restaurant?.city].filter(Boolean).join(' ') || '',
+            restaurantPhone: state.restaurant?.phone || '',
+            restaurantEmail: state.restaurant?.email || '',
             bookingId,
           }),
         });
