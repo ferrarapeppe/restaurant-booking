@@ -275,7 +275,7 @@ class _ScheduleTabState extends ConsumerState<_ScheduleTab> {
       case 'seated':
         return const Color(0xFF2E7D52);
       case 'pending':
-        return const Color(0xFFE65100);
+        return const Color(0xFFFFC107);
       case 'walkin':
         return const Color(0xFF007BFF);
       default:

@@ -23,7 +23,7 @@ class BookingRepository {
     final endDate = '$year-${month.toString().padLeft(2, '0')}-${lastDay.toString().padLeft(2, '0')}';
     final response = await _client
         .from('bookings')
-        .select('date, party_size')
+        .select('date, party_size, status')
         .eq('restaurant_id', _restaurantId)
         .gte('date', startDate)
         .lte('date', endDate);
@@ -31,9 +31,12 @@ class BookingRepository {
     final Map<String, Map<String, int>> counts = {};
     for (final row in response as List) {
       final d = row['date'] as String;
-      counts[d] ??= {'prenotazioni': 0, 'ospiti': 0};
+      counts[d] ??= {'prenotazioni': 0, 'ospiti': 0, 'pending': 0};
       counts[d]!['prenotazioni'] = (counts[d]?['prenotazioni'] ?? 0) + 1;
       counts[d]!['ospiti'] = (counts[d]?['ospiti'] ?? 0) + ((row['party_size'] as int?) ?? 0);
+      if (row['status'] == 'pending') {
+        counts[d]!['pending'] = (counts[d]?['pending'] ?? 0) + 1;
+      }
     }
     return counts;
   }

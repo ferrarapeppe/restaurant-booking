@@ -100,7 +100,7 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
     switch (status) {
       case 'approved': return const Color(0xFFFFC107);
       case 'seated': return const Color(0xFF2E7D52);
-      case 'pending': return const Color(0xFFE65100);
+      case 'pending': return const Color(0xFFFFC107);
       case 'canceled': return Colors.red;
       case 'no_show': return Colors.grey;
       default: return Colors.grey;
@@ -704,6 +704,7 @@ class _BookingDetailSheetState extends State<BookingDetailSheet>
                 onPressed: () async {
                   final supabase = Supabase.instance.client;
                   await supabase.from('bookings').update({'status': 'approved'}).eq('id', widget.booking['id']);
+                  sendTableAssignedEmail(widget.booking, widget.booking['tables'] as Map<String, dynamic>? ?? {});
                   if (!context.mounted) return;
                   Navigator.pop(context);
                   widget.onSaved();

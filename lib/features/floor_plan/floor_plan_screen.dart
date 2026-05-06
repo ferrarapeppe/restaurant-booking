@@ -940,7 +940,7 @@ class _TableDetailSheetState extends State<_TableDetailSheet>
     switch (_editStatus) {
       case 'approved': return const Color(0xFF2E7D52);
       case 'seated': return const Color(0xFF1565C0);
-      case 'pending': return const Color(0xFFE65100);
+      case 'pending': return const Color(0xFFFFC107);
       default: return Colors.grey;
     }
   }
