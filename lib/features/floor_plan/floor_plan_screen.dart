@@ -1711,15 +1711,17 @@ extension FloorPlanPending on _FloorPlanScreenState {
                       }).eq('id', booking['id']);
                       final guestId = booking['guest_id'];
                       if (guestId != null) {
-                        await _supabase.rpc('increment_visits_count', params: {'guest_id': guestId});
+                        try {
+                          await _supabase.rpc('increment_visits_count', params: {'guest_id': guestId});
+                        } catch (e) {
+                          debugPrint('increment_visits_count error: $e');
+                        }
                       }
+                      _sendTableAssignedEmail(booking, t);
                       if (!mounted) return;
                       ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text('Tavolo ${t['name']} assegnato!'),
-                        ),
+                        SnackBar(content: Text('Tavolo ${t['name']} assegnato!')),
                       );
-                      _sendTableAssignedEmail(booking, t);
                       _loadData();
                     },
                     child: Container(
