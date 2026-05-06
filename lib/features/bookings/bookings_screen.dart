@@ -225,13 +225,13 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
         const Divider(height: 1, color: AppColors.divider),
         Container(
           color: AppColors.surface,
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 8),
           child: const Row(children: [
-            SizedBox(width: 56, child: Text('Ora', style: TextStyle(color: AppColors.textSecondary, fontSize: 12))),
-            Expanded(child: Text('Nome', style: TextStyle(color: AppColors.textSecondary, fontSize: 12))),
-            SizedBox(width: 32, child: Text('P', style: TextStyle(color: AppColors.textSecondary, fontSize: 12))),
-            SizedBox(width: 80, child: Text('Tavolo/i', style: TextStyle(color: AppColors.textSecondary, fontSize: 12))),
-            SizedBox(width: 40),
+            SizedBox(width: 72, child: Padding(padding: EdgeInsets.only(left: 8), child: Text('Ora', style: TextStyle(color: AppColors.textSecondary, fontSize: 12)))),
+            Expanded(child: Padding(padding: EdgeInsets.only(left: 12), child: Text('Nome', style: TextStyle(color: AppColors.textSecondary, fontSize: 12)))),
+            SizedBox(width: 36, child: Center(child: Text('P', style: TextStyle(color: AppColors.textSecondary, fontSize: 12)))),
+            SizedBox(width: 86, child: Padding(padding: EdgeInsets.only(left: 4), child: Text('Tavolo/i', style: TextStyle(color: AppColors.textSecondary, fontSize: 12)))),
+            SizedBox(width: 70, child: Center(child: Text('Stato', style: TextStyle(color: AppColors.textSecondary, fontSize: 12)))),
           ]),
         ),
         const Divider(height: 1, color: AppColors.divider),
@@ -255,6 +255,17 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
                           booking: b,
                           guestName: _guestName(b),
                           onTap: () => _showBookingDetail(context, b),
+                          onStatusChange: (newStatus) async {
+                            await _supabase.from('bookings')
+                                .update({'status': newStatus}).eq('id', b['id']);
+                            _loadBookings();
+                          },
+                          onReject: () => Navigator.push(context, MaterialPageRoute(
+                            builder: (_) => RejectionScreen(
+                              booking: b,
+                              onRejected: _loadBookings,
+                            ),
+                          )),
                         );
                       },
                     ),
@@ -312,16 +323,43 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
   }
 
 }
+// ── Status menu items ─────────────────────────────────────────────────────────
+const _kStatusChoices = [
+  ('pending',   'Richiesta',          Icons.help_outline),
+  ('approved',  'Accettato',          Icons.thumb_up_outlined),
+  ('seated',    'Accomodato',         Icons.chair_outlined),
+  ('left',      'Se ne è andato',     Icons.done_all),
+  ('no_show',   'No-show',            Icons.block_outlined),
+  ('canceled',  'Annullato',          Icons.close),
+  ('rejected',  'Rifiuta (con email)',Icons.thumb_down_outlined),
+];
+
+Color _statusDotColor(String status) {
+  switch (status) {
+    case 'approved': return const Color(0xFFFFC107);
+    case 'seated':   return const Color(0xFF2E7D52);
+    case 'left':     return Colors.grey;
+    case 'canceled':
+    case 'no_show':  return Colors.red;
+    case 'pending':  return const Color(0xFFFFC107);
+    default:         return AppColors.textMuted;
+  }
+}
+
 // ── Booking Row ───────────────────────────────────────────────────────────────
 class _BookingRow extends StatelessWidget {
   final Map<String, dynamic> booking;
   final String guestName;
   final VoidCallback onTap;
+  final Future<void> Function(String)? onStatusChange;
+  final VoidCallback? onReject;
 
   const _BookingRow({
     required this.booking,
     required this.guestName,
     required this.onTap,
+    this.onStatusChange,
+    this.onReject,
   });
 
   @override
@@ -442,30 +480,69 @@ class _BookingRow extends StatelessWidget {
                               color: AppColors.textMuted, fontSize: 14))),
             ),
           ),
-          // Status dots
+          // Stato — tappable popup
           SizedBox(
-            width: 40,
-            child: Center(
-              child: Row(mainAxisSize: MainAxisSize.min, children: [
-                if (isPending) ...[
-                  Container(
-                      width: 10,
-                      height: 10,
-                      decoration: const BoxDecoration(
-                          color: Colors.red, shape: BoxShape.circle)),
-                  const SizedBox(width: 3),
-                ],
-                Container(
-                  width: 10,
-                  height: 10,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: status == 'seated'
-                        ? const Color(0xFF2E7D52)
-                        : const Color(0xFFFFC107),
+            width: 70,
+            child: PopupMenuButton<String>(
+              color: AppColors.surface,
+              padding: EdgeInsets.zero,
+              onSelected: (value) {
+                if (value == 'rejected') {
+                  onReject?.call();
+                } else {
+                  onStatusChange?.call(value);
+                }
+              },
+              itemBuilder: (_) => _kStatusChoices.map((choice) {
+                final isCurrent = choice.$1 == status ||
+                    (choice.$1 == 'rejected' && status == 'canceled');
+                return PopupMenuItem<String>(
+                  value: choice.$1 == 'rejected' ? 'rejected' : choice.$1,
+                  child: Container(
+                    color: isCurrent
+                        ? AppColors.accent.withValues(alpha: 0.15)
+                        : Colors.transparent,
+                    padding: const EdgeInsets.symmetric(vertical: 2),
+                    child: Row(children: [
+                      Icon(choice.$3,
+                          size: 18,
+                          color: isCurrent
+                              ? AppColors.accent
+                              : AppColors.textPrimary),
+                      const SizedBox(width: 10),
+                      Text(choice.$2,
+                          style: TextStyle(
+                              color: isCurrent
+                                  ? AppColors.accent
+                                  : AppColors.textPrimary,
+                              fontSize: 14,
+                              fontWeight: isCurrent
+                                  ? FontWeight.bold
+                                  : FontWeight.normal)),
+                    ]),
                   ),
-                ),
-              ]),
+                );
+              }).toList(),
+              child: Center(
+                child: Row(mainAxisSize: MainAxisSize.min, children: [
+                  if (isPending) ...[
+                    Container(
+                        width: 10, height: 10,
+                        decoration: const BoxDecoration(
+                            color: Colors.red, shape: BoxShape.circle)),
+                    const SizedBox(width: 3),
+                  ],
+                  Container(
+                    width: 10, height: 10,
+                    decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: _statusDotColor(status)),
+                  ),
+                  const SizedBox(width: 2),
+                  const Icon(Icons.arrow_drop_down,
+                      size: 14, color: AppColors.textMuted),
+                ]),
+              ),
             ),
           ),
         ]),
