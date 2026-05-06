@@ -30,7 +30,7 @@ const RESOURCES = {"assets/assets/images/logo_appbar.png": "8fac0dbd9740e6a07e32
 "canvaskit/canvaskit.js": "26eef3024dbc64886b7f48e1b6fb05cf",
 "canvaskit/skwasm.js": "ac0f73826b925320a1e9b0d3fd7da61c",
 "flutter.js": "4b2350e14c6650ba82871f60906437ea",
-"flutter_bootstrap.js": "a96382471e0f5510f76007078e1c04b0",
+"flutter_bootstrap.js": "2ff0181ac0809fd95cf7275a2cc8d235",
 "main.dart.js": "c6bc7d7994757bff46b2321904153991",
 "version.json": "dca05162d8cc58448747c8e00c237df8",
 "booking-status.html": "34977d5d437c5f5c50f823cd86bc2b6b",
