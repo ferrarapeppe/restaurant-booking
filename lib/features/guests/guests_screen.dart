@@ -211,7 +211,16 @@ class _GuestCard extends StatelessWidget {
                         const Icon(Icons.phone_outlined, size: 13, color: AppColors.textSecondary),
                         const SizedBox(width: 3),
                         Text(guest.phone!, style: const TextStyle(color: AppColors.textSecondary, fontSize: 13)),
-                        const SizedBox(width: 10),
+                        const SizedBox(width: 6),
+                        GestureDetector(
+                          onTap: () => launchUrl(Uri.parse(_waUrl(guest.phone!)), mode: LaunchMode.externalApplication),
+                          child: Container(
+                            padding: const EdgeInsets.all(3),
+                            decoration: BoxDecoration(color: const Color(0xFF25D366), borderRadius: BorderRadius.circular(5)),
+                            child: const Icon(Icons.chat, size: 11, color: Colors.white),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
                       ],
                       if (guest.email != null) ...[
                         const Icon(Icons.email_outlined, size: 13, color: AppColors.textSecondary),
@@ -852,15 +861,15 @@ class _InfoCard extends StatelessWidget {
   }
 }
 
+String _waUrl(String phone) {
+  final digits = phone.replaceAll(RegExp(r'[^\d+]'), '');
+  final normalized = digits.startsWith('+') ? digits.substring(1) : digits.startsWith('0') ? digits.substring(1) : digits.length == 10 ? '39$digits' : digits;
+  return 'https://wa.me/$normalized';
+}
+
 class _PhoneRow extends StatelessWidget {
   final String phone;
   const _PhoneRow({required this.phone});
-
-  String _waUrl(String phone) {
-    final digits = phone.replaceAll(RegExp(r'[^\d+]'), '');
-    final normalized = digits.startsWith('+') ? digits.substring(1) : digits.startsWith('0') ? digits.substring(1) : digits.length == 10 ? '39$digits' : digits;
-    return 'https://wa.me/$normalized';
-  }
 
   @override
   Widget build(BuildContext context) {
