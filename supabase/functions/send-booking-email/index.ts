@@ -66,8 +66,8 @@ Deno.serve(async (req) => {
       restName, restAddress, restCity, restPhone, restContactEmail, statusUrl,
     };
 
-    // Email 1 — Conferma della prenotazione (al cliente + notifica al ristorante)
-    const email1Subject = `Conferma della prenotazione (${persons} ${persons === 1 ? 'persona' : 'persone'}, ${dateSubject} ${time})`;
+    // Email 1 — Richiesta di prenotazione ricevuta (al cliente + notifica al ristorante)
+    const email1Subject = `Richiesta di prenotazione ricevuta (${persons} ${persons === 1 ? 'persona' : 'persone'}, ${dateSubject} ${time})`;
     const email1Html = buildEmail1Html(data);
     await transporter.sendMail({
       from: `${restName} <${smtpUser}>`,
@@ -143,18 +143,25 @@ function header(restName: string): string {
 }
 
 function footer(d: EmailData): string {
+  const mapsUrl = `https://maps.google.com/?q=${encodeURIComponent(d.restAddress + ', ' + d.restCity)}`;
+  const siteUrl = `https://ferrarapeppe.github.io/restaurant-booking/booking.html`;
   return `<tr>
     <td style="background:white;padding:24px 40px 36px;border-radius:0 0 8px 8px;">
       <div style="border-top:1px solid #eee;padding-top:24px;">
         <p style="color:#555;font-size:13px;margin:0 0 2px;">Distinti saluti</p>
-        <p style="color:#1a1a2e;font-size:13px;font-weight:700;margin:0 0 24px;">${d.restName}</p>
+        <p style="color:#1a1a2e;font-size:13px;font-weight:700;margin:0 0 28px;">${d.restName}</p>
         <p style="color:#bbb;font-size:11px;text-align:center;margin:0 0 2px;">${d.restName}</p>
         <p style="color:#bbb;font-size:11px;text-align:center;margin:0 0 2px;">${d.restAddress}</p>
-        <p style="color:#bbb;font-size:11px;text-align:center;margin:0 0 8px;">${d.restCity}</p>
-        <p style="color:#bbb;font-size:11px;text-align:center;margin:0;">
-          <a href="tel:${d.restPhone}" style="color:#bbb;text-decoration:none;">${d.restPhone}</a>
-          &nbsp;&nbsp;·&nbsp;&nbsp;
-          <a href="mailto:${d.restContactEmail}" style="color:#bbb;text-decoration:none;">${d.restContactEmail}</a>
+        <p style="color:#bbb;font-size:11px;text-align:center;margin:0 0 10px;">${d.restCity}</p>
+        <p style="font-size:11px;text-align:center;margin:0 0 6px;">
+          <a href="${mapsUrl}" style="color:#888;text-decoration:underline;">Mostra sulla mappa</a>
+          &nbsp;&nbsp;
+          <a href="tel:${d.restPhone}" style="color:#888;text-decoration:underline;">${d.restPhone}</a>
+          &nbsp;&nbsp;
+          <a href="mailto:${d.restContactEmail}" style="color:#888;text-decoration:underline;">${d.restContactEmail}</a>
+        </p>
+        <p style="font-size:11px;text-align:center;margin:0;">
+          <a href="${siteUrl}" style="color:#888;text-decoration:underline;">Sito web</a>
         </p>
       </div>
     </td>
@@ -183,10 +190,10 @@ function wrap(restName: string, body: string): string {
 function buildEmail1Html(d: EmailData): string {
   const body = `<tr>
     <td style="background:white;padding:40px 40px 24px;">
-      <h2 style="color:#1a1a2e;font-size:20px;font-weight:700;margin:0 0 12px;">Conferma della prenotazione</h2>
-      <p style="color:#555;font-size:14px;line-height:1.7;margin:0 0 28px;">
-        Abbiamo accettato la tua richiesta di prenotazione e non vediamo l'ora di servirti.<br>
-        Ti preghiamo di <a href="${d.statusUrl}" style="color:#3b4cc0;">visualizzare la tua prenotazione</a> per contattarci o se devi annullarla.
+      <h2 style="color:#1a1a2e;font-size:20px;font-weight:700;margin:0 0 12px;">Richiesta di prenotazione ricevuta</h2>
+      <p style="color:#c0392b;font-size:14px;line-height:1.7;margin:0 0 28px;">
+        Grazie per la tua richiesta di prenotazione, ti risponderemo il prima possibile.
+        Tieni presente che <strong>questa non è una conferma della tua prenotazione</strong>.
       </p>
       ${detailsTable(d)}
       <div style="text-align:center;margin:36px 0 0;">
