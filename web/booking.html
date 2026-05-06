@@ -570,9 +570,10 @@ async function submitBooking() {
     // Crea o trova guest
     let guestId = null;
     if (email || phone) {
-      const query = db.from('guests').select('id');
-      if (email) query.eq('email', email);
-      const { data: existing } = await query.eq('restaurant_id', RESTAURANT_ID).limit(1);
+      let query = db.from('guests').select('id').eq('restaurant_id', RESTAURANT_ID);
+      if (email) query = query.eq('email', email);
+      else query = query.eq('phone', phone);
+      const { data: existing } = await query.limit(1);
       if (existing && existing.length > 0) {
         guestId = existing[0].id;
         await db.from('guests').update({
