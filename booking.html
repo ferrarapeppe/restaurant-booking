@@ -196,6 +196,34 @@
     }
     .checkbox-row input { accent-color: #3b4cc0; width: 18px; height: 18px; }
     .checkbox-row a { color: #3b4cc0; }
+    /* Modal */
+    .modal-overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,0.45); z-index: 1000;
+      align-items: center; justify-content: center;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal-box {
+      background: white; border-radius: 12px;
+      max-width: 480px; width: 92%; padding: 28px 24px 20px;
+      max-height: 80vh; overflow-y: auto;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+    }
+    .modal-box h3 { font-size: 18px; color: #1a1a2e; margin-bottom: 16px; }
+    .modal-box p { font-size: 14px; color: #444; line-height: 1.6; margin-bottom: 14px; }
+    .modal-footer {
+      display: flex; justify-content: flex-end; gap: 12px; margin-top: 8px;
+    }
+    .btn-modal-close {
+      padding: 10px 20px; border: none; border-radius: 6px;
+      background: #f0f0f0; color: #333; font-size: 14px;
+      font-weight: 600; cursor: pointer;
+    }
+    .btn-modal-accept {
+      padding: 10px 20px; border: none; border-radius: 6px;
+      background: #3b4cc0; color: white; font-size: 14px;
+      font-weight: 600; cursor: pointer;
+    }
     /* Bottoni */
     .btn-primary {
       width: 100%; padding: 15px;
@@ -244,6 +272,21 @@
 <footer>
   <p>Hio Oriental Bar · <a href="#" id="footer-address">Via Giuseppe Mazzini 5, Palermo</a></p>
 </footer>
+
+<!-- Modale Termini e Condizioni -->
+<div class="modal-overlay" id="terms-modal">
+  <div class="modal-box">
+    <h3>Termini e Condizioni di Prenotazione</h3>
+    <p>Se non sei in grado di soddisfare la tua prenotazione, sei obbligato a cancellarla il prima possibile utilizzando il link di prenotazione che ti invieremo dopo aver completato la prenotazione o contattandoci telefonicamente (grazie).</p>
+    <p>Accetti che Hio Oriental Bar e i suoi fornitori raccolgano, memorizzino ed elaborino i tuoi dati personali e i dati raccolti automaticamente quando effettui questa prenotazione. I dati vengono raccolti anche durante la comunicazione e la visita al ristorante.</p>
+    <p>Questi dati includono, ma non sono limitati a: nome, indirizzo e-mail, numero di telefono, altri dati forniti tramite il modulo, posizione e dispositivo specifiche.</p>
+    <p>In base alla legge europea GDPR puoi richiedere una copia dei dati che abbiamo raccolto, inviando un'e-mail a <a href="mailto:hi@hiosrl.com" style="color:#3b4cc0">hi@hiosrl.com</a>.</p>
+    <div class="modal-footer">
+      <button class="btn-modal-close" id="terms-vicino">Vicino</button>
+      <button class="btn-modal-accept" id="terms-accetta">Accetta</button>
+    </div>
+  </div>
+</div>
 
 <script>
 const SUPABASE_URL = 'https://jxdnldyabhzmfnterzil.supabase.co';
@@ -429,31 +472,47 @@ function renderStep3() {
 function renderStep4() {
   const rules = state.restaurant?.booking_rules || '';
   let html = '<div class="step-title">Le tue informazioni di contatto</div>';
-  html += '<div class="form-group"><label>Nome *</label><input id="f-nome" type="text" placeholder="Il tuo nome" required></div>';
-  html += '<div class="form-group"><label>Cognome *</label><input id="f-cognome" type="text" placeholder="Il tuo cognome" required></div>';
+
+  // Nome
+  html += '<div class="form-group"><label>Nome</label><input id="f-nome" type="text" placeholder="Il tuo nome" required></div>';
+
+  // E-mail
   html += '<div class="form-group"><label>E-mail</label><input id="f-email" type="email" placeholder="La tua email"></div>';
-  html += '<div class="form-group"><label>Cellulare *</label>';
-  html += '<input id="f-phone" type="tel" placeholder="Numero di cellulare" required>';
-  html += '</div>';
+
+  // Telefono con prefisso nazione
+  html += '<div class="form-group"><label>Telefono</label><div class="phone-row">';
+  html += '<select class="phone-prefix" id="f-prefix">';
+  html += '<option value="+39">Italy (+39)</option>';
+  html += '<option value="+1">USA (+1)</option>';
+  html += '<option value="+44">UK (+44)</option>';
+  html += '<option value="+33">France (+33)</option>';
+  html += '<option value="+49">Germany (+49)</option>';
+  html += '<option value="+34">Spain (+34)</option>';
+  html += '<option value="+41">Switzerland (+41)</option>';
+  html += '<option value="+32">Belgium (+32)</option>';
+  html += '<option value="+31">Netherlands (+31)</option>';
+  html += '</select>';
+  html += '<input id="f-phone" type="tel" placeholder="Numero di telefono"></div></div>';
+
+  // Messaggio
   html += '<div class="form-group"><label>Messaggio (opzionale)</label><textarea id="f-notes" rows="3" placeholder="Allergie, occasioni speciali..."></textarea></div>';
 
-  // SCEGLI turno
-  const dow = state.date ? (state.date.getDay() + 6) % 7 : 0;
-  const hour = state.openingHours.find(h => h.day_of_week === dow);
-  if (hour && hour.title) {
-    html += '<div class="form-group"><label>SCEGLI</label>';
-    html += '<div class="radio-group">';
-    html += '<label><input type="radio" name="turno" value="aperitivo"> APERTIF/APERITIVO DALLE 18:30 ALLE 20:30</label>';
-    html += '<label><input type="radio" name="turno" value="cena" checked> DINNER/CENA 1° TURNO 20:30  2° TURNO 22:30</label>';
-    html += '</div></div>';
-  }
+  // Cognome
+  html += '<div class="form-group"><label>COGNOME</label><input id="f-cognome" type="text" placeholder="Il tuo cognome" required></div>';
 
-  if (rules) {
-    html += '<div class="form-group"><label>REGOLE DI PRENOTAZIONE</label>';
-    html += '<div class="rules-box">' + rules + '</div></div>';
-  }
+  // SCEGLI — 3 turni fissi
+  html += '<div class="form-group"><label>SCEGLI</label>';
+  html += '<div class="radio-group">';
+  html += '<label><input type="radio" name="turno" value="aperitivo"> APERTIF/APERITIVO DALLE 18:30 ALLE 20:30</label>';
+  html += '<label><input type="radio" name="turno" value="cena1"> DINNER/CENA 1° TURNO 20:30</label>';
+  html += '<label><input type="radio" name="turno" value="cena2"> DINNER/CENA 2° TURNO 22:30</label>';
+  html += '</div></div>';
 
-  html += '<div class="checkbox-row"><input type="checkbox" id="f-terms"><label for="f-terms">Accetto i <a href="#">termini e condizioni</a></label></div>';
+  // Regole di prenotazione
+  html += '<div class="form-group"><label>REGOLE DI PRENOTAZIONE</label>';
+  html += '<div class="rules-box" style="min-height:48px;">' + (rules || '') + '</div></div>';
+
+  html += '<div class="checkbox-row"><input type="checkbox" id="f-terms"><label for="f-terms">Accetto i <a href="#" id="terms-link">termini e condizioni</a></label></div>';
   html += '<button class="btn-primary" id="btn-submit" disabled>Invia Richiesta di Prenotazione ➤</button>';
   return html;
 }
@@ -540,22 +599,51 @@ function attachEvents() {
     });
   });
 
-  // Step 4 — terms checkbox
+  // Step 4 — terms checkbox e modal
   const terms = document.getElementById('f-terms');
   const submitBtn = document.getElementById('btn-submit');
+  const termsLink = document.getElementById('terms-link');
   if (terms && submitBtn) {
     terms.addEventListener('change', () => {
       submitBtn.disabled = !terms.checked;
     });
     submitBtn.addEventListener('click', submitBooking);
   }
+  if (termsLink) {
+    termsLink.addEventListener('click', (e) => {
+      e.preventDefault();
+      document.getElementById('terms-modal').classList.add('open');
+    });
+  }
+
+  // Pulsanti modale
+  const vicinoBt = document.getElementById('terms-vicino');
+  const accettaBt = document.getElementById('terms-accetta');
+  if (vicinoBt) vicinoBt.addEventListener('click', () => {
+    document.getElementById('terms-modal').classList.remove('open');
+  });
+  if (accettaBt) accettaBt.addEventListener('click', () => {
+    const cb = document.getElementById('f-terms');
+    const sb = document.getElementById('btn-submit');
+    if (cb) { cb.checked = true; }
+    if (sb) { sb.disabled = false; }
+    document.getElementById('terms-modal').classList.remove('open');
+  });
+  // Chiudi cliccando fuori dal box
+  document.getElementById('terms-modal')?.addEventListener('click', (e) => {
+    if (e.target === document.getElementById('terms-modal')) {
+      document.getElementById('terms-modal').classList.remove('open');
+    }
+  });
 }
 
 async function submitBooking() {
   const nome = document.getElementById('f-nome')?.value?.trim();
   const cognome = document.getElementById('f-cognome')?.value?.trim();
   const email = document.getElementById('f-email')?.value?.trim();
-  const phone = document.getElementById('f-phone')?.value?.trim();
+  const phoneRaw = document.getElementById('f-phone')?.value?.trim();
+  const prefix = document.getElementById('f-prefix')?.value || '+39';
+  const phone = phoneRaw ? (prefix + phoneRaw) : '';
   const notes = document.getElementById('f-notes')?.value?.trim();
 
   if (!nome) { alert('Il nome è obbligatorio'); return; }
