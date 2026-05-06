@@ -111016,7 +111016,7 @@ if(m.h(n,"date")!=null)s.push(A.V(A.eB("d MMM","it_IT").dz(A.x2(J.aW(m.h(n,"date
 n=A.a([A.bJ(A.aJ(s,B.a0,B.f,B.h),p,72),A.b8(A.cr(p,A.V(q.d,p,B.b9,p,p,B.l_,p,p,p),B.w,!1,p,p,p,p,p,p,p,p,p,p,p,p,p,p,p,p,p,p,q.r,p,p,p,p,p,p,!1,B.a9),1)],l)
 m=q.w
 s=m==null
-if(s){r=A.d6(A.al(B.d.b1(127.5),B.z.gl(0)>>>16&255,B.z.gl(0)>>>8&255,B.z.gl(0)&255),1)
+if(s&&q.x==null){r=A.d6(A.al(B.d.b1(127.5),B.z.gl(0)>>>16&255,B.z.gl(0)>>>8&255,B.z.gl(0)&255),1)
 n.push(A.bJ(A.aA(p,A.da(A.V("$partySize",p,p,p,p,B.x3,p,p,p),p,p),B.o,p,p,new A.aM(p,p,r,p,p,p,B.cN),p,26,p,p,p,p,26),p,32))}n.push(B.b1)
 r=q.x
 if(r!=null&&q.y!=null)m=A.aF(A.a([A.iZ(!1,B.apJ,p,p,B.a6,p,p,p,p,r,p,A.hy(p,p,B.ag,p,p,p,p,p,p,p,p,B.X,B.jL,p,new A.cp(A.aL(8),B.u),p,B.ky,p,p)),B.e8,A.iZ(!1,B.aqu,p,p,B.a6,p,p,p,p,q.y,p,A.hy(p,p,B.dI,p,p,p,p,p,p,p,p,B.X,B.jL,p,new A.cp(A.aL(8),B.u),p,B.ky,p,p))],l),B.n,B.f,B.aK,p)
