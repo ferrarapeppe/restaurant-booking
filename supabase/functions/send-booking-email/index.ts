@@ -66,12 +66,20 @@ Deno.serve(async (req) => {
       restName, restAddress, restCity, restPhone, restContactEmail, statusUrl,
     };
 
-    // Email 1 — Conferma della prenotazione
+    // Email 1 — Conferma della prenotazione (al cliente + notifica al ristorante)
+    const email1Subject = `Conferma della prenotazione (${persons} ${persons === 1 ? 'persona' : 'persone'}, ${dateSubject} ${time})`;
+    const email1Html = buildEmail1Html(data);
     await transporter.sendMail({
       from: `${restName} <${smtpUser}>`,
       to: email,
-      subject: `Conferma della prenotazione (${persons} ${persons === 1 ? 'persona' : 'persone'}, ${dateSubject} ${time})`,
-      html: buildEmail1Html(data),
+      subject: email1Subject,
+      html: email1Html,
+    });
+    await transporter.sendMail({
+      from: `${restName} <${smtpUser}>`,
+      to: 'prenota@hiooriental.com',
+      subject: `[NUOVA PRENOTAZIONE] ${email1Subject}`,
+      html: email1Html,
     });
 
     // Email 2 — Nuovo messaggio: Gentile cliente la aspettiamo
