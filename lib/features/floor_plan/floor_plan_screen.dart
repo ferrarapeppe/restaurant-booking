@@ -121,7 +121,7 @@ class _FloorPlanScreenState extends State<FloorPlanScreen> {
       // Carica prenotazioni pending senza tavolo
       final pendingRes = await _supabase
           .from('bookings')
-          .select('*, guests(first_name, surname, name)')
+          .select('*, guests(first_name, surname, name, phone, email)')
           .eq('restaurant_id', _restaurantId)
           .eq('date', dateStr)
           .eq('status', 'pending')
@@ -1621,6 +1621,56 @@ extension FloorPlanPending on _FloorPlanScreenState {
     );
   }
 
+  Future<void> _sendTableAssignedEmail(
+    Map<String, dynamic> booking,
+    Map<String, dynamic> table,
+  ) async {
+    final g = booking['guests'];
+    final email = g?['email'] as String?;
+    if (email == null || email.isEmpty) return;
+
+    // Parsing internal_notes per turno e area
+    String turno = '', area = '';
+    try {
+      final raw = booking['internal_notes'] as String? ?? '';
+      if (raw.startsWith('{')) {
+        final decoded = raw.replaceAll(RegExp(r'[\r\n]'), '');
+        // simple extraction without dart:convert since it's already imported via supabase
+        turno = _extractJson(decoded, 'turno');
+        area = _extractJson(decoded, 'area');
+      }
+    } catch (_) {}
+
+    try {
+      await _supabase.functions.invoke('send-table-assigned-email', body: {
+        'email': email,
+        'nome': g?['first_name'] ?? '',
+        'cognome': g?['surname'] ?? '',
+        'phone': g?['phone'] ?? '',
+        'date': booking['date'] ?? '',
+        'time': (booking['time_start'] ?? '').toString().substring(0, 5),
+        'persons': booking['party_size'] ?? 0,
+        'notes': booking['notes'] ?? '',
+        'turno': turno,
+        'area': area,
+        'tableName': table['name']?.toString() ?? '',
+        'restaurantName': 'Hio Oriental Bar',
+        'restaurantAddress': 'Via Giuseppe Mazzini 5',
+        'restaurantCity': '90139 Palermo',
+        'restaurantPhone': '+39 328 574 4906',
+        'restaurantEmail': 'info@hiooriental.com',
+        'bookingId': booking['id'],
+      });
+    } catch (e) {
+      debugPrint('send-table-assigned-email error: $e');
+    }
+  }
+
+  String _extractJson(String json, String key) {
+    final pattern = RegExp('"$key"\\s*:\\s*"([^"]*)"');
+    return pattern.firstMatch(json)?.group(1) ?? '';
+  }
+
   void _assignBookingToTable(Map<String, dynamic> booking) {
     showModalBottomSheet(
       context: context,
@@ -1664,6 +1714,7 @@ extension FloorPlanPending on _FloorPlanScreenState {
                           content: Text('Tavolo ' + t['name'].toString() + ' assegnato!'),
                         ),
                       );
+                      _sendTableAssignedEmail(booking, t);
                       _loadData();
                     },
                     child: Container(
