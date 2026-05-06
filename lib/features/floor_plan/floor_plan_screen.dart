@@ -121,7 +121,7 @@ class _FloorPlanScreenState extends State<FloorPlanScreen> {
       // Carica tutte le prenotazioni pending (con e senza tavolo)
       final pendingRes = await _supabase
           .from('bookings')
-          .select('*, guests(first_name, surname, name, phone, email)')
+          .select('*, guests(first_name, surname, name, phone, email), tables(name, capacity)')
           .eq('restaurant_id', _restaurantId)
           .eq('date', dateStr)
           .eq('status', 'pending');
@@ -1588,8 +1588,6 @@ extension FloorPlanPending on _FloorPlanScreenState {
                     Row(children: [
                       Expanded(child: Text(guestName.isEmpty ? 'Ospite' : guestName,
                           style: const TextStyle(color: AppColors.textPrimary, fontSize: 16, fontWeight: FontWeight.bold))),
-                      if (b['table_id'] == null)
-                        const Text('senza tavolo', style: TextStyle(color: Color(0xFFFFC107), fontSize: 11)),
                     ]),
                     const SizedBox(height: 4),
                     Row(children: [
@@ -1600,6 +1598,20 @@ extension FloorPlanPending on _FloorPlanScreenState {
                       const Icon(Icons.people_outline, size: 14, color: AppColors.textSecondary),
                       const SizedBox(width: 4),
                       Text('$persons persone', style: const TextStyle(color: AppColors.textSecondary, fontSize: 13)),
+                    ]),
+                    const SizedBox(height: 4),
+                    Row(children: [
+                      const Icon(Icons.table_restaurant_outlined, size: 14, color: AppColors.textSecondary),
+                      const SizedBox(width: 4),
+                      Text(
+                        b['tables']?['name'] != null
+                            ? 'Tavolo ${b['tables']['name']}  (${b['tables']['capacity']} posti)'
+                            : 'Nessun tavolo assegnato',
+                        style: TextStyle(
+                          color: b['tables'] != null ? AppColors.accent : const Color(0xFFFFC107),
+                          fontSize: 13, fontWeight: FontWeight.w600,
+                        ),
+                      ),
                     ]),
                     const SizedBox(height: 10),
                     Row(children: [

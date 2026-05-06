@@ -653,19 +653,22 @@ class _BookingDetailSheetState extends State<BookingDetailSheet>
                     onPressed: () => setState(() => _editPartySize = (_editPartySize + 1).clamp(1, 20))),
               ])),
               const Divider(color: AppColors.divider),
-              if (tableName.isNotEmpty) ...[
-                _DetailRow(label: 'Tavolo', child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFE65100).withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: const Color(0xFFE65100)),
-                  ),
-                  child: Text('$tableName  $tableCapacity posti',
-                      style: const TextStyle(color: Color(0xFFE65100), fontWeight: FontWeight.bold)),
-                )),
-                const SizedBox(height: 16),
-              ],
+              _DetailRow(label: 'Tavolo', child: tableName.isNotEmpty
+                ? Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: AppColors.accent.withOpacity(0.15),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: AppColors.accent),
+                    ),
+                    child: Text(
+                      tableCapacity.isNotEmpty ? '$tableName  ($tableCapacity posti)' : tableName,
+                      style: const TextStyle(color: AppColors.accent, fontWeight: FontWeight.bold),
+                    ),
+                  )
+                : const Text('Nessun tavolo assegnato',
+                    style: TextStyle(color: Color(0xFFFFC107), fontSize: 14))),
+              const SizedBox(height: 16),
               _EditableField(label: 'Nome', controller: _nomeCtrl),
               const SizedBox(height: 8),
               _EditableField(label: 'Telefono', controller: _phoneCtrl, prefix: 'Italy (+39)', type: TextInputType.phone),
