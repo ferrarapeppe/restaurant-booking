@@ -487,6 +487,59 @@ class _ScheduleTabState extends ConsumerState<_ScheduleTab> {
                         ]),
                       ),
                       const Divider(height: 1, color: AppColors.divider),
+                      // Prenotazioni pending senza tavolo
+                      ...() {
+                        final noTable = _bookings.where((b) => b['table_id'] == null).toList();
+                        if (noTable.isEmpty) return <Widget>[];
+                        return noTable.map((b) {
+                          final timeStart = (b['time_start'] ?? '${_startHour}:00:00').toString();
+                          final timeEnd = (b['time_end'] ?? '').toString();
+                          final x = _labelWidth + _timeToX(timeStart);
+                          final w = timeEnd.isNotEmpty ? _durationToWidth(timeStart, timeEnd) : _slotWidth * 4.0;
+                          final guestName = _guestName(b);
+                          return Container(
+                            height: _rowHeight,
+                            decoration: const BoxDecoration(
+                                border: Border(bottom: BorderSide(color: AppColors.divider, width: 0.5))),
+                            child: Stack(children: [
+                              Row(children: [
+                                Container(
+                                  width: _labelWidth,
+                                  color: const Color(0xFFFFC107).withOpacity(0.15),
+                                  padding: const EdgeInsets.symmetric(horizontal: 6),
+                                  child: const Center(
+                                    child: Text('!', style: TextStyle(color: Color(0xFFFFC107), fontWeight: FontWeight.bold, fontSize: 16)),
+                                  ),
+                                ),
+                                ...slots.map((_) => Container(
+                                    width: _slotWidth,
+                                    decoration: const BoxDecoration(
+                                        border: Border(left: BorderSide(color: AppColors.divider, width: 0.5))))),
+                              ]),
+                              Positioned(
+                                left: x, top: 4, height: _rowHeight - 8, width: w.clamp(80, 400),
+                                child: GestureDetector(
+                                  behavior: HitTestBehavior.opaque,
+                                  onTap: () => _showDetail(context, b),
+                                  child: Container(
+                                    decoration: BoxDecoration(color: const Color(0xFFFFC107), borderRadius: BorderRadius.circular(6)),
+                                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                                    child: Row(children: [
+                                      const Icon(Icons.warning_amber_rounded, size: 13, color: Colors.black54),
+                                      const SizedBox(width: 4),
+                                      Expanded(
+                                        child: Text(guestName,
+                                            style: const TextStyle(color: Colors.black, fontSize: 11, fontWeight: FontWeight.bold),
+                                            overflow: TextOverflow.ellipsis),
+                                      ),
+                                    ]),
+                                  ),
+                                ),
+                              ),
+                            ]),
+                          );
+                        }).toList();
+                      }(),
                       // Aree e tavoli
                       ...tablesByArea.entries.map((entry) => Column(
                             crossAxisAlignment: CrossAxisAlignment.start,

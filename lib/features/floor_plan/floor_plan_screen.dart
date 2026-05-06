@@ -118,14 +118,13 @@ class _FloorPlanScreenState extends State<FloorPlanScreen> {
         }
       }
 
-      // Carica prenotazioni pending senza tavolo
+      // Carica tutte le prenotazioni pending (con e senza tavolo)
       final pendingRes = await _supabase
           .from('bookings')
           .select('*, guests(first_name, surname, name, phone, email)')
           .eq('restaurant_id', _restaurantId)
           .eq('date', dateStr)
-          .eq('status', 'pending')
-          .isFilter('table_id', null);
+          .eq('status', 'pending');
 
       final areas = List<Map<String, dynamic>>.from(areasRes);
       setState(() {
@@ -285,18 +284,18 @@ class _FloorPlanScreenState extends State<FloorPlanScreen> {
                       },
                     ),
                   ),
-                // Barra prenotazioni pending senza tavolo
+                // Barra prenotazioni pending
                 if (_pendingBookings.isNotEmpty)
                   Container(
-                    color: const Color(0xFFE65100).withOpacity(0.15),
+                    color: const Color(0xFFFFC107).withOpacity(0.15),
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                     child: Row(children: [
-                      const Icon(Icons.pending_actions, color: Color(0xFFE65100), size: 18),
+                      const Icon(Icons.pending_actions, color: Color(0xFFFFC107), size: 18),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
-                          '${_pendingBookings.length} prenotazion${_pendingBookings.length == 1 ? "e" : "i"} in attesa senza tavolo',
-                          style: const TextStyle(color: Color(0xFFE65100), fontSize: 13, fontWeight: FontWeight.w600),
+                          '${_pendingBookings.length} prenotazion${_pendingBookings.length == 1 ? "e" : "i"} in attesa',
+                          style: const TextStyle(color: Color(0xFFFFC107), fontSize: 13, fontWeight: FontWeight.w600),
                         ),
                       ),
                       GestureDetector(
@@ -304,10 +303,10 @@ class _FloorPlanScreenState extends State<FloorPlanScreen> {
                         child: Container(
                           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFE65100),
+                            color: const Color(0xFFFFC107),
                             borderRadius: BorderRadius.circular(12),
                           ),
-                          child: const Text('Assegna', style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
+                          child: const Text('Vedi', style: TextStyle(color: Colors.black, fontSize: 12, fontWeight: FontWeight.bold)),
                         ),
                       ),
                     ]),
@@ -1585,32 +1584,47 @@ extension FloorPlanPending on _FloorPlanScreenState {
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(color: const Color(0xFFE65100).withOpacity(0.5)),
                   ),
-                  child: Row(children: [
-                    Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                      Text(guestName.isEmpty ? 'Ospite' : guestName,
-                          style: const TextStyle(color: AppColors.textPrimary, fontSize: 16, fontWeight: FontWeight.bold)),
-                      const SizedBox(height: 4),
-                      Row(children: [
-                        const Icon(Icons.access_time, size: 14, color: AppColors.textSecondary),
-                        const SizedBox(width: 4),
-                        Text(time, style: const TextStyle(color: AppColors.textSecondary, fontSize: 13)),
-                        const SizedBox(width: 12),
-                        const Icon(Icons.people_outline, size: 14, color: AppColors.textSecondary),
-                        const SizedBox(width: 4),
-                        Text('$persons persone', style: const TextStyle(color: AppColors.textSecondary, fontSize: 13)),
-                      ]),
-                    ])),
-                    ElevatedButton(
-                      onPressed: () {
-                        Navigator.pop(context);
-                        _assignBookingToTable(b);
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF2E7D52),
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    Row(children: [
+                      Expanded(child: Text(guestName.isEmpty ? 'Ospite' : guestName,
+                          style: const TextStyle(color: AppColors.textPrimary, fontSize: 16, fontWeight: FontWeight.bold))),
+                      if (b['table_id'] == null)
+                        const Text('senza tavolo', style: TextStyle(color: Color(0xFFFFC107), fontSize: 11)),
+                    ]),
+                    const SizedBox(height: 4),
+                    Row(children: [
+                      const Icon(Icons.access_time, size: 14, color: AppColors.textSecondary),
+                      const SizedBox(width: 4),
+                      Text(time, style: const TextStyle(color: AppColors.textSecondary, fontSize: 13)),
+                      const SizedBox(width: 12),
+                      const Icon(Icons.people_outline, size: 14, color: AppColors.textSecondary),
+                      const SizedBox(width: 4),
+                      Text('$persons persone', style: const TextStyle(color: AppColors.textSecondary, fontSize: 13)),
+                    ]),
+                    const SizedBox(height: 10),
+                    Row(children: [
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: () { Navigator.pop(context); _acceptBooking(b); },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF2E7D52),
+                            padding: const EdgeInsets.symmetric(vertical: 8),
+                          ),
+                          child: const Text('Accetta', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
+                        ),
                       ),
-                      child: const Text('Assegna tavolo', style: TextStyle(fontSize: 12)),
-                    ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: () { Navigator.pop(context); _rejectBooking(b); },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.red,
+                            padding: const EdgeInsets.symmetric(vertical: 8),
+                          ),
+                          child: const Text('Rifiuta', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
+                        ),
+                      ),
+                    ]),
                   ]),
                 );
               },
@@ -1619,6 +1633,41 @@ extension FloorPlanPending on _FloorPlanScreenState {
         ]),
       ),
     );
+  }
+
+  Future<void> _acceptBooking(Map<String, dynamic> booking) async {
+    if (booking['table_id'] == null) {
+      // Nessun tavolo auto-assegnato: fai scegliere il tavolo
+      _assignBookingToTable(booking);
+      return;
+    }
+    // Tavolo già assegnato: approva e invia email3
+    await _supabase.from('bookings').update({'status': 'approved'}).eq('id', booking['id']);
+    final guestId = booking['guest_id'];
+    if (guestId != null) {
+      try {
+        await _supabase.rpc('increment_visits_count', params: {'guest_id': guestId});
+      } catch (e) {
+        debugPrint('increment_visits_count error: $e');
+      }
+    }
+    final tableId = booking['table_id'] as String;
+    final tableData = _tables.firstWhere((t) => t['id'] == tableId, orElse: () => {'name': ''});
+    _sendTableAssignedEmail(booking, tableData);
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Prenotazione accettata!'), backgroundColor: Color(0xFF2E7D52)),
+    );
+    _loadData();
+  }
+
+  Future<void> _rejectBooking(Map<String, dynamic> booking) async {
+    await _supabase.from('bookings').update({'status': 'canceled'}).eq('id', booking['id']);
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Prenotazione rifiutata'), backgroundColor: Colors.red),
+    );
+    _loadData();
   }
 
   Future<void> _sendTableAssignedEmail(
