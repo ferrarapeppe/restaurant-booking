@@ -91,21 +91,6 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
     return (g['name'] ?? 'Ospite').toString().toUpperCase();
   }
 
-  String _tableName(Map<String, dynamic> b) {
-    final t = b['tables'];
-    return t?['name']?.toString() ?? '';
-  }
-
-  Color _statusColor(String status) {
-    switch (status) {
-      case 'approved': return const Color(0xFFFFC107);
-      case 'seated': return const Color(0xFF2E7D52);
-      case 'pending': return const Color(0xFFFFC107);
-      case 'canceled': return Colors.red;
-      case 'no_show': return Colors.grey;
-      default: return Colors.grey;
-    }
-  }
 
   void _changeDate(int delta) {
     final current = ref.read(selectedDateProvider);
@@ -266,27 +251,10 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
                       separatorBuilder: (_, __) => const Divider(height: 1, color: AppColors.divider),
                       itemBuilder: (context, index) {
                         final b = _bookingsWithDetails[index];
-                        final isPending = b['status'] == 'pending';
                         return _BookingRow(
                           booking: b,
                           guestName: _guestName(b),
-                          tableName: _tableName(b),
-                          statusColor: _statusColor(b['status'] ?? ''),
                           onTap: () => _showBookingDetail(context, b),
-                          onAssignTable: !isPending && _tableName(b).isEmpty ? () => _showAssignTable(context, b) : null,
-                          onAccept: isPending ? () async {
-                            await _supabase.from('bookings').update({'status': 'approved'}).eq('id', b['id']);
-                            sendTableAssignedEmail(b, b['tables'] as Map<String, dynamic>? ?? {});
-                            _loadBookings();
-                          } : null,
-                          onReject: isPending ? () {
-                            Navigator.push(context, MaterialPageRoute(
-                              builder: (_) => RejectionScreen(
-                                booking: b,
-                                onRejected: _loadBookings,
-                              ),
-                            ));
-                          } : null,
                         );
                       },
                     ),
@@ -343,179 +311,165 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
     );
   }
 
-  Future<void> _showAssignTable(BuildContext context, Map<String, dynamic> booking) async {
-    final supabase = Supabase.instance.client;
-    final tablesRes = await supabase
-        .from('tables')
-        .select('*, areas(name)')
-        .eq('restaurant_id', _restaurantId)
-        .order('name');
-    final tables = List<Map<String, dynamic>>.from(tablesRes);
-    if (!context.mounted) return;
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: AppColors.surface,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-      builder: (_) => SizedBox(
-        height: 420,
-        child: Column(children: [
-          const Padding(
-            padding: EdgeInsets.all(16),
-            child: Text('Seleziona un tavolo libero', style: TextStyle(color: AppColors.textPrimary, fontSize: 18, fontWeight: FontWeight.bold)),
-          ),
-          const Divider(color: AppColors.divider),
-          Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(16),
-              child: Wrap(
-                spacing: 10, runSpacing: 10,
-                children: tables.map((t) => GestureDetector(
-                  onTap: () async {
-                    Navigator.pop(context);
-                    await supabase.from('bookings').update({
-                      'table_id': t['id'],
-                      'status': 'approved',
-                    }).eq('id', booking['id']);
-                    sendTableAssignedEmail(booking, t);
-                    _loadBookings();
-                    if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Tavolo ${t['name']} assegnato!'), backgroundColor: AppColors.accent),
-                    );
-                  },
-                  child: Container(
-                    width: 72, height: 72,
-                    decoration: BoxDecoration(color: const Color(0xFF2E7D52), borderRadius: BorderRadius.circular(8)),
-                    child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-                      Text(t['name'].toString(), style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
-                      Text((t['capacity'] ?? '').toString() + ' posti', style: const TextStyle(color: Colors.white, fontSize: 11)),
-                    ]),
-                  ),
-                )).toList(),
-              ),
-            ),
-          ),
-        ]),
-      ),
-    );
-  }
-
 }
 // ── Booking Row ───────────────────────────────────────────────────────────────
 class _BookingRow extends StatelessWidget {
   final Map<String, dynamic> booking;
-  final String guestName, tableName;
-  final Color statusColor;
+  final String guestName;
   final VoidCallback onTap;
-  final VoidCallback? onAssignTable;
-  final VoidCallback? onAccept;
-  final VoidCallback? onReject;
 
   const _BookingRow({
-    required this.booking, required this.guestName,
-    required this.tableName, required this.statusColor, required this.onTap,
-    this.onAssignTable, this.onAccept, this.onReject,
+    required this.booking,
+    required this.guestName,
+    required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
     final timeStart = (booking['time_start'] ?? '').toString().substring(0, 5);
-    final timeEnd = booking['time_end'] != null ? booking['time_end'].toString().substring(0, 5) : '';
-    final partySize = booking['party_size'] ?? 0;
+    final timeEnd = booking['time_end'] != null
+        ? booking['time_end'].toString().substring(0, 5)
+        : '';
+    final partySize = booking['party_size'] as int? ?? 0;
+    final status = booking['status'] as String? ?? '';
+    final table = booking['tables'] as Map<String, dynamic>?;
+    final tableName = table?['name']?.toString() ?? '';
+    final areaName =
+        (table?['areas'] as Map<String, dynamic>?)?['name']?.toString() ?? '';
+    final isPending = status == 'pending';
 
-    return Container(
-      color: Colors.transparent,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-      child: Row(children: [
-        SizedBox(
-          width: 72,
-          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(timeStart, style: const TextStyle(color: AppColors.textPrimary, fontSize: 14, fontWeight: FontWeight.w600)),
-            if (timeEnd.isNotEmpty)
-              Text(timeEnd, style: const TextStyle(color: AppColors.textSecondary, fontSize: 12)),
-            if (booking['date'] != null)
-              Text(
-                DateFormat('d MMM', 'it_IT').format(DateTime.parse(booking['date'].toString())),
-                style: const TextStyle(color: AppColors.textMuted, fontSize: 11),
-              ),
-          ]),
-        ),
-        Expanded(
-          child: GestureDetector(
-            onTap: onTap,
-            child: Text(guestName,
-                style: const TextStyle(color: AppColors.textPrimary, fontSize: 14, fontWeight: FontWeight.w500),
-                overflow: TextOverflow.ellipsis),
+    return GestureDetector(
+      onTap: onTap,
+      child: IntrinsicHeight(
+        child: Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+          // Colonna ora — teal
+          Container(
+            width: 72,
+            color: const Color(0xFF00897B),
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(timeStart,
+                    style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold)),
+                if (timeEnd.isNotEmpty)
+                  Text(timeEnd,
+                      style: const TextStyle(color: Colors.white70, fontSize: 11)),
+              ],
+            ),
           ),
-        ),
-        if (onAssignTable == null && onAccept == null)
+          // Nome
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              child: Text(guestName,
+                  style: const TextStyle(
+                      color: AppColors.textPrimary,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600),
+                  overflow: TextOverflow.ellipsis),
+            ),
+          ),
+          // Party size circle (P)
           SizedBox(
-            width: 32,
-            child: Container(
-              width: 26, height: 26,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(color: AppColors.textSecondary.withOpacity(0.5)),
-              ),
-              child: Center(
-                child: Text('\$partySize',
-                    style: const TextStyle(color: AppColors.textPrimary, fontSize: 12, fontWeight: FontWeight.bold)),
+            width: 36,
+            child: Center(
+              child: Container(
+                width: 28,
+                height: 28,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: partySize >= 3
+                      ? const Color(0xFFE6781A)
+                      : Colors.transparent,
+                  border: partySize < 3
+                      ? Border.all(
+                          color: const Color(0xFFE6781A).withValues(alpha: 0.7))
+                      : null,
+                ),
+                child: Center(
+                  child: Text('$partySize',
+                      style: TextStyle(
+                          color: partySize >= 3
+                              ? Colors.white
+                              : const Color(0xFFE6781A),
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold)),
+                ),
               ),
             ),
           ),
-        const SizedBox(width: 8),
-        onAccept != null && onReject != null
-            ? Row(mainAxisSize: MainAxisSize.min, children: [
-                ElevatedButton(
-                  onPressed: onAccept,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF2E7D52),
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                    minimumSize: Size.zero,
-                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                  ),
-                  child: const Text('Accetta', style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
-                ),
-                const SizedBox(width: 6),
-                ElevatedButton(
-                  onPressed: onReject,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFDC3545),
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                    minimumSize: Size.zero,
-                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                  ),
-                  child: const Text('Rifiuta', style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
-                ),
-              ])
-            : onAssignTable != null
-            ? ElevatedButton(
-                onPressed: onAssignTable,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.accent,
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                  minimumSize: Size.zero,
-                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                ),
-                child: const Text('Assegna', style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
-              )
-            : Row(mainAxisSize: MainAxisSize.min, children: [
+          // Tavolo/i
+          SizedBox(
+            width: 86,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+              child: tableName.isNotEmpty
+                  ? Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        if (areaName.isNotEmpty)
+                          Text(areaName.toUpperCase(),
+                              style: const TextStyle(
+                                  color: AppColors.textSecondary,
+                                  fontSize: 9,
+                                  fontWeight: FontWeight.w600)),
+                        const SizedBox(height: 2),
+                        Container(
+                          width: 32,
+                          height: 32,
+                          decoration: const BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: Color(0xFF4A5568)),
+                          child: Center(
+                            child: Text(tableName,
+                                style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.bold)),
+                          ),
+                        ),
+                      ],
+                    )
+                  : const Center(
+                      child: Text('—',
+                          style: TextStyle(
+                              color: AppColors.textMuted, fontSize: 14))),
+            ),
+          ),
+          // Status dots
+          SizedBox(
+            width: 40,
+            child: Center(
+              child: Row(mainAxisSize: MainAxisSize.min, children: [
+                if (isPending) ...[
+                  Container(
+                      width: 10,
+                      height: 10,
+                      decoration: const BoxDecoration(
+                          color: Colors.red, shape: BoxShape.circle)),
+                  const SizedBox(width: 3),
+                ],
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  width: 10,
+                  height: 10,
                   decoration: BoxDecoration(
-                    color: AppColors.textSecondary.withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(10),
+                    shape: BoxShape.circle,
+                    color: status == 'seated'
+                        ? const Color(0xFF2E7D52)
+                        : const Color(0xFFFFC107),
                   ),
-                  child: Text(tableName,
-                      style: const TextStyle(color: AppColors.textPrimary, fontSize: 12, fontWeight: FontWeight.bold)),
                 ),
-                const SizedBox(width: 6),
-                Container(width: 10, height: 10, decoration: BoxDecoration(color: statusColor, shape: BoxShape.circle)),
               ]),
-      ]),
+            ),
+          ),
+        ]),
+      ),
     );
   }
 }
