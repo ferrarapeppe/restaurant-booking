@@ -363,9 +363,10 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
                       'table_id': t['id'],
                       'status': 'approved',
                     }).eq('id', booking['id']);
+                    sendTableAssignedEmail(booking, t);
                     _loadBookings();
                     if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Tavolo ' + t['name'].toString() + ' assegnato!'), backgroundColor: AppColors.accent),
+                      SnackBar(content: Text('Tavolo ${t['name']} assegnato!'), backgroundColor: AppColors.accent),
                     );
                   },
                   child: Container(
@@ -725,6 +726,7 @@ class _BookingDetailSheetState extends State<BookingDetailSheet>
                               Navigator.pop(ctx);
                               Navigator.pop(context);
                               await supabase.from('bookings').update({'table_id': t['id'], 'status': 'approved'}).eq('id', widget.booking['id']);
+                              sendTableAssignedEmail(widget.booking, t);
                               widget.onSaved();
                             },
                           );
@@ -861,5 +863,56 @@ class BookingCard extends StatelessWidget {
         Container(width: 10, height: 10, decoration: BoxDecoration(color: statusColor, shape: BoxShape.circle)),
       ]),
     );
+  }
+}
+
+Future<void> sendTableAssignedEmail(
+  Map<String, dynamic> booking,
+  Map<String, dynamic> table,
+) async {
+  final g = booking['guests'];
+  final email = g?['email'] as String?;
+  if (email == null || email.isEmpty) return;
+
+  String turno = '', area = '';
+  try {
+    final raw = booking['internal_notes'] as String? ?? '';
+    if (raw.startsWith('{')) {
+      final pattern = RegExp(r'"(\w+)"\s*:\s*"([^"]*)"');
+      for (final m in pattern.allMatches(raw)) {
+        if (m.group(1) == 'turno') turno = m.group(2) ?? '';
+        if (m.group(1) == 'area') area = m.group(2) ?? '';
+      }
+    }
+  } catch (_) {}
+
+  try {
+    final guestId = booking['guest_id'];
+    if (guestId != null) {
+      try {
+        await Supabase.instance.client.rpc('increment_visits_count', params: {'guest_id': guestId});
+      } catch (_) {}
+    }
+    await Supabase.instance.client.functions.invoke('send-table-assigned-email', body: {
+      'email': email,
+      'nome': g?['first_name'] ?? '',
+      'cognome': g?['surname'] ?? '',
+      'phone': g?['phone'] ?? '',
+      'date': booking['date'] ?? '',
+      'time': (booking['time_start'] ?? '').toString().substring(0, 5),
+      'persons': booking['party_size'] ?? 0,
+      'notes': booking['notes'] ?? '',
+      'turno': turno,
+      'area': area,
+      'tableName': table['name']?.toString() ?? '',
+      'restaurantName': 'Hio Oriental Bar',
+      'restaurantAddress': 'Via Giuseppe Mazzini 5',
+      'restaurantCity': '90139 Palermo',
+      'restaurantPhone': '+39 328 574 4906',
+      'restaurantEmail': 'info@hiooriental.com',
+      'bookingId': booking['id'],
+    });
+  } catch (e) {
+    debugPrint('send-table-assigned-email error: $e');
   }
 }
