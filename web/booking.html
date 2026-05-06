@@ -597,8 +597,13 @@ async function submitBooking() {
       String(state.date.getMonth()+1).padStart(2,'0') + '-' +
       String(state.date.getDate()).padStart(2,'0');
 
-    // Crea prenotazione
-    await db.from('bookings').insert({
+    // Turno e area selezionati
+    const turnoEl = document.querySelector('input[name="turno"]:checked');
+    const turnoVal = turnoEl ? turnoEl.parentElement?.textContent?.trim() : '';
+    const areaName = state.areas.find(a => a.id === state.area)?.name || '';
+
+    // Crea prenotazione e ottieni l'ID
+    const { data: newBooking } = await db.from('bookings').insert({
       restaurant_id: RESTAURANT_ID,
       guest_id: guestId,
       date: dateStr,
@@ -608,12 +613,13 @@ async function submitBooking() {
       status: 'pending',
       source: 'web',
       notes: notes || null,
-    });
+      internal_notes: JSON.stringify({ turno: turnoVal, area: areaName }),
+    }).select('id').single();
+
+    const bookingId = newBooking?.id || null;
 
     // Invia email di conferma al cliente (se ha fornito email)
     if (email) {
-      const turnoEl = document.querySelector('input[name="turno"]:checked');
-      const turnoVal = turnoEl ? turnoEl.parentElement?.textContent?.trim() : '';
       try {
         await fetch(SUPABASE_URL + '/functions/v1/send-booking-email', {
           method: 'POST',
@@ -631,12 +637,13 @@ async function submitBooking() {
             persons: state.persons,
             notes: notes || '',
             turno: turnoVal || '',
+            area: areaName || '',
             restaurantName: state.restaurant?.name || 'Hio Oriental Bar',
+            bookingId,
           }),
         });
       } catch (emailErr) {
         console.warn('Email non inviata:', emailErr);
-        // Non blocca il flusso — la prenotazione è già salvata
       }
     }
 

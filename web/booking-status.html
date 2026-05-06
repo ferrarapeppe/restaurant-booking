@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>La tua prenotazione — Hio Oriental Bar</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f0f0f0; min-height: 100vh; }
+
+    .header {
+      background: #1a1a2e;
+      color: white;
+      padding: 20px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .header h1 { font-size: 20px; font-weight: 700; }
+    .header nav a {
+      color: #aaa; text-decoration: none; font-size: 12px;
+      font-weight: 600; letter-spacing: 1px; text-transform: uppercase;
+    }
+    .header nav a:hover { color: white; }
+
+    .container { max-width: 900px; margin: 32px auto; padding: 0 16px; }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+    @media (max-width: 640px) { .grid { grid-template-columns: 1fr; } }
+
+    .card {
+      background: white;
+      border-radius: 8px;
+      padding: 24px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+    }
+    .card h2 { font-size: 18px; color: #1a1a2e; margin-bottom: 20px; font-weight: 700; }
+
+    .detail-row {
+      display: flex;
+      padding: 10px 0;
+      border-bottom: 1px solid #f0f0f0;
+      gap: 16px;
+    }
+    .detail-row:last-child { border-bottom: none; }
+    .detail-label { color: #888; font-size: 13px; min-width: 130px; flex-shrink: 0; }
+    .detail-value { color: #1a1a2e; font-size: 13px; font-weight: 500; }
+
+    .separator { height: 1px; background: #eee; margin: 4px 0; }
+
+    .status-badge {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 4px 12px 4px 4px;
+      border-radius: 20px;
+      font-size: 13px; font-weight: 600;
+    }
+    .status-icon {
+      width: 26px; height: 26px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px; font-weight: 700; color: white;
+    }
+
+    .btn-new {
+      display: inline-block; margin-top: 24px;
+      background: #3b4cc0; color: white; text-decoration: none;
+      padding: 12px 20px; border-radius: 6px; font-size: 14px; font-weight: 600;
+    }
+    .btn-new:hover { background: #2d3ba0; }
+
+    /* Messaggi */
+    .messages { display: flex; flex-direction: column; gap: 12px; }
+    .msg-time { font-size: 11px; color: #aaa; text-align: center; margin: 4px 0; display: flex; align-items: center; gap: 6px; justify-content: center; }
+    .msg-time::before { content: '✉'; font-size: 12px; }
+    .msg-bubble {
+      padding: 10px 14px; border-radius: 8px;
+      font-size: 14px; font-weight: 500;
+      max-width: 100%;
+    }
+    .msg-bubble.client { background: #3b4cc0; color: white; }
+    .msg-bubble.restaurant { background: #e91e8c; color: white; }
+    .msg-status { font-size: 12px; color: #666; text-align: center; padding: 2px 0; }
+    .msg-avatar { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+    .avatar { width: 24px; height: 24px; border-radius: 50%; background: #3b4cc0; color: white; font-size: 10px; font-weight: 700; display: flex; align-items: center; justify-content: center; }
+
+    .loading { text-align: center; padding: 60px; color: #888; font-size: 16px; }
+    .error { text-align: center; padding: 60px; color: #dc3545; }
+
+    footer {
+      text-align: center; padding: 32px 16px;
+      font-size: 12px; color: #999; line-height: 1.8;
+    }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <h1 id="rest-name">Hio Oriental Bar</h1>
+  <nav><a href="booking.html">Prenota un tavolo</a></nav>
+</div>
+
+<div class="container" id="main">
+  <div class="loading">Caricamento prenotazione...</div>
+</div>
+
+<footer id="footer">
+  <p>Hio Oriental Bar</p>
+  <p>Via Giuseppe Mazzini 5, 90139 Palermo</p>
+</footer>
+
+<script>
+const SUPABASE_URL = 'https://jxdnldyabhzmfnterzil.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp4ZG5sZHlhYmh6bWZudGVyemlsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4NDY2ODYsImV4cCI6MjA4NzQyMjY4Nn0.1oBMQj7EDpRfYrf3_lb4dOVQy29I2JOC8Hjr2IV_q1s';
+
+const { createClient } = supabase;
+const db = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+const DAYS = ['Domenica','Lunedì','Martedì','Mercoledì','Giovedì','Venerdì','Sabato'];
+const MONTHS = ['gennaio','febbraio','marzo','aprile','maggio','giugno','luglio','agosto','settembre','ottobre','novembre','dicembre'];
+
+function formatDate(dateStr) {
+  const d = new Date(dateStr + 'T12:00:00');
+  return `${DAYS[d.getDay()]} ${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()}`;
+}
+
+function statusInfo(status) {
+  const map = {
+    pending:  { label: 'In attesa',   color: '#3b4cc0', bg: '#eef0fb', letter: '⏳' },
+    approved: { label: 'Accettato',   color: '#22c55e', bg: '#f0fdf4', letter: '✓'  },
+    seated:   { label: 'Seduto',      color: '#22c55e', bg: '#f0fdf4', letter: '🪑' },
+    left:     { label: 'Partito',     color: '#6c757d', bg: '#f5f5f5', letter: '→'  },
+    canceled: { label: 'Cancellato',  color: '#dc3545', bg: '#fff5f5', letter: '✕'  },
+    no_show:  { label: 'No-show',     color: '#dc3545', bg: '#fff5f5', letter: '✕'  },
+    walkin:   { label: 'Walk-in',     color: '#3b4cc0', bg: '#eef0fb', letter: '🚶' },
+  };
+  return map[status] || { label: status, color: '#888', bg: '#f5f5f5', letter: '?' };
+}
+
+function row(label, value) {
+  if (!value) return '';
+  return `<div class="detail-row">
+    <span class="detail-label">${label}</span>
+    <span class="detail-value">${value}</span>
+  </div>`;
+}
+
+async function load() {
+  const params = new URLSearchParams(window.location.search);
+  const id = params.get('id');
+
+  if (!id) {
+    document.getElementById('main').innerHTML = '<div class="error">Prenotazione non trovata.<br><a href="booking.html">Effettua una nuova prenotazione</a></div>';
+    return;
+  }
+
+  const { data: b, error } = await db
+    .from('bookings')
+    .select('*, guests(first_name, surname, phone, email)')
+    .eq('id', id)
+    .single();
+
+  if (error || !b) {
+    document.getElementById('main').innerHTML = '<div class="error">Prenotazione non trovata.<br><a href="booking.html">Effettua una nuova prenotazione</a></div>';
+    return;
+  }
+
+  // Carica nome ristorante
+  const { data: rest } = await db.from('restaurants').select('name, address, city').eq('id', b.restaurant_id).single();
+  if (rest) {
+    document.getElementById('rest-name').textContent = rest.name;
+    document.getElementById('footer').innerHTML = `<p>${rest.name}</p><p>${[rest.address, rest.city].filter(Boolean).join(', ')}</p>`;
+  }
+
+  // Parsing internal_notes per turno e area
+  let turno = '', area = '';
+  try {
+    const meta = JSON.parse(b.internal_notes || '{}');
+    turno = meta.turno || '';
+    area = meta.area || '';
+  } catch(e) {
+    turno = b.internal_notes || '';
+  }
+
+  const guest = b.guests || {};
+  const nome = guest.first_name || '';
+  const cognome = guest.surname || '';
+  const phone = guest.phone || '';
+  const email = guest.email || '';
+
+  const timeStart = (b.time_start || '').substring(0, 5);
+  const timeEnd = (b.time_end || '').substring(0, 5);
+
+  const si = statusInfo(b.status);
+
+  // Messaggi da mostrare
+  const msgs = [];
+  if (b.notes) {
+    msgs.push(`<div class="msg-time">${new Date(b.created_at).toLocaleDateString('it-IT')}</div>
+    <div class="msg-bubble client">${b.notes}</div>`);
+  }
+  if (b.status === 'approved' || b.status === 'seated') {
+    msgs.push(`<div class="msg-avatar"><div class="avatar">HIO</div></div>
+    <div class="msg-bubble restaurant">Gentile cliente, la aspettiamo!</div>`);
+  }
+  msgs.push(`<div class="msg-status">Stato: <strong>${si.label}</strong></div>`);
+
+  document.getElementById('main').innerHTML = `
+    <div class="grid">
+      <!-- Dettagli prenotazione -->
+      <div class="card">
+        <h2>La Tua Prenotazione</h2>
+
+        <div class="detail-row">
+          <span class="detail-label">Stato</span>
+          <span class="detail-value">
+            <span class="status-badge" style="background:${si.bg};color:${si.color};">
+              <span class="status-icon" style="background:${si.color};">${si.letter}</span>
+              ${si.label}
+            </span>
+          </span>
+        </div>
+
+        ${row('Data', formatDate(b.date))}
+        <div class="detail-row">
+          <span class="detail-label">Ora</span>
+          <span class="detail-value">
+            ${timeStart}${timeEnd ? ' - ' + timeEnd : ''}
+            <br><small style="color:#888;font-size:11px;">Tieni presente che il tuo tavolo sarà riservato per 2 ore.</small>
+          </span>
+        </div>
+        ${row('Area Ristorante', area)}
+        ${row('Persone', String(b.party_size))}
+
+        <div class="separator"></div>
+
+        ${row('Nome', nome)}
+        ${row('Telefono', phone)}
+        ${row('E-Mail', email)}
+
+        <div class="separator"></div>
+
+        ${row('COGNOME', cognome)}
+        ${row('SCEGLI', turno)}
+
+        <a href="booking.html" class="btn-new">← Effettua una nuova prenotazione</a>
+      </div>
+
+      <!-- Messaggi -->
+      <div class="card">
+        <h2>Messaggi</h2>
+        <div class="messages">
+          ${msgs.length ? msgs.join('') : '<p style="color:#aaa;font-size:13px;">Nessun messaggio.</p>'}
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+load();
+</script>
+</body>
+</html>

@@ -27,8 +27,10 @@ jobs:
       - name: Build Web
         run: flutter build web --release --base-href "/restaurant-booking/"
 
-      - name: Copy booking page
-        run: cp web/booking.html build/web/booking.html
+      - name: Copy booking pages
+        run: |
+          cp web/booking.html build/web/booking.html
+          cp web/booking-status.html build/web/booking-status.html
 
       - name: Deploy su GitHub Pages
         uses: peaceiris/actions-gh-pages@v3

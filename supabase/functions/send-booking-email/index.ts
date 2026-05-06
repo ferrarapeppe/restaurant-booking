@@ -11,7 +11,7 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { nome, cognome, email, phone, date, time, persons, notes, turno, restaurantName } = await req.json();
+    const { nome, cognome, email, phone, date, time, persons, notes, turno, area, restaurantName, bookingId } = await req.json();
 
     if (!email) {
       return new Response(JSON.stringify({ error: 'Email cliente mancante' }), {
@@ -36,7 +36,11 @@ Deno.serve(async (req) => {
     const restName = restaurantName || 'Hio Oriental Bar';
     const subject = `Richiesta di prenotazione ricevuta (${persons} ${persons === 1 ? 'persona' : 'persone'}, ${dateSubject} ${time})`;
 
-    const html = buildEmailHtml({ nome, cognome, email, phone, dateFormatted, time, endTime, persons, notes, turno, restName });
+    const statusUrl = bookingId
+      ? `https://ferrarapeppe.github.io/restaurant-booking/booking-status.html?id=${bookingId}`
+      : `https://ferrarapeppe.github.io/restaurant-booking/booking.html`;
+
+    const html = buildEmailHtml({ nome, cognome, email, phone, dateFormatted, time, endTime, persons, notes, turno, area: area || '', restName, statusUrl });
 
     const transporter = nodemailer.createTransport({
       host: Deno.env.get('SMTP_HOST') ?? 'smtps.aruba.it',
@@ -70,13 +74,15 @@ Deno.serve(async (req) => {
 function buildEmailHtml(d: {
   nome: string; cognome: string; email: string; phone: string;
   dateFormatted: string; time: string; endTime: string; persons: number;
-  notes: string; turno: string; restName: string;
+  notes: string; turno: string; area: string; restName: string; statusUrl: string;
 }): string {
   const row = (label: string, value: string) => value ? `
     <tr>
-      <td style="padding:12px 0;border-bottom:1px solid #eee;color:#999;font-size:13px;width:150px;vertical-align:top;">${label}</td>
-      <td style="padding:12px 0;border-bottom:1px solid #eee;color:#1a1a2e;font-size:13px;">${value}</td>
+      <td style="padding:10px 0;border-bottom:1px solid #eee;color:#888;font-size:13px;width:150px;vertical-align:top;">${label}</td>
+      <td style="padding:10px 0;border-bottom:1px solid #eee;color:#1a1a2e;font-size:13px;">${value}</td>
     </tr>` : '';
+
+  const gap = `<tr><td colspan="2" style="height:8px;border-bottom:1px solid #eee;"></td></tr>`;
 
   return `<!DOCTYPE html>
 <html lang="it">
@@ -89,15 +95,15 @@ function buildEmailHtml(d: {
   <!-- Header -->
   <tr>
     <td style="background:#1a1a1a;padding:32px;text-align:center;border-radius:8px 8px 0 0;">
-      <h1 style="color:white;margin:0;font-size:22px;font-weight:700;letter-spacing:1px;">${d.restName}</h1>
+      <h1 style="color:white;margin:0;font-size:24px;font-weight:700;letter-spacing:1px;">${d.restName}</h1>
     </td>
   </tr>
 
   <!-- Body -->
   <tr>
     <td style="background:white;padding:40px 40px 24px;">
-      <h2 style="color:#1a1a2e;font-size:22px;font-weight:700;margin:0 0 16px;">Richiesta di prenotazione ricevuta</h2>
-      <p style="color:#555;font-size:14px;line-height:1.7;margin:0 0 32px;">
+      <h2 style="color:#1a1a2e;font-size:20px;font-weight:700;margin:0 0 12px;">Richiesta di prenotazione ricevuta</h2>
+      <p style="color:#555;font-size:14px;line-height:1.7;margin:0 0 28px;">
         Grazie per la tua richiesta di prenotazione, ti risponderemo il prima possibile.
         Tieni presente che questa non è una conferma della tua prenotazione.
       </p>
@@ -107,17 +113,19 @@ function buildEmailHtml(d: {
         ${row('Data', d.dateFormatted)}
         ${row('Tempo', `${d.time} - ${d.endTime} (2:00 ore)`)}
         ${row('Persone', String(d.persons))}
+        ${gap}
         ${row('Nome', d.nome)}
         ${row('Telefono', d.phone)}
         ${row('E-mail', d.email)}
-        ${row('Messaggio', d.notes)}
+        ${d.notes ? gap + row('Messaggio', d.notes) : ''}
+        ${gap}
         ${row('COGNOME', d.cognome)}
         ${row('SCEGLI', d.turno)}
       </table>
 
       <!-- CTA -->
       <div style="text-align:center;margin:36px 0 0;">
-        <a href="https://ferrarapeppe.github.io/restaurant-booking/booking.html"
+        <a href="${d.statusUrl}"
            style="background:#3b4cc0;color:white;text-decoration:none;padding:14px 36px;border-radius:6px;font-size:15px;font-weight:600;display:inline-block;">
           Visualizza la prenotazione
         </a>
