@@ -593,6 +593,8 @@ class _GuestDetailScreenState extends ConsumerState<GuestDetailScreen> {
     final emailCtrl = TextEditingController(text: widget.guest.email ?? '');
     final notesCtrl = TextEditingController(text: widget.guest.notes ?? '');
     final tags = Set<String>.from(widget.guest.tags);
+    final newTagCtrl = TextEditingController();
+    const predefinedTags = ['vip', 'regular', 'no_show', 'allergie', 'compleanno'];
 
     showModalBottomSheet(
       context: context,
@@ -628,8 +630,9 @@ class _GuestDetailScreenState extends ConsumerState<GuestDetailScreen> {
                 const SizedBox(height: 8),
                 Wrap(
                   spacing: 8,
+                  runSpacing: 4,
                   children: [
-                    for (final tag in ['vip', 'regular', 'no_show', 'allergie', 'compleanno'])
+                    for (final tag in predefinedTags)
                       FilterChip(
                         label: Text(tag),
                         selected: tags.contains(tag),
@@ -638,6 +641,60 @@ class _GuestDetailScreenState extends ConsumerState<GuestDetailScreen> {
                         checkmarkColor: AppColors.accent,
                         labelStyle: TextStyle(color: tags.contains(tag) ? AppColors.accent : AppColors.textSecondary),
                       ),
+                    for (final tag in tags.where((t) => !predefinedTags.contains(t)))
+                      Chip(
+                        label: Text(tag),
+                        onDeleted: () => setState(() => tags.remove(tag)),
+                        backgroundColor: AppColors.goldLight,
+                        labelStyle: const TextStyle(color: AppColors.gold, fontSize: 13),
+                        deleteIconColor: AppColors.gold,
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: newTagCtrl,
+                        textInputAction: TextInputAction.done,
+                        decoration: InputDecoration(
+                          hintText: 'Nuovo tag personalizzato...',
+                          hintStyle: const TextStyle(color: AppColors.textMuted, fontSize: 13),
+                          prefixIcon: const Icon(Icons.label_outline, color: AppColors.textSecondary, size: 18),
+                          contentPadding: const EdgeInsets.symmetric(vertical: 10),
+                          filled: true,
+                          fillColor: AppColors.background,
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppColors.divider)),
+                          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppColors.divider)),
+                          focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppColors.accent, width: 2)),
+                        ),
+                        onSubmitted: (value) {
+                          final tag = value.trim().toLowerCase();
+                          if (tag.isNotEmpty) {
+                            setState(() => tags.add(tag));
+                            newTagCtrl.clear();
+                          }
+                        },
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    ElevatedButton(
+                      onPressed: () {
+                        final tag = newTagCtrl.text.trim().toLowerCase();
+                        if (tag.isNotEmpty) {
+                          setState(() => tags.add(tag));
+                          newTagCtrl.clear();
+                        }
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.accent,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                      child: const Text('Aggiungi'),
+                    ),
                   ],
                 ),
                 const SizedBox(height: 20),
