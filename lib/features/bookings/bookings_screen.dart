@@ -60,7 +60,7 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
           .select('*, guests(first_name, surname, name, phone, email), tables(name, capacity, area_id, areas(name))')
           .eq('restaurant_id', _restaurantId);
       if (_sourceFilter == 'web') {
-        query = query.eq('source', 'web').eq('status', 'pending').isFilter('table_id', null);
+        query = query.eq('source', 'web').eq('status', 'pending');
       } else {
         query = query.eq('date', dateStr);
         if (_statusFilter != 'tutti' && _statusFilter != 'attivo') {
@@ -699,45 +699,42 @@ class _BookingDetailSheetState extends State<BookingDetailSheet>
           color: AppColors.surface,
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
           child: Row(mainAxisAlignment: MainAxisAlignment.end, children: [
-            if (widget.booking['table_id'] == null)
-              TextButton.icon(
+            if (widget.booking['status'] == 'pending') ...[
+              ElevatedButton.icon(
                 onPressed: () async {
                   final supabase = Supabase.instance.client;
-                  final tablesRes = await supabase.from('tables').select('*, areas(name)').eq('restaurant_id', '2b126a92-24d5-4e83-b38c-dfc82035a0cf').order('name');
-                  final tables = List<Map<String, dynamic>>.from(tablesRes);
+                  await supabase.from('bookings').update({'status': 'approved'}).eq('id', widget.booking['id']);
                   if (!context.mounted) return;
-                  showModalBottomSheet(
-                    context: context,
-                    backgroundColor: AppColors.surface,
-                    shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-                    builder: (ctx) => Column(mainAxisSize: MainAxisSize.min, children: [
-                      const SizedBox(height: 12),
-                      const Text('Assegna tavolo', style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.bold, fontSize: 16)),
-                      const Divider(),
-                      SizedBox(height: 300, child: ListView.builder(
-                        itemCount: tables.length,
-                        itemBuilder: (_, i) {
-                          final t = tables[i];
-                          return ListTile(
-                            leading: CircleAvatar(backgroundColor: AppColors.accentLight, child: Text(t['name'].toString(), style: const TextStyle(color: AppColors.accent, fontSize: 11, fontWeight: FontWeight.bold))),
-                            title: Text(t['name'].toString()),
-                            subtitle: Text('${t['areas']?['name'] ?? ''} • ${t['capacity']} posti', style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
-                            onTap: () async {
-                              Navigator.pop(ctx);
-                              Navigator.pop(context);
-                              await supabase.from('bookings').update({'table_id': t['id'], 'status': 'approved'}).eq('id', widget.booking['id']);
-                              sendTableAssignedEmail(widget.booking, t);
-                              widget.onSaved();
-                            },
-                          );
-                        },
-                      )),
-                    ]),
-                  );
+                  Navigator.pop(context);
+                  widget.onSaved();
                 },
-                icon: const Icon(Icons.table_restaurant_outlined, color: AppColors.accent, size: 18),
-                label: const Text('Assegna tavolo', style: TextStyle(color: AppColors.accent, fontSize: 13)),
+                icon: const Icon(Icons.check, size: 16),
+                label: const Text('Accetta'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF2E7D52),
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                ),
               ),
+              const SizedBox(width: 8),
+              ElevatedButton.icon(
+                onPressed: () async {
+                  final supabase = Supabase.instance.client;
+                  await supabase.from('bookings').update({'status': 'canceled'}).eq('id', widget.booking['id']);
+                  if (!context.mounted) return;
+                  Navigator.pop(context);
+                  widget.onSaved();
+                },
+                icon: const Icon(Icons.close, size: 16),
+                label: const Text('Rifiuta'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFDC3545),
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                ),
+              ),
+              const SizedBox(width: 8),
+            ],
             const Spacer(),
             _ActionBtn(icon: Icons.more_horiz, onTap: () {}),
             const SizedBox(width: 12),

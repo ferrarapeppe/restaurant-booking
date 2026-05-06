@@ -82,13 +82,6 @@ Deno.serve(async (req) => {
       html: email1Html,
     });
 
-    // Email 2 — Nuovo messaggio: Gentile cliente la aspettiamo
-    await transporter.sendMail({
-      from: `${restName} <${smtpUser}>`,
-      to: email,
-      subject: `Nuovo messaggio riguardante la tua prenotazione (${persons} ${persons === 1 ? 'persona' : 'persone'}, ${dateSubject} ${time})`,
-      html: buildEmail2Html(data),
-    });
 
     return new Response(JSON.stringify({ success: true }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
