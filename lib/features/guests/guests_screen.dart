@@ -5,6 +5,7 @@ import 'package:restaurant_booking/shared/theme/app_theme.dart';
 import 'package:restaurant_booking/data/models/booking_model.dart';
 import 'package:restaurant_booking/core/providers/guest_providers.dart';
 import 'package:restaurant_booking/features/bookings/booking_detail_screen.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class GuestsScreen extends ConsumerWidget {
   const GuestsScreen({super.key});
@@ -500,7 +501,7 @@ class _GuestDetailScreenState extends ConsumerState<GuestDetailScreen> {
               _InfoRow(icon: Icons.person_outline, label: 'Nome', value: guest.firstName ?? guest.name),
               if (guest.surname != null && guest.surname!.isNotEmpty)
                 _InfoRow(icon: Icons.person_outline, label: 'Cognome', value: guest.surname!.toUpperCase()),
-              if (guest.phone != null) _InfoRow(icon: Icons.phone_outlined, label: 'Telefono', value: guest.phone!),
+              if (guest.phone != null) _PhoneRow(phone: guest.phone!),
               if (guest.email != null) _InfoRow(icon: Icons.email_outlined, label: 'E-mail', value: guest.email!),
               if (guest.notes != null) _InfoRow(icon: Icons.note_outlined, label: 'Note', value: guest.notes!),
             ]),
@@ -846,6 +847,40 @@ class _InfoCard extends StatelessWidget {
         ),
         const Divider(height: 1, color: AppColors.divider),
         ...children,
+      ]),
+    );
+  }
+}
+
+class _PhoneRow extends StatelessWidget {
+  final String phone;
+  const _PhoneRow({required this.phone});
+
+  String _waUrl(String phone) {
+    final digits = phone.replaceAll(RegExp(r'[^\d+]'), '');
+    final normalized = digits.startsWith('+') ? digits.substring(1) : digits.startsWith('0') ? digits.substring(1) : digits.length == 10 ? '39$digits' : digits;
+    return 'https://wa.me/$normalized';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      child: Row(children: [
+        const Icon(Icons.phone_outlined, size: 18, color: AppColors.textSecondary),
+        const SizedBox(width: 12),
+        const Text('Telefono', style: TextStyle(color: AppColors.textSecondary, fontSize: 14)),
+        const Spacer(),
+        Text(phone, style: const TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w500, fontSize: 14)),
+        const SizedBox(width: 12),
+        GestureDetector(
+          onTap: () => launchUrl(Uri.parse(_waUrl(phone)), mode: LaunchMode.externalApplication),
+          child: Container(
+            padding: const EdgeInsets.all(6),
+            decoration: BoxDecoration(color: const Color(0xFF25D366), borderRadius: BorderRadius.circular(8)),
+            child: const Icon(Icons.chat, size: 16, color: Colors.white),
+          ),
+        ),
       ]),
     );
   }
