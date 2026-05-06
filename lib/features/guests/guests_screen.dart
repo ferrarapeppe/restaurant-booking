@@ -222,12 +222,58 @@ class _GuestCard extends StatelessWidget {
                 ],
               ),
             ),
-            // Visite
+            // Visite + tag
             Column(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 Text('${guest.visitsCount}', style: const TextStyle(color: AppColors.accent, fontWeight: FontWeight.bold, fontSize: 18)),
                 const Text('visite', style: TextStyle(color: AppColors.textMuted, fontSize: 11)),
+                if (guest.tags.isNotEmpty) ...[
+                  const SizedBox(height: 6),
+                  Wrap(
+                    spacing: 4,
+                    runSpacing: 4,
+                    alignment: WrapAlignment.end,
+                    children: [
+                      for (final tag in guest.tags.take(3))
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: tag == 'vip'
+                                ? const Color(0xFFFFD700)
+                                : tag == 'no_show'
+                                    ? const Color(0xFFFFE0E0)
+                                    : AppColors.accentLight,
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Text(
+                            tag,
+                            style: TextStyle(
+                              color: tag == 'vip'
+                                  ? const Color(0xFF856404)
+                                  : tag == 'no_show'
+                                      ? const Color(0xFFDC3545)
+                                      : AppColors.accent,
+                              fontSize: 10,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      if (guest.tags.length > 3)
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: AppColors.cardLight,
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Text(
+                            '+${guest.tags.length - 3}',
+                            style: const TextStyle(color: AppColors.textSecondary, fontSize: 10, fontWeight: FontWeight.w600),
+                          ),
+                        ),
+                    ],
+                  ),
+                ],
               ],
             ),
           ],
