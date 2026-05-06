@@ -610,6 +610,36 @@ async function submitBooking() {
       notes: notes || null,
     });
 
+    // Invia email di conferma al cliente (se ha fornito email)
+    if (email) {
+      const turnoEl = document.querySelector('input[name="turno"]:checked');
+      const turnoVal = turnoEl ? turnoEl.parentElement?.textContent?.trim() : '';
+      try {
+        await fetch(SUPABASE_URL + '/functions/v1/send-booking-email', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + SUPABASE_ANON_KEY,
+          },
+          body: JSON.stringify({
+            nome,
+            cognome,
+            email,
+            phone,
+            date: state.date.toISOString(),
+            time: state.time,
+            persons: state.persons,
+            notes: notes || '',
+            turno: turnoVal || '',
+            restaurantName: state.restaurant?.name || 'Hio Oriental Bar',
+          }),
+        });
+      } catch (emailErr) {
+        console.warn('Email non inviata:', emailErr);
+        // Non blocca il flusso — la prenotazione è già salvata
+      }
+    }
+
     state.step = 5;
     renderStep();
   } catch(e) {
