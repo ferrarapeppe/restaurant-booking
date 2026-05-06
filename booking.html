@@ -165,24 +165,25 @@
       margin-bottom: 4px; font-weight: 500;
     }
     .form-group input, .form-group textarea, .form-group select {
-      width: 100%; padding: 12px;
+      padding: 12px;
       border: 1px solid #e0e0e0; border-radius: 8px;
       font-size: 15px; color: #333;
       outline: none; transition: border-color 0.2s;
     }
+    .form-group > input, .form-group > textarea, .form-group > select { width: 100%; }
     .form-group input:focus, .form-group textarea:focus { border-color: #3b4cc0; }
     .phone-row { display: flex; gap: 8px; align-items: stretch; }
-    .phone-row select { width: 150px !important; flex-shrink: 0 !important; }
-    .phone-row input { flex: 1 !important; width: auto !important; min-width: 0; }
+    .phone-row select { width: 150px; flex-shrink: 0; }
+    .phone-row input { flex: 1; min-width: 0; }
     .radio-group { border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden; }
     .radio-group label {
-      display: flex !important; align-items: center; gap: 10px;
+      display: flex; align-items: center; gap: 10px;
       padding: 14px 16px; cursor: pointer;
       border-bottom: 1px solid #f0f0f0; margin: 0;
-      font-size: 14px !important; color: #333 !important; font-weight: 400;
+      font-size: 14px; color: #333; font-weight: 400;
     }
     .radio-group label:last-child { border-bottom: none; }
-    .radio-group input[type=radio] { flex-shrink: 0; accent-color: #3b4cc0; width: 16px !important; height: 16px; padding: 0 !important; }
+    .radio-group input[type=radio] { flex-shrink: 0; accent-color: #3b4cc0; width: 16px; height: 16px; padding: 0; }
     .rules-box {
       border: 1px solid #e0e0e0; border-radius: 8px;
       padding: 12px; font-size: 13px; color: #555;
