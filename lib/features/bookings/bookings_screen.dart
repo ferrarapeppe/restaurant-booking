@@ -993,9 +993,11 @@ class _RejectionScreenState extends State<RejectionScreen> {
 
   void _onMotivoChanged(String? value) {
     if (value == null) return;
-    setState(() => _selectedMotivo = value);
     final match = _motivi.firstWhere((m) => m.$1 == value, orElse: () => _motivi[0]);
-    _msgCtrl.text = match.$2;
+    setState(() {
+      _selectedMotivo = value;
+      _msgCtrl.text = match.$2;
+    });
   }
 
   Future<void> _confirm() async {
