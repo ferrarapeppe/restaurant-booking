@@ -480,70 +480,86 @@ class _BookingRow extends StatelessWidget {
                               color: AppColors.textMuted, fontSize: 14))),
             ),
           ),
-          // Stato — tappable popup
+          // Stato — pulsanti per pending, popup per gli altri
           SizedBox(
             width: 70,
-            child: PopupMenuButton<String>(
-              color: AppColors.surface,
-              padding: EdgeInsets.zero,
-              onSelected: (value) {
-                if (value == 'rejected') {
-                  onReject?.call();
-                } else {
-                  onStatusChange?.call(value);
-                }
-              },
-              itemBuilder: (_) => _kStatusChoices.map((choice) {
-                final isCurrent = choice.$1 == status ||
-                    (choice.$1 == 'rejected' && status == 'canceled');
-                return PopupMenuItem<String>(
-                  value: choice.$1 == 'rejected' ? 'rejected' : choice.$1,
-                  child: Container(
-                    color: isCurrent
-                        ? AppColors.accent.withValues(alpha: 0.15)
-                        : Colors.transparent,
-                    padding: const EdgeInsets.symmetric(vertical: 2),
-                    child: Row(children: [
-                      Icon(choice.$3,
-                          size: 18,
-                          color: isCurrent
-                              ? AppColors.accent
-                              : AppColors.textPrimary),
-                      const SizedBox(width: 10),
-                      Text(choice.$2,
-                          style: TextStyle(
-                              color: isCurrent
-                                  ? AppColors.accent
-                                  : AppColors.textPrimary,
-                              fontSize: 14,
-                              fontWeight: isCurrent
-                                  ? FontWeight.bold
-                                  : FontWeight.normal)),
-                    ]),
-                  ),
-                );
-              }).toList(),
-              child: Center(
-                child: Row(mainAxisSize: MainAxisSize.min, children: [
-                  if (isPending) ...[
-                    Container(
-                        width: 10, height: 10,
+            child: isPending
+                ? Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                    GestureDetector(
+                      onTap: () => onStatusChange?.call('approved'),
+                      child: Container(
+                        width: 30, height: 30,
                         decoration: const BoxDecoration(
-                            color: Colors.red, shape: BoxShape.circle)),
-                    const SizedBox(width: 3),
-                  ],
-                  Container(
-                    width: 10, height: 10,
-                    decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: _statusDotColor(status)),
+                            color: Color(0xFF2E7D52), shape: BoxShape.circle),
+                        child: const Icon(Icons.check,
+                            color: Colors.white, size: 17),
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    GestureDetector(
+                      onTap: onReject,
+                      child: Container(
+                        width: 30, height: 30,
+                        decoration: const BoxDecoration(
+                            color: Color(0xFFDC3545), shape: BoxShape.circle),
+                        child: const Icon(Icons.close,
+                            color: Colors.white, size: 17),
+                      ),
+                    ),
+                  ])
+                : PopupMenuButton<String>(
+                    color: AppColors.surface,
+                    padding: EdgeInsets.zero,
+                    onSelected: (value) {
+                      if (value == 'rejected') {
+                        onReject?.call();
+                      } else {
+                        onStatusChange?.call(value);
+                      }
+                    },
+                    itemBuilder: (_) => _kStatusChoices.map((choice) {
+                      final isCurrent = choice.$1 == status;
+                      return PopupMenuItem<String>(
+                        value: choice.$1 == 'rejected' ? 'rejected' : choice.$1,
+                        child: Container(
+                          color: isCurrent
+                              ? AppColors.accent.withValues(alpha: 0.15)
+                              : Colors.transparent,
+                          padding: const EdgeInsets.symmetric(vertical: 2),
+                          child: Row(children: [
+                            Icon(choice.$3,
+                                size: 18,
+                                color: isCurrent
+                                    ? AppColors.accent
+                                    : AppColors.textPrimary),
+                            const SizedBox(width: 10),
+                            Text(choice.$2,
+                                style: TextStyle(
+                                    color: isCurrent
+                                        ? AppColors.accent
+                                        : AppColors.textPrimary,
+                                    fontSize: 14,
+                                    fontWeight: isCurrent
+                                        ? FontWeight.bold
+                                        : FontWeight.normal)),
+                          ]),
+                        ),
+                      );
+                    }).toList(),
+                    child: Center(
+                      child: Row(mainAxisSize: MainAxisSize.min, children: [
+                        Container(
+                          width: 10, height: 10,
+                          decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: _statusDotColor(status)),
+                        ),
+                        const SizedBox(width: 2),
+                        const Icon(Icons.arrow_drop_down,
+                            size: 14, color: AppColors.textMuted),
+                      ]),
+                    ),
                   ),
-                  const SizedBox(width: 2),
-                  const Icon(Icons.arrow_drop_down,
-                      size: 14, color: AppColors.textMuted),
-                ]),
-              ),
-            ),
           ),
         ]),
       ),
