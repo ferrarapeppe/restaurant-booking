@@ -376,193 +376,192 @@ class _BookingRow extends StatelessWidget {
         (table?['areas'] as Map<String, dynamic>?)?['name']?.toString() ?? '';
     final isPending = status == 'pending';
 
-    return GestureDetector(
-      onTap: onTap,
-      child: IntrinsicHeight(
-        child: Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-          // Colonna ora — teal
-          Container(
-            width: 72,
-            color: const Color(0xFF00897B),
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(timeStart,
-                    style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 13,
-                        fontWeight: FontWeight.bold)),
-                if (timeEnd.isNotEmpty)
-                  Text(timeEnd,
-                      style: const TextStyle(color: Colors.white70, fontSize: 11)),
-              ],
-            ),
-          ),
-          // Nome
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-              child: Text(guestName,
-                  style: const TextStyle(
-                      color: AppColors.textPrimary,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600),
-                  overflow: TextOverflow.ellipsis),
-            ),
-          ),
-          // Party size circle (P)
-          SizedBox(
-            width: 36,
-            child: Center(
-              child: Container(
-                width: 28,
-                height: 28,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: partySize >= 3
-                      ? const Color(0xFFE6781A)
-                      : Colors.transparent,
-                  border: partySize < 3
-                      ? Border.all(
-                          color: const Color(0xFFE6781A).withValues(alpha: 0.7))
-                      : null,
-                ),
-                child: Center(
-                  child: Text('$partySize',
-                      style: TextStyle(
-                          color: partySize >= 3
-                              ? Colors.white
-                              : const Color(0xFFE6781A),
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold)),
+    // Colonna Stato — estratta fuori dal GestureDetector del dettaglio
+    Widget statoColumn = SizedBox(
+      width: 70,
+      child: isPending
+          ? Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+              GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: () => onStatusChange?.call('approved'),
+                child: Container(
+                  width: 30, height: 30,
+                  decoration: const BoxDecoration(
+                      color: Color(0xFF2E7D52), shape: BoxShape.circle),
+                  child: const Icon(Icons.check, color: Colors.white, size: 17),
                 ),
               ),
-            ),
-          ),
-          // Tavolo/i
-          SizedBox(
-            width: 86,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
-              child: tableName.isNotEmpty
-                  ? Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        if (areaName.isNotEmpty)
-                          Text(areaName.toUpperCase(),
-                              style: const TextStyle(
-                                  color: AppColors.textSecondary,
-                                  fontSize: 9,
-                                  fontWeight: FontWeight.w600)),
-                        const SizedBox(height: 2),
-                        Container(
-                          width: 32,
-                          height: 32,
-                          decoration: const BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: Color(0xFF4A5568)),
-                          child: Center(
-                            child: Text(tableName,
-                                style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.bold)),
-                          ),
-                        ),
-                      ],
-                    )
-                  : const Center(
-                      child: Text('—',
+              const SizedBox(width: 6),
+              GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: onReject,
+                child: Container(
+                  width: 30, height: 30,
+                  decoration: const BoxDecoration(
+                      color: Color(0xFFDC3545), shape: BoxShape.circle),
+                  child: const Icon(Icons.close, color: Colors.white, size: 17),
+                ),
+              ),
+            ])
+          : PopupMenuButton<String>(
+              color: AppColors.surface,
+              padding: EdgeInsets.zero,
+              onSelected: (value) {
+                if (value == 'rejected') {
+                  onReject?.call();
+                } else {
+                  onStatusChange?.call(value);
+                }
+              },
+              itemBuilder: (_) => _kStatusChoices.map((choice) {
+                final isCurrent = choice.$1 == status;
+                return PopupMenuItem<String>(
+                  value: choice.$1 == 'rejected' ? 'rejected' : choice.$1,
+                  child: Container(
+                    color: isCurrent
+                        ? AppColors.accent.withValues(alpha: 0.15)
+                        : Colors.transparent,
+                    padding: const EdgeInsets.symmetric(vertical: 2),
+                    child: Row(children: [
+                      Icon(choice.$3,
+                          size: 18,
+                          color: isCurrent ? AppColors.accent : AppColors.textPrimary),
+                      const SizedBox(width: 10),
+                      Text(choice.$2,
                           style: TextStyle(
-                              color: AppColors.textMuted, fontSize: 14))),
+                              color: isCurrent ? AppColors.accent : AppColors.textPrimary,
+                              fontSize: 14,
+                              fontWeight: isCurrent ? FontWeight.bold : FontWeight.normal)),
+                    ]),
+                  ),
+                );
+              }).toList(),
+              child: Center(
+                child: Row(mainAxisSize: MainAxisSize.min, children: [
+                  Container(
+                    width: 10, height: 10,
+                    decoration: BoxDecoration(
+                        shape: BoxShape.circle, color: _statusDotColor(status)),
+                  ),
+                  const SizedBox(width: 2),
+                  const Icon(Icons.arrow_drop_down,
+                      size: 14, color: AppColors.textMuted),
+                ]),
+              ),
             ),
-          ),
-          // Stato — pulsanti per pending, popup per gli altri
-          SizedBox(
-            width: 70,
-            child: isPending
-                ? Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-                    GestureDetector(
-                      onTap: () => onStatusChange?.call('approved'),
-                      child: Container(
-                        width: 30, height: 30,
-                        decoration: const BoxDecoration(
-                            color: Color(0xFF2E7D52), shape: BoxShape.circle),
-                        child: const Icon(Icons.check,
-                            color: Colors.white, size: 17),
-                      ),
+    );
+
+    return IntrinsicHeight(
+      child: Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+        // Area tappabile per dettaglio (tutto tranne Stato)
+        Expanded(
+          child: GestureDetector(
+            onTap: onTap,
+            behavior: HitTestBehavior.opaque,
+            child: Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+              // Colonna ora — teal
+              Container(
+                width: 72,
+                color: const Color(0xFF00897B),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(timeStart,
+                        style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold)),
+                    if (timeEnd.isNotEmpty)
+                      Text(timeEnd,
+                          style: const TextStyle(color: Colors.white70, fontSize: 11)),
+                  ],
+                ),
+              ),
+              // Nome
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  child: Text(guestName,
+                      style: const TextStyle(
+                          color: AppColors.textPrimary,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600),
+                      overflow: TextOverflow.ellipsis),
+                ),
+              ),
+              // Party size circle (P)
+              SizedBox(
+                width: 36,
+                child: Center(
+                  child: Container(
+                    width: 28, height: 28,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: partySize >= 3
+                          ? const Color(0xFFE6781A)
+                          : Colors.transparent,
+                      border: partySize < 3
+                          ? Border.all(
+                              color: const Color(0xFFE6781A).withValues(alpha: 0.7))
+                          : null,
                     ),
-                    const SizedBox(width: 6),
-                    GestureDetector(
-                      onTap: onReject,
-                      child: Container(
-                        width: 30, height: 30,
-                        decoration: const BoxDecoration(
-                            color: Color(0xFFDC3545), shape: BoxShape.circle),
-                        child: const Icon(Icons.close,
-                            color: Colors.white, size: 17),
-                      ),
-                    ),
-                  ])
-                : PopupMenuButton<String>(
-                    color: AppColors.surface,
-                    padding: EdgeInsets.zero,
-                    onSelected: (value) {
-                      if (value == 'rejected') {
-                        onReject?.call();
-                      } else {
-                        onStatusChange?.call(value);
-                      }
-                    },
-                    itemBuilder: (_) => _kStatusChoices.map((choice) {
-                      final isCurrent = choice.$1 == status;
-                      return PopupMenuItem<String>(
-                        value: choice.$1 == 'rejected' ? 'rejected' : choice.$1,
-                        child: Container(
-                          color: isCurrent
-                              ? AppColors.accent.withValues(alpha: 0.15)
-                              : Colors.transparent,
-                          padding: const EdgeInsets.symmetric(vertical: 2),
-                          child: Row(children: [
-                            Icon(choice.$3,
-                                size: 18,
-                                color: isCurrent
-                                    ? AppColors.accent
-                                    : AppColors.textPrimary),
-                            const SizedBox(width: 10),
-                            Text(choice.$2,
-                                style: TextStyle(
-                                    color: isCurrent
-                                        ? AppColors.accent
-                                        : AppColors.textPrimary,
-                                    fontSize: 14,
-                                    fontWeight: isCurrent
-                                        ? FontWeight.bold
-                                        : FontWeight.normal)),
-                          ]),
-                        ),
-                      );
-                    }).toList(),
                     child: Center(
-                      child: Row(mainAxisSize: MainAxisSize.min, children: [
-                        Container(
-                          width: 10, height: 10,
-                          decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: _statusDotColor(status)),
-                        ),
-                        const SizedBox(width: 2),
-                        const Icon(Icons.arrow_drop_down,
-                            size: 14, color: AppColors.textMuted),
-                      ]),
+                      child: Text('$partySize',
+                          style: TextStyle(
+                              color: partySize >= 3
+                                  ? Colors.white
+                                  : const Color(0xFFE6781A),
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold)),
                     ),
                   ),
+                ),
+              ),
+              // Tavolo/i
+              SizedBox(
+                width: 86,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+                  child: tableName.isNotEmpty
+                      ? Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            if (areaName.isNotEmpty)
+                              Text(areaName.toUpperCase(),
+                                  style: const TextStyle(
+                                      color: AppColors.textSecondary,
+                                      fontSize: 9,
+                                      fontWeight: FontWeight.w600)),
+                            const SizedBox(height: 2),
+                            Container(
+                              width: 32, height: 32,
+                              decoration: const BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: Color(0xFF4A5568)),
+                              child: Center(
+                                child: Text(tableName,
+                                    style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.bold)),
+                              ),
+                            ),
+                          ],
+                        )
+                      : const Center(
+                          child: Text('—',
+                              style: TextStyle(
+                                  color: AppColors.textMuted, fontSize: 14))),
+                ),
+              ),
+            ]),
           ),
-        ]),
-      ),
+        ),
+        statoColumn,
+      ]),
     );
   }
 }
