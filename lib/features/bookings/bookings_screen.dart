@@ -585,6 +585,9 @@ class _BookingDetailSheetState extends State<BookingDetailSheet>
   late String _editTime;
   late int _editPartySize;
   late String _editStatus, _editSource;
+  String? _editTableId;
+  String _editTableName = '';
+  int _editTableCapacity = 0;
   bool _saving = false;
 
   @override
@@ -597,6 +600,10 @@ class _BookingDetailSheetState extends State<BookingDetailSheet>
     _editPartySize = (b['party_size'] as int?) ?? 2;
     _editStatus = (b['status'] as String?) ?? 'approved';
     _editSource = (b['source'] as String?) ?? 'phone';
+    _editTableId = b['table_id'] as String?;
+    final t = b['tables'] as Map<String, dynamic>?;
+    _editTableName = t?['name']?.toString() ?? '';
+    _editTableCapacity = (t?['capacity'] as int?) ?? 0;
     final g = b['guests'];
     _nomeCtrl = TextEditingController(text: (g?['first_name'] ?? '').toString());
     _cognomeCtrl = TextEditingController(text: (g?['surname'] ?? '').toString().toUpperCase());
@@ -634,6 +641,7 @@ class _BookingDetailSheetState extends State<BookingDetailSheet>
         'status': _editStatus,
         'source': _editSource,
         'notes': _noteCtrl.text.trim(),
+        'table_id': _editTableId,
       }).eq('id', widget.booking['id']);
       widget.onSaved();
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(
@@ -646,6 +654,55 @@ class _BookingDetailSheetState extends State<BookingDetailSheet>
     } finally {
       if (mounted) setState(() => _saving = false);
     }
+  }
+
+  Future<void> _pickTable() async {
+    final tables = await Supabase.instance.client
+        .from('tables')
+        .select('id, name, capacity, areas(name)')
+        .eq('restaurant_id', '2b126a92-24d5-4e83-b38c-dfc82035a0cf')
+        .order('name');
+    if (!mounted) return;
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: AppColors.surface,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
+      builder: (_) => ListView(
+        shrinkWrap: true,
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        children: [
+          ListTile(
+            leading: const Icon(Icons.block, color: AppColors.textMuted),
+            title: const Text('Nessun tavolo', style: TextStyle(color: AppColors.textPrimary)),
+            onTap: () {
+              setState(() { _editTableId = null; _editTableName = ''; _editTableCapacity = 0; });
+              Navigator.pop(context);
+            },
+          ),
+          ...tables.map((t) {
+            final areaName = (t['areas'] as Map?)?['name']?.toString() ?? '';
+            return ListTile(
+              leading: Container(
+                width: 32, height: 32,
+                decoration: const BoxDecoration(shape: BoxShape.circle, color: Color(0xFF4A5568)),
+                child: Center(child: Text(t['name'] ?? '', style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold))),
+              ),
+              title: Text('Tavolo ${t['name']}', style: const TextStyle(color: AppColors.textPrimary)),
+              subtitle: areaName.isNotEmpty ? Text(areaName, style: const TextStyle(color: AppColors.textSecondary, fontSize: 12)) : null,
+              trailing: Text('${t['capacity']} posti', style: const TextStyle(color: AppColors.textMuted, fontSize: 12)),
+              onTap: () {
+                setState(() {
+                  _editTableId = t['id'] as String;
+                  _editTableName = t['name']?.toString() ?? '';
+                  _editTableCapacity = (t['capacity'] as int?) ?? 0;
+                });
+                Navigator.pop(context);
+              },
+            );
+          }),
+        ],
+      ),
+    );
   }
 
   void _changeTime(int deltaMinutes) {
@@ -662,9 +719,6 @@ class _BookingDetailSheetState extends State<BookingDetailSheet>
   @override
   Widget build(BuildContext context) {
     final dateLabel = DateFormat('EEE d MMM yyyy', 'it_IT').format(_editDate);
-    final t = widget.booking['tables'];
-    final tableName = t?['name']?.toString() ?? '';
-    final tableCapacity = t?['capacity']?.toString() ?? '';
 
     return DraggableScrollableSheet(
       initialChildSize: 0.9, minChildSize: 0.5, maxChildSize: 0.95, expand: false,
@@ -703,21 +757,29 @@ class _BookingDetailSheetState extends State<BookingDetailSheet>
                     onPressed: () => setState(() => _editPartySize = (_editPartySize + 1).clamp(1, 20))),
               ])),
               const Divider(color: AppColors.divider),
-              _DetailRow(label: 'Tavolo', child: tableName.isNotEmpty
-                ? Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: AppColors.accent.withOpacity(0.15),
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: AppColors.accent),
-                    ),
-                    child: Text(
-                      tableCapacity.isNotEmpty ? '$tableName  ($tableCapacity posti)' : tableName,
-                      style: const TextStyle(color: AppColors.accent, fontWeight: FontWeight.bold),
-                    ),
-                  )
-                : const Text('Nessun tavolo assegnato',
-                    style: TextStyle(color: Color(0xFFFFC107), fontSize: 14))),
+              GestureDetector(
+                onTap: _pickTable,
+                child: _DetailRow(label: 'Tavolo', child: Row(children: [
+                  Expanded(
+                    child: _editTableName.isNotEmpty
+                        ? Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: AppColors.accent.withValues(alpha: 0.15),
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(color: AppColors.accent),
+                            ),
+                            child: Text(
+                              _editTableCapacity > 0 ? '$_editTableName  ($_editTableCapacity posti)' : _editTableName,
+                              style: const TextStyle(color: AppColors.accent, fontWeight: FontWeight.bold),
+                            ),
+                          )
+                        : const Text('Tocca per assegnare un tavolo',
+                            style: TextStyle(color: Color(0xFFFFC107), fontSize: 14)),
+                  ),
+                  const Icon(Icons.edit_outlined, color: AppColors.textMuted, size: 16),
+                ])),
+              ),
               const SizedBox(height: 16),
               _EditableField(label: 'Nome', controller: _nomeCtrl),
               const SizedBox(height: 8),
@@ -789,54 +851,71 @@ class _BookingDetailSheetState extends State<BookingDetailSheet>
         Container(
           color: AppColors.surface,
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
-          child: Row(mainAxisAlignment: MainAxisAlignment.end, children: [
+          child: Column(mainAxisSize: MainAxisSize.min, children: [
             if (widget.booking['status'] == 'pending') ...[
-              ElevatedButton.icon(
-                onPressed: () async {
-                  final supabase = Supabase.instance.client;
-                  await supabase.from('bookings').update({'status': 'approved'}).eq('id', widget.booking['id']);
-                  sendTableAssignedEmail(widget.booking, widget.booking['tables'] as Map<String, dynamic>? ?? {});
-                  if (!context.mounted) return;
-                  Navigator.pop(context);
-                  widget.onSaved();
-                },
-                icon: const Icon(Icons.check, size: 16),
-                label: const Text('Accetta'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF2E7D52),
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                ),
-              ),
-              const SizedBox(width: 8),
-              ElevatedButton.icon(
-                onPressed: () {
-                  Navigator.pop(context);
-                  Navigator.push(context, MaterialPageRoute(
-                    builder: (_) => RejectionScreen(
-                      booking: widget.booking,
-                      onRejected: widget.onSaved,
+              Row(children: [
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: () async {
+                      try {
+                        await _supabase.from('bookings')
+                            .update({'status': 'approved'})
+                            .eq('id', widget.booking['id']);
+                        sendTableAssignedEmail(
+                          widget.booking,
+                          widget.booking['tables'] as Map<String, dynamic>? ?? {},
+                        );
+                        if (!context.mounted) return;
+                        Navigator.pop(context);
+                        widget.onSaved();
+                      } catch (e) {
+                        if (mounted) ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Errore: $e'), backgroundColor: Colors.red),
+                        );
+                      }
+                    },
+                    icon: const Icon(Icons.check, size: 16),
+                    label: const Text('Accetta'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF2E7D52),
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
                     ),
-                  ));
-                },
-                icon: const Icon(Icons.close, size: 16),
-                label: const Text('Rifiuta'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFDC3545),
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  ),
                 ),
-              ),
-              const SizedBox(width: 8),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      Navigator.pop(context);
+                      Navigator.push(context, MaterialPageRoute(
+                        builder: (_) => RejectionScreen(
+                          booking: widget.booking,
+                          onRejected: widget.onSaved,
+                        ),
+                      ));
+                    },
+                    icon: const Icon(Icons.close, size: 16),
+                    label: const Text('Rifiuta'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFFDC3545),
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                    ),
+                  ),
+                ),
+              ]),
+              const SizedBox(height: 8),
             ],
-            const Spacer(),
-            _ActionBtn(icon: Icons.more_horiz, onTap: () {}),
-            const SizedBox(width: 12),
-            _ActionBtn(icon: Icons.close, onTap: () => Navigator.pop(context)),
-            const SizedBox(width: 12),
-            _saving
-                ? const CircularProgressIndicator(color: Color(0xFF2E7D52))
-                : _ActionBtn(icon: Icons.check, color: AppColors.accent, onTap: _save),
+            Row(mainAxisAlignment: MainAxisAlignment.end, children: [
+              _ActionBtn(icon: Icons.more_horiz, onTap: () {}),
+              const SizedBox(width: 12),
+              _ActionBtn(icon: Icons.close, onTap: () => Navigator.pop(context)),
+              const SizedBox(width: 12),
+              _saving
+                  ? const CircularProgressIndicator(color: Color(0xFF2E7D52))
+                  : _ActionBtn(icon: Icons.check, color: AppColors.accent, onTap: _save),
+            ]),
           ]),
         ),
       ]),
