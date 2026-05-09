@@ -866,7 +866,6 @@ class _BookingDetailSheetState extends State<BookingDetailSheet>
                           widget.booking['tables'] as Map<String, dynamic>? ?? {},
                         );
                         if (!context.mounted) return;
-                        Navigator.pop(context);
                         widget.onSaved();
                       } catch (e) {
                         if (mounted) ScaffoldMessenger.of(context).showSnackBar(
