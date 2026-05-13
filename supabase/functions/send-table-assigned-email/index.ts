@@ -169,7 +169,7 @@ function buildHtml(d: D): string {
   <tr>
     <td style="background:white;padding:0 40px 24px;">
       <p style="color:#e6a817;font-size:13px;line-height:1.6;margin:0;">
-        Orario limite: Il tavolo sarà tenuto per un massimo di 15:30 minuti oltre l'orario prenotato, dopodiché la prenotazione verrà annullata.
+        Orario limite: Il tavolo sarà tenuto per un massimo di 20 minuti oltre l'orario prenotato, dopodiché la prenotazione verrà annullata.
       </p>
     </td>
   </tr>
