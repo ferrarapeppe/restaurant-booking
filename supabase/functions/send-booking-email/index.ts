@@ -216,7 +216,7 @@ function detailsTable(d: EmailData): string {
     ${d.notes ? row('Messaggio', d.notes) : ''}
   </table>
   <p style="color:${C.rosso};font-family:${FONT_TESTO};font-size:13px;font-weight:bold;line-height:1.6;margin:12px 0 0;">
-    Tieni presente che il tuo tavolo sarà riservato per 2 ore.
+    Tieni presente che il tavolo sarà a tua disposizione per 2 ore a partire dall’orario della prenotazione, a prescindere dall’orario di arrivo.
   </p>`;
 }
 
