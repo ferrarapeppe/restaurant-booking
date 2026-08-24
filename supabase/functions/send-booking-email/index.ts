@@ -152,8 +152,8 @@ function detailsTable(d: EmailData): string {
     ${row('E-mail', d.email ? `<a href="mailto:${d.email}" style="color:${C.testo};text-decoration:none;">${d.email}</a>` : '')}
     ${d.notes ? row('Messaggio', d.notes) : ''}
   </table>
-  <p style="color:${C.testoSoft};font-family:${FONT_TESTO};font-size:12px;line-height:1.6;margin:12px 0 0;">
-    Il tavolo resta riservato per 2 ore.
+  <p style="color:${C.rosso};font-family:${FONT_TESTO};font-size:13px;font-weight:bold;line-height:1.6;margin:12px 0 0;">
+    Tieni presente che il tuo tavolo sarà riservato per 2 ore.
   </p>`;
 }
 
