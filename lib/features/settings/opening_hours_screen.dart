@@ -215,7 +215,7 @@ class _OpeningHoursScreenState extends State<OpeningHoursScreen> {
                       )
                     else
                       ..._specialHours.map((h) => Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                         child: Row(children: [
                           Expanded(child: Text(h['special_date'] ?? '', style: const TextStyle(color: AppColors.textPrimary))),
                           Expanded(child: Text(h['is_closed'] == true ? 'Chiuso' : 'Aperto',
@@ -224,6 +224,20 @@ class _OpeningHoursScreenState extends State<OpeningHoursScreen> {
                             h['is_closed'] == true ? '-' : '${_formatTime(h['open_time'])} - ${_formatTime(h['close_time'])}',
                             style: const TextStyle(color: AppColors.textSecondary),
                           )),
+                          Row(mainAxisSize: MainAxisSize.min, children: [
+                            IconButton(
+                              icon: const Icon(Icons.edit_outlined, size: 18, color: AppColors.textSecondary),
+                              onPressed: () => _showForm(context, existing: h, isSpecial: true),
+                              padding: EdgeInsets.zero,
+                              constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.delete_outline, size: 18, color: AppColors.textSecondary),
+                              onPressed: () => _delete(h['id']),
+                              padding: EdgeInsets.zero,
+                              constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                            ),
+                          ]),
                         ]),
                       )),
                     const Divider(height: 1, color: AppColors.divider),
@@ -291,6 +305,7 @@ class _OpeningHoursFormState extends State<_OpeningHoursForm> with SingleTickerP
   ];
 
   int _selectedDay = 0;
+  DateTime? _specialDate;
   String _openTime = '18:30';
   String _closeTime = '01:00';
   bool _isClosed = false;
@@ -314,8 +329,12 @@ class _OpeningHoursFormState extends State<_OpeningHoursForm> with SingleTickerP
       _maxParty = (e['max_party_size'] as int?) ?? 15;
       _titleCtrl.text = e['title'] ?? '';
       _notesCtrl.text = e['notes'] ?? '';
+      _specialDate = DateTime.tryParse(e['special_date']?.toString() ?? '');
     }
   }
+
+  static String _formatDate(DateTime d) =>
+      '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
 
   @override
   void dispose() { _tabCtrl.dispose(); _titleCtrl.dispose(); _notesCtrl.dispose(); super.dispose(); }
@@ -331,11 +350,24 @@ class _OpeningHoursFormState extends State<_OpeningHoursForm> with SingleTickerP
   }
 
   Future<void> _save() async {
+    // Un orario speciale senza data finirebbe salvato come orario settimanale
+    if (widget.isSpecial && _specialDate == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Scegli la data dell\'orario speciale'), backgroundColor: AppColors.accent),
+      );
+      return;
+    }
     setState(() => _saving = true);
     try {
+      // Per una data speciale il giorno della settimana si ricava dalla data
+      // (DateTime: 1 = lunedì ... 7 = domenica; qui 0 = lunedì)
+      final giorno = widget.isSpecial && _specialDate != null
+          ? _specialDate!.weekday - 1
+          : _selectedDay;
       final data = {
         'restaurant_id': widget.restaurantId,
-        'day_of_week': _selectedDay,
+        'day_of_week': giorno,
+        'special_date': widget.isSpecial ? _formatDate(_specialDate!) : null,
         'open_time': _openTime + ':00',
         'close_time': _closeTime + ':00',
         'is_closed': _isClosed,
@@ -361,7 +393,9 @@ class _OpeningHoursFormState extends State<_OpeningHoursForm> with SingleTickerP
 
   @override
   Widget build(BuildContext context) {
-    final dayName = _days[_selectedDay];
+    final dayName = widget.isSpecial
+        ? (_specialDate == null ? 'data da scegliere' : _formatDate(_specialDate!))
+        : _days[_selectedDay];
     final lastSlot = _calcLastSlot();
     return DraggableScrollableSheet(
       initialChildSize: 0.9,
@@ -372,7 +406,7 @@ class _OpeningHoursFormState extends State<_OpeningHoursForm> with SingleTickerP
         Container(
           margin: const EdgeInsets.symmetric(vertical: 8),
           width: 40, height: 4,
-          decoration: BoxDecoration(color: Colors.white24, borderRadius: BorderRadius.circular(2)),
+          decoration: BoxDecoration(color: AppColors.divider, borderRadius: BorderRadius.circular(2)),
         ),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -386,9 +420,9 @@ class _OpeningHoursFormState extends State<_OpeningHoursForm> with SingleTickerP
         ),
         TabBar(
           controller: _tabCtrl,
-          indicatorColor: const Color(0xFF2E7D52),
-          labelColor: Colors.white,
-          unselectedLabelColor: Colors.white38,
+          indicatorColor: AppColors.accent,
+          labelColor: AppColors.accent,
+          unselectedLabelColor: AppColors.textSecondary,
           labelStyle: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
           tabs: const [Tab(text: 'GENERALE'), Tab(text: 'POSTI A SEDERE'), Tab(text: 'LIMITI'), Tab(text: 'FORM')],
         ),
@@ -397,18 +431,51 @@ class _OpeningHoursFormState extends State<_OpeningHoursForm> with SingleTickerP
             // ── GENERALE ──
             ListView(controller: sc, padding: const EdgeInsets.all(16), children: [
               // Giorno
-              _FormField(
-                label: 'Giorno',
-                child: DropdownButton<int>(
-                  value: _selectedDay,
-                  isExpanded: true,
-                  dropdownColor: AppColors.surface,
-                  underline: const SizedBox(),
-                  style: const TextStyle(color: Colors.white, fontSize: 16),
-                  items: List.generate(7, (i) => DropdownMenuItem(value: i, child: Text(_days[i]))),
-                  onChanged: (v) => setState(() => _selectedDay = v!),
+              if (widget.isSpecial)
+                _FormField(
+                  label: 'Data',
+                  child: InkWell(
+                    onTap: () async {
+                      final oggi = DateTime.now();
+                      final scelta = await showDatePicker(
+                        context: context,
+                        initialDate: _specialDate ?? oggi,
+                        firstDate: DateTime(oggi.year - 1),
+                        lastDate: DateTime(oggi.year + 3),
+                        locale: const Locale('it', 'IT'),
+                      );
+                      if (scelta != null) setState(() => _specialDate = scelta);
+                    },
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      child: Row(children: [
+                        Expanded(
+                          child: Text(
+                            _specialDate == null ? 'Scegli una data' : _formatDate(_specialDate!),
+                            style: TextStyle(
+                              color: _specialDate == null ? AppColors.textMuted : AppColors.textPrimary,
+                              fontSize: 16,
+                            ),
+                          ),
+                        ),
+                        const Icon(Icons.calendar_today_outlined, size: 18, color: AppColors.textSecondary),
+                      ]),
+                    ),
+                  ),
+                )
+              else
+                _FormField(
+                  label: 'Giorno',
+                  child: DropdownButton<int>(
+                    value: _selectedDay,
+                    isExpanded: true,
+                    dropdownColor: AppColors.surface,
+                    underline: const SizedBox(),
+                    style: const TextStyle(color: AppColors.textPrimary, fontSize: 16),
+                    items: List.generate(7, (i) => DropdownMenuItem(value: i, child: Text(_days[i]))),
+                    onChanged: (v) => setState(() => _selectedDay = v!),
+                  ),
                 ),
-              ),
               const SizedBox(height: 12),
               // Chiuso toggle
               Row(children: [
@@ -425,7 +492,7 @@ class _OpeningHoursFormState extends State<_OpeningHoursForm> with SingleTickerP
                       isExpanded: true,
                       dropdownColor: AppColors.surface,
                       underline: const SizedBox(),
-                      style: const TextStyle(color: Colors.white, fontSize: 16),
+                      style: const TextStyle(color: AppColors.textPrimary, fontSize: 16),
                       items: _timeSlots.map((t) => DropdownMenuItem(value: t, child: Text(t))).toList(),
                       onChanged: (v) => setState(() => _openTime = v!),
                     ),
@@ -438,7 +505,7 @@ class _OpeningHoursFormState extends State<_OpeningHoursForm> with SingleTickerP
                       isExpanded: true,
                       dropdownColor: AppColors.surface,
                       underline: const SizedBox(),
-                      style: const TextStyle(color: Colors.white, fontSize: 16),
+                      style: const TextStyle(color: AppColors.textPrimary, fontSize: 16),
                       items: _timeSlots.map((t) => DropdownMenuItem(value: t, child: Text(t))).toList(),
                       onChanged: (v) => setState(() => _closeTime = v!),
                     ),
@@ -493,7 +560,7 @@ class _OpeningHoursFormState extends State<_OpeningHoursForm> with SingleTickerP
                   label: 'Titolo',
                   child: TextField(
                     controller: _titleCtrl,
-                    style: const TextStyle(color: Colors.white),
+                    style: const TextStyle(color: AppColors.textPrimary),
                     decoration: const InputDecoration(border: InputBorder.none, isDense: true),
                   ),
                 ),
@@ -507,7 +574,7 @@ class _OpeningHoursFormState extends State<_OpeningHoursForm> with SingleTickerP
                   child: TextField(
                     controller: _notesCtrl,
                     maxLines: 3,
-                    style: const TextStyle(color: Colors.white),
+                    style: const TextStyle(color: AppColors.textPrimary),
                     decoration: const InputDecoration(border: InputBorder.none, isDense: true),
                   ),
                 ),
@@ -520,18 +587,18 @@ class _OpeningHoursFormState extends State<_OpeningHoursForm> with SingleTickerP
               _FormField(
                 label: 'Minimo persone per prenotazione',
                 child: Row(children: [
-                  Expanded(child: Text('$_minParty', style: const TextStyle(color: Colors.white, fontSize: 16))),
-                  IconButton(icon: const Icon(Icons.remove_circle_outline, color: Colors.white54), onPressed: () => setState(() => _minParty = (_minParty - 1).clamp(1, 20))),
-                  IconButton(icon: const Icon(Icons.add_circle_outline, color: Colors.white54), onPressed: () => setState(() => _minParty = (_minParty + 1).clamp(1, 20))),
+                  Expanded(child: Text('$_minParty', style: const TextStyle(color: AppColors.textPrimary, fontSize: 16))),
+                  IconButton(icon: const Icon(Icons.remove_circle_outline, color: AppColors.textSecondary), onPressed: () => setState(() => _minParty = (_minParty - 1).clamp(1, 20))),
+                  IconButton(icon: const Icon(Icons.add_circle_outline, color: AppColors.textSecondary), onPressed: () => setState(() => _minParty = (_minParty + 1).clamp(1, 20))),
                 ]),
               ),
               const SizedBox(height: 12),
               _FormField(
                 label: 'Massimo persone per prenotazione',
                 child: Row(children: [
-                  Expanded(child: Text('$_maxParty', style: const TextStyle(color: Colors.white, fontSize: 16))),
-                  IconButton(icon: const Icon(Icons.remove_circle_outline, color: Colors.white54), onPressed: () => setState(() => _maxParty = (_maxParty - 1).clamp(1, 50))),
-                  IconButton(icon: const Icon(Icons.add_circle_outline, color: Colors.white54), onPressed: () => setState(() => _maxParty = (_maxParty + 1).clamp(1, 50))),
+                  Expanded(child: Text('$_maxParty', style: const TextStyle(color: AppColors.textPrimary, fontSize: 16))),
+                  IconButton(icon: const Icon(Icons.remove_circle_outline, color: AppColors.textSecondary), onPressed: () => setState(() => _maxParty = (_maxParty - 1).clamp(1, 50))),
+                  IconButton(icon: const Icon(Icons.add_circle_outline, color: AppColors.textSecondary), onPressed: () => setState(() => _maxParty = (_maxParty + 1).clamp(1, 50))),
                 ]),
               ),
             ]),

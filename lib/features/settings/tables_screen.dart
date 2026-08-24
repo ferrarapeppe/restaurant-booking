@@ -263,9 +263,9 @@ class _TablesScreenState extends State<TablesScreen> with SingleTickerProviderSt
         ],
         bottom: TabBar(
           controller: _tabController,
-          indicatorColor: const Color(0xFF2E7D52),
-          labelColor: Colors.white,
-          unselectedLabelColor: Colors.white38,
+          indicatorColor: AppColors.accent,
+          labelColor: AppColors.accent,
+          unselectedLabelColor: AppColors.textSecondary,
           labelStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
           tabs: const [
             Tab(text: 'AREE E TAVOLI'),
