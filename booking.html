@@ -709,8 +709,16 @@ function fasciaPerData(date) {
   return state.openingHours.find(h => h.day_of_week === dow);
 }
 
-// Le prenotazioni online aprono dal 1 settembre 2026
-const APERTURA_PRENOTAZIONI = new Date(2026, 8, 1);
+// Data di apertura delle prenotazioni online. Si imposta dall'app, in
+// Impostazioni > Profilo ristorante: prima era scritta qui nel codice e per
+// cambiarla bisognava modificare il sorgente e ripubblicare il sito.
+function aperturaPrenotazioni() {
+  const iso = state.restaurant?.settings?.prenotazioni_dal;
+  if (!iso) return null;                       // nessun limite: si prenota da oggi
+  const [a, m, g] = String(iso).slice(0, 10).split('-').map(Number);
+  if (!a || !m || !g) return null;
+  return new Date(a, m - 1, g);
+}
 
 // Unici orari prenotabili online, uguali per tutte le aree
 const ORARI_FISSI = ['18:30', '20:00', '22:00'];
@@ -718,11 +726,13 @@ const ORARI_FISSI = ['18:30', '20:00', '22:00'];
 // Marcatore campo obbligatorio
 const OBBL = ' <span class="req" aria-hidden="true">*</span>';
 
-// Primo giorno selezionabile: l'apertura, oppure oggi se l'apertura è già passata
+// Primo giorno selezionabile: l'apertura impostata dall'app, oppure oggi se
+// quella data è già passata o non è stata impostata.
 function dataMinimaPrenotabile() {
   const n = new Date();
   const oggi = new Date(n.getFullYear(), n.getMonth(), n.getDate());
-  return oggi > APERTURA_PRENOTAZIONI ? oggi : APERTURA_PRENOTAZIONI;
+  const apertura = aperturaPrenotazioni();
+  return apertura && apertura > oggi ? apertura : oggi;
 }
 
 const DAYS_IT = ['lun','mar','mer','gio','ven','sab','dom'];
