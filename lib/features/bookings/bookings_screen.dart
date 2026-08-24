@@ -46,6 +46,7 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
         _sourceFilter = 'web';
       }
       _loadBookings();
+      _caricaStatoGiornata();
     });
   }
 
@@ -82,6 +83,100 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
     }
   }
 
+  // ── Prenotazioni online per la giornata mostrata ──────────────────────────
+  // Blocca solo il modulo pubblico: lo staff continua a inserire prenotazioni
+  // dall'app. Il blocco è una riga di orario speciale chiusa su quella data,
+  // che il modulo già rispetta.
+  StatoGiornata _statoGiornata = StatoGiornata.inCaricamento;
+  String? _idBloccoGiornata;
+  bool _cambioStatoInCorso = false;
+
+  static const _titoloBlocco = 'Prenotazioni online sospese';
+
+  Future<void> _caricaStatoGiornata() async {
+    final dateStr = DateFormat('yyyy-MM-dd').format(ref.read(selectedDateProvider));
+    final giornoSettimana = (ref.read(selectedDateProvider).weekday - 1) % 7;
+    try {
+      final res = await _supabase
+          .from('opening_hours')
+          .select('id, is_closed, special_date, day_of_week')
+          .eq('restaurant_id', _restaurantId);
+
+      Map<String, dynamic>? speciale;
+      Map<String, dynamic>? settimanale;
+      for (final r in res) {
+        final sd = r['special_date']?.toString();
+        if (sd != null && sd.startsWith(dateStr)) {
+          speciale = Map<String, dynamic>.from(r);
+        } else if (sd == null && r['day_of_week'] == giornoSettimana) {
+          settimanale = Map<String, dynamic>.from(r);
+        }
+      }
+
+      if (!mounted) return;
+      setState(() {
+        if (speciale != null && speciale['is_closed'] == true) {
+          _statoGiornata = StatoGiornata.chiuse;
+          _idBloccoGiornata = speciale['id'] as String?;
+        } else if (speciale == null && settimanale?['is_closed'] == true) {
+          _statoGiornata = StatoGiornata.chiusuraSettimanale;
+          _idBloccoGiornata = null;
+        } else {
+          _statoGiornata = StatoGiornata.aperte;
+          _idBloccoGiornata = null;
+        }
+      });
+    } catch (e) {
+      debugPrint('stato giornata non caricato: $e');
+      if (mounted) setState(() => _statoGiornata = StatoGiornata.sconosciuto);
+    }
+  }
+
+  Future<void> _cambiaPrenotazioniOnline() async {
+    if (_cambioStatoInCorso) return;
+    if (_statoGiornata == StatoGiornata.chiusuraSettimanale) {
+      _avviso('È il giorno di chiusura settimanale. Si cambia da Impostazioni → Orari di apertura.');
+      return;
+    }
+    final data = ref.read(selectedDateProvider);
+    final dateStr = DateFormat('yyyy-MM-dd').format(data);
+    setState(() => _cambioStatoInCorso = true);
+    try {
+      if (_statoGiornata == StatoGiornata.aperte) {
+        final righe = await _supabase.from('opening_hours').insert({
+          'restaurant_id': _restaurantId,
+          'day_of_week': (data.weekday - 1) % 7,
+          'special_date': dateStr,
+          'is_closed': true,
+          'open_time': '18:30:00',
+          'close_time': '01:00:00',
+          'title': _titoloBlocco,
+        }).select();
+        _avviso(righe.isEmpty
+            ? 'Non riuscito: il database ha rifiutato la scrittura.'
+            : 'Prenotazioni online chiuse per questa giornata.');
+      } else if (_idBloccoGiornata != null) {
+        final righe = await _supabase
+            .from('opening_hours').delete().eq('id', _idBloccoGiornata!).select();
+        _avviso(righe.isEmpty
+            ? 'Non riuscito: il database ha rifiutato la cancellazione.'
+            : 'Prenotazioni online riaperte.');
+      }
+    } catch (e) {
+      _avviso('Errore: $e');
+    } finally {
+      if (mounted) setState(() => _cambioStatoInCorso = false);
+      await _caricaStatoGiornata();
+    }
+  }
+
+  void _avviso(String testo) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(testo), backgroundColor: AppColors.accent, duration: const Duration(seconds: 3)),
+    );
+  }
+
   String _guestName(Map<String, dynamic> b) {
     final g = b['guests'];
     if (g == null) return 'Ospite';
@@ -96,12 +191,13 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
     final current = ref.read(selectedDateProvider);
     ref.read(selectedDateProvider.notifier).state = current.add(Duration(days: delta));
     _loadBookings();
+    _caricaStatoGiornata();
   }
 
   @override
   Widget build(BuildContext context) {
     ref.listen<DateTime>(selectedDateProvider, (previous, next) {
-      if (previous != next) _loadBookings();
+      if (previous != next) { _loadBookings(); _caricaStatoGiornata(); }
     });
 
     final selectedDate = ref.watch(selectedDateProvider);
@@ -171,10 +267,10 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
             Row(children: [
               Text(capitalDay, style: const TextStyle(color: AppColors.textPrimary, fontSize: 20, fontWeight: FontWeight.bold)),
               const SizedBox(width: 10),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
-                decoration: BoxDecoration(color: AppColors.accent, borderRadius: BorderRadius.circular(12)),
-                child: const Text('Aperto', style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
+              _InterruttorePrenotazioniOnline(
+                stato: _statoGiornata,
+                inCorso: _cambioStatoInCorso,
+                onCambia: _cambiaPrenotazioniOnline,
               ),
               const Spacer(),
               IconButton(icon: const Icon(Icons.more_vert, color: AppColors.textSecondary), onPressed: () {}),
@@ -1453,6 +1549,82 @@ class _Avviso extends StatelessWidget {
             TextButton(onPressed: onRiprova, child: const Text('Riprova')),
           ],
         ]),
+      ),
+    );
+  }
+}
+
+
+// ── Stato delle prenotazioni online per una giornata ─────────────────────────
+enum StatoGiornata { inCaricamento, aperte, chiuse, chiusuraSettimanale, sconosciuto }
+
+/// Sostituisce il badge "Aperto", che era scritto fisso e diceva sempre
+/// "Aperto" anche nel giorno di chiusura.
+class _InterruttorePrenotazioniOnline extends StatelessWidget {
+  final StatoGiornata stato;
+  final bool inCorso;
+  final VoidCallback onCambia;
+  const _InterruttorePrenotazioniOnline({
+    required this.stato, required this.inCorso, required this.onCambia,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    late final String etichetta;
+    late final Color sfondo;
+    late final Color testo;
+    late final IconData icona;
+
+    switch (stato) {
+      case StatoGiornata.inCaricamento:
+      case StatoGiornata.sconosciuto:
+        etichetta = 'Prenotazioni online';
+        sfondo = AppColors.cardLight;
+        testo = AppColors.textMuted;
+        icona = Icons.hourglass_empty;
+      case StatoGiornata.aperte:
+        etichetta = 'Online aperte';
+        sfondo = AppColors.statoConfermatoSfondo;
+        testo = AppColors.statoConfermato;
+        icona = Icons.lock_open_outlined;
+      case StatoGiornata.chiuse:
+        etichetta = 'Online chiuse';
+        sfondo = AppColors.accentLight;
+        testo = AppColors.accent;
+        icona = Icons.lock_outline;
+      case StatoGiornata.chiusuraSettimanale:
+        etichetta = 'Giorno di chiusura';
+        sfondo = AppColors.cardLight;
+        testo = AppColors.textSecondary;
+        icona = Icons.event_busy_outlined;
+    }
+
+    final attivabile = stato == StatoGiornata.aperte || stato == StatoGiornata.chiuse;
+
+    return Tooltip(
+      message: attivabile
+          ? 'Tocca per ${stato == StatoGiornata.aperte ? 'chiudere' : 'riaprire'} le prenotazioni dal sito. '
+            "Voi potete comunque inserirle dall'app."
+          : 'La chiusura settimanale si cambia da Impostazioni → Orari di apertura',
+      child: InkWell(
+        onTap: inCorso ? null : onCambia,
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+          decoration: BoxDecoration(
+            color: sfondo,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: testo.withValues(alpha: 0.35)),
+          ),
+          child: Row(mainAxisSize: MainAxisSize.min, children: [
+            if (inCorso)
+              SizedBox(width: 12, height: 12, child: CircularProgressIndicator(strokeWidth: 2, color: testo))
+            else
+              Icon(icona, size: 13, color: testo),
+            const SizedBox(width: 5),
+            Text(etichetta, style: TextStyle(color: testo, fontSize: 12, fontWeight: FontWeight.bold)),
+          ]),
+        ),
       ),
     );
   }
