@@ -7,6 +7,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:restaurant_booking/shared/widgets/app_drawer.dart';
 import 'package:restaurant_booking/shared/theme/app_theme.dart';
 import 'package:restaurant_booking/core/providers/booking_providers.dart';
+import 'package:restaurant_booking/features/bookings/stato_giornata.dart';
 
 class BookingsScreen extends ConsumerStatefulWidget {
   final DateTime? initialDate;
@@ -90,65 +91,17 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
   StatoGiornata _statoGiornata = StatoGiornata.inCaricamento;
   String? _idBloccoGiornata;
   bool _cambioStatoInCorso = false;
-  DateTime? _aperturaPrenotazioni;
-
-  static const _titoloBlocco = 'Prenotazioni online sospese';
+  RegoleGiornate? _regole;
 
   Future<void> _caricaStatoGiornata() async {
     final data = ref.read(selectedDateProvider);
-    final dateStr = DateFormat('yyyy-MM-dd').format(data);
-    final giornoSettimana = (data.weekday - 1) % 7;
     try {
-      // Il modulo non accetta prenotazioni prima della data di apertura
-      // impostata in Impostazioni > Profilo ristorante, ne' per giorni passati:
-      // senza questo controllo il comando diceva "aperte" anche allora.
-      final profilo = await _supabase
-          .from('restaurants').select('settings').eq('id', _restaurantId).single();
-      final impostazioni = profilo['settings'];
-      final aperturaIso = impostazioni is Map ? impostazioni['prenotazioni_dal']?.toString() : null;
-      final apertura = DateTime.tryParse(aperturaIso ?? '');
-      final ora = DateTime.now();
-      final oggi = DateTime(ora.year, ora.month, ora.day);
-      final giorno = DateTime(data.year, data.month, data.day);
-      final minima = (apertura != null && apertura.isAfter(oggi)) ? apertura : oggi;
-      if (giorno.isBefore(minima)) {
-        if (!mounted) return;
-        setState(() {
-          _statoGiornata = StatoGiornata.nonAncoraAperte;
-          _idBloccoGiornata = null;
-          _aperturaPrenotazioni = apertura;
-        });
-        return;
-      }
-      _aperturaPrenotazioni = apertura;
-      final res = await _supabase
-          .from('opening_hours')
-          .select('id, is_closed, special_date, day_of_week')
-          .eq('restaurant_id', _restaurantId);
-
-      Map<String, dynamic>? speciale;
-      Map<String, dynamic>? settimanale;
-      for (final r in res) {
-        final sd = r['special_date']?.toString();
-        if (sd != null && sd.startsWith(dateStr)) {
-          speciale = Map<String, dynamic>.from(r);
-        } else if (sd == null && r['day_of_week'] == giornoSettimana) {
-          settimanale = Map<String, dynamic>.from(r);
-        }
-      }
-
+      final regole = await RegoleGiornate.carica();
       if (!mounted) return;
       setState(() {
-        if (speciale != null && speciale['is_closed'] == true) {
-          _statoGiornata = StatoGiornata.chiuse;
-          _idBloccoGiornata = speciale['id'] as String?;
-        } else if (speciale == null && settimanale?['is_closed'] == true) {
-          _statoGiornata = StatoGiornata.chiusuraSettimanale;
-          _idBloccoGiornata = null;
-        } else {
-          _statoGiornata = StatoGiornata.aperte;
-          _idBloccoGiornata = null;
-        }
+        _regole = regole;
+        _statoGiornata = regole.stato(data);
+        _idBloccoGiornata = regole.idBlocco(data);
       });
     } catch (e) {
       debugPrint('stato giornata non caricato: $e');
@@ -163,36 +116,21 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
       return;
     }
     if (_statoGiornata == StatoGiornata.nonAncoraAperte) {
-      final d = _aperturaPrenotazioni;
-      _avviso(d == null
-          ? 'Data passata: il modulo non accetta prenotazioni.'
-          : 'Le prenotazioni online aprono il ${DateFormat('d MMMM yyyy', 'it_IT').format(d)}. '
-            'Si cambia da Impostazioni → Profilo ristorante.');
+      _avviso(_regole?.motivoNonAperta(ref.read(selectedDateProvider)) ??
+          'Il modulo non accetta prenotazioni per questa data.');
       return;
     }
     final data = ref.read(selectedDateProvider);
-    final dateStr = DateFormat('yyyy-MM-dd').format(data);
     setState(() => _cambioStatoInCorso = true);
     try {
       if (_statoGiornata == StatoGiornata.aperte) {
-        final righe = await _supabase.from('opening_hours').insert({
-          'restaurant_id': _restaurantId,
-          'day_of_week': (data.weekday - 1) % 7,
-          'special_date': dateStr,
-          'is_closed': true,
-          'open_time': '18:30:00',
-          'close_time': '01:00:00',
-          'title': _titoloBlocco,
-        }).select();
-        _avviso(righe.isEmpty
-            ? 'Non riuscito: il database ha rifiutato la scrittura.'
-            : 'Prenotazioni online chiuse per questa giornata.');
+        final motivo = await RegoleGiornate.chiudi(data);
+        _avviso(motivo == null
+            ? 'Prenotazioni online chiuse per questa giornata.'
+            : 'Non riuscito: $motivo.');
       } else if (_idBloccoGiornata != null) {
-        final righe = await _supabase
-            .from('opening_hours').delete().eq('id', _idBloccoGiornata!).select();
-        _avviso(righe.isEmpty
-            ? 'Non riuscito: il database ha rifiutato la cancellazione.'
-            : 'Prenotazioni online riaperte.');
+        final motivo = await RegoleGiornate.riapri(_idBloccoGiornata!);
+        _avviso(motivo == null ? 'Prenotazioni online riaperte.' : 'Non riuscito: $motivo.');
       }
     } catch (e) {
       _avviso('Errore: $e');
@@ -1588,7 +1526,8 @@ class _Avviso extends StatelessWidget {
 
 
 // ── Stato delle prenotazioni online per una giornata ─────────────────────────
-enum StatoGiornata { inCaricamento, aperte, chiuse, chiusuraSettimanale, nonAncoraAperte, sconosciuto }
+// `StatoGiornata` e le regole stanno in stato_giornata.dart, condivise col
+// calendario.
 
 /// Sostituisce il badge "Aperto", che era scritto fisso e diceva sempre
 /// "Aperto" anche nel giorno di chiusura.
@@ -1602,7 +1541,7 @@ class _InterruttorePrenotazioniOnline extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    late final String etichetta;
+    final etichetta = AspettoStato.di(stato).etichetta;
     late final Color sfondo;
     late final Color testo;
     late final IconData icona;
@@ -1610,27 +1549,22 @@ class _InterruttorePrenotazioniOnline extends StatelessWidget {
     switch (stato) {
       case StatoGiornata.inCaricamento:
       case StatoGiornata.sconosciuto:
-        etichetta = 'Prenotazioni online';
         sfondo = AppColors.cardLight;
         testo = AppColors.textMuted;
         icona = Icons.hourglass_empty;
       case StatoGiornata.aperte:
-        etichetta = 'Online aperte';
         sfondo = AppColors.statoConfermatoSfondo;
         testo = AppColors.statoConfermato;
         icona = Icons.lock_open_outlined;
       case StatoGiornata.chiuse:
-        etichetta = 'Online chiuse';
         sfondo = AppColors.accentLight;
         testo = AppColors.accent;
         icona = Icons.lock_outline;
       case StatoGiornata.nonAncoraAperte:
-        etichetta = 'Non ancora aperte';
         sfondo = AppColors.cardLight;
         testo = AppColors.textSecondary;
         icona = Icons.schedule_outlined;
       case StatoGiornata.chiusuraSettimanale:
-        etichetta = 'Giorno di chiusura';
         sfondo = AppColors.cardLight;
         testo = AppColors.textSecondary;
         icona = Icons.event_busy_outlined;
