@@ -46,24 +46,52 @@ class _OpeningHoursScreenState extends State<OpeningHoursScreen> {
     }
   }
 
+  /// Se il database rifiuta la scrittura per mancanza di permessi non
+  /// restituisce un errore: scarta l'operazione e risponde "nessuna riga".
+  /// Senza questo controllo il pannello si chiudeva come se avesse salvato.
+  void _segnalaEsito(List<dynamic> righe, String azione) {
+    if (!mounted) return;
+    final riuscito = righe.isNotEmpty;
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text(riuscito
+          ? '$azione: salvato'
+          : '$azione non riuscita: il database ha rifiutato la scrittura. '
+            'Mancano i permessi sulla tabella opening_hours.'),
+      backgroundColor: riuscito ? AppColors.accentGreen : AppColors.accent,
+      duration: Duration(seconds: riuscito ? 2 : 6),
+    ));
+  }
+
   Future<void> _delete(String id) async {
-    await _supabase.from('opening_hours').delete().eq('id', id);
+    try {
+      final res = await _supabase.from('opening_hours').delete().eq('id', id).select();
+      _segnalaEsito(res, 'Eliminazione');
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Errore: $e'), backgroundColor: AppColors.accent));
+    }
     _loadData();
   }
 
   Future<void> _duplicate(Map<String, dynamic> h) async {
-    await _supabase.from('opening_hours').insert({
-      'restaurant_id': _restaurantId,
-      'day_of_week': h['day_of_week'],
-      'open_time': h['open_time'],
-      'close_time': h['close_time'],
-      'is_closed': h['is_closed'],
-      'shift_name': h['shift_name'],
-      'min_party_size': h['min_party_size'],
-      'max_party_size': h['max_party_size'],
-      'title': h['title'],
-      'notes': h['notes'],
-    });
+    try {
+      final res = await _supabase.from('opening_hours').insert({
+        'restaurant_id': _restaurantId,
+        'day_of_week': h['day_of_week'],
+        'open_time': h['open_time'],
+        'close_time': h['close_time'],
+        'is_closed': h['is_closed'],
+        'shift_name': h['shift_name'],
+        'min_party_size': h['min_party_size'],
+        'max_party_size': h['max_party_size'],
+        'title': h['title'],
+        'notes': h['notes'],
+      }).select();
+      _segnalaEsito(res, 'Duplicazione');
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Errore: $e'), backgroundColor: AppColors.accent));
+    }
     _loadData();
   }
 
@@ -376,10 +404,24 @@ class _OpeningHoursFormState extends State<_OpeningHoursForm> with SingleTickerP
         'title': _titleCtrl.text.trim().isEmpty ? null : _titleCtrl.text.trim(),
         'notes': _notesCtrl.text.trim().isEmpty ? null : _notesCtrl.text.trim(),
       };
-      if (widget.existing != null) {
-        await _supabase.from('opening_hours').update(data).eq('id', widget.existing!['id']);
-      } else {
-        await _supabase.from('opening_hours').insert(data);
+      // `.select()` fa restituire le righe toccate: se il database rifiuta la
+      // scrittura per mancanza di permessi non solleva un errore, risponde
+      // semplicemente "nessuna riga". Senza questo controllo il pannello si
+      // chiudeva come se avesse salvato.
+      final righe = widget.existing != null
+          ? await _supabase.from('opening_hours').update(data).eq('id', widget.existing!['id']).select()
+          : await _supabase.from('opening_hours').insert(data).select();
+
+      if (righe.isEmpty) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content: Text('Non salvato: il database ha rifiutato la scrittura. '
+                'Mancano i permessi di modifica sulla tabella opening_hours.'),
+            backgroundColor: AppColors.accent,
+            duration: Duration(seconds: 6),
+          ));
+        }
+        return;
       }
       widget.onSaved();
     } catch (e) {
