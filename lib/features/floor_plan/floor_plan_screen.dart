@@ -1713,11 +1713,7 @@ extension FloorPlanPending on _FloorPlanScreenState {
         'notes': booking['notes'] ?? '',
         'turno': turno,
         'area': area,
-        'restaurantName': 'Hio Oriental Bar',
-        'restaurantAddress': 'Via Giuseppe Mazzini 5',
-        'restaurantCity': '90139 Palermo',
-        'restaurantPhone': '+39 328 574 4906',
-        'restaurantEmail': 'info@hiooriental.com',
+        ...await datiRistorante(),
         'bookingId': booking['id'],
       });
     } catch (e) {

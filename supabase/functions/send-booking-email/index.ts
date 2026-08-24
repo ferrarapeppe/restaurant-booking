@@ -120,10 +120,10 @@ Deno.serve(async (req) => {
     const endTime = `${String(Math.floor(endMin / 60) % 24).padStart(2, '0')}:${String(endMin % 60).padStart(2, '0')}`;
 
     const restName = restaurantName || 'Hio Oriental Bar';
-    const restAddress = restaurantAddress || 'Via Giuseppe Mazzini 5';
-    const restCity = restaurantCity || '90139 Palermo';
-    const restPhone = restaurantPhone || '+39 328 574 4906';
-    const restContactEmail = restaurantEmail || 'info@hiooriental.com';
+    const restAddress = restaurantAddress || '';
+    const restCity = restaurantCity || '';
+    const restPhone = restaurantPhone || '';
+    const restContactEmail = restaurantEmail || '';
 
     const statusUrl = bookingId
       ? `https://ferrarapeppe.github.io/restaurant-booking/booking-status.html?id=${bookingId}`
@@ -216,7 +216,8 @@ function detailsTable(d: EmailData): string {
     ${d.notes ? row('Messaggio', d.notes) : ''}
   </table>
   <p style="color:${C.rosso};font-family:${FONT_TESTO};font-size:13px;font-weight:bold;line-height:1.6;margin:12px 0 0;">
-    Tieni presente che il tavolo sarà a tua disposizione per 2 ore a partire dall’orario della prenotazione, a prescindere dall’orario di arrivo.
+    Il tavolo sarà mantenuto a disposizione per un massimo di 20 minuti oltre l’orario della prenotazione.
+    Trascorso questo termine, la prenotazione sarà considerata annullata.
   </p>`;
 }
 
@@ -235,6 +236,12 @@ function header(restName: string, restAddress: string, restCity: string): string
 function footer(d: EmailData): string {
   const mapsUrl = `https://maps.google.com/?q=${encodeURIComponent(d.restAddress + ', ' + d.restCity)}`;
   const siteUrl = `https://ferrarapeppe.github.io/restaurant-booking/booking.html`;
+  const indirizzoPiede = [d.restAddress, d.restCity].filter(Boolean).join('<br>');
+  const contattiPiede = [
+    d.restPhone ? `<a href="tel:${d.restPhone.replace(/\s/g, '')}" style="color:${C.oro};text-decoration:none;">${d.restPhone}</a>` : '',
+    d.restContactEmail ? `<a href="mailto:${d.restContactEmail}" style="color:${C.oro};text-decoration:none;">${d.restContactEmail}</a>` : '',
+    `<a href="${siteUrl}" style="color:${C.oro};text-decoration:none;">Prenota un tavolo</a>`,
+  ].filter(Boolean).join('<br>');
   return `<tr>
     <td style="background:white;padding:0 32px 30px;">
       <div style="border-top:1px solid ${C.bordo};padding-top:22px;">
@@ -246,18 +253,13 @@ function footer(d: EmailData): string {
   <tr>
     <td style="background:${C.nero};padding:24px 24px 28px;text-align:center;border-radius:0 0 12px 12px;">
       <p style="color:${C.oro};font-family:${FONT_TITOLO};font-size:14px;font-weight:bold;letter-spacing:3px;margin:0 0 12px;">${d.restName.toUpperCase()}</p>
-      <!-- Link dichiarato esplicitamente: cosi' il client non lo riscrive in blu -->
-      <p style="margin:0 0 14px;">
-        <a href="${mapsUrl}" style="color:#B9B4AC;text-decoration:none;font-family:${FONT_TESTO};font-size:12px;line-height:1.7;">
-          ${d.restAddress}<br>${d.restCity}
-        </a>
-      </p>
+      <!-- Link dichiarato esplicitamente: cosi' il client non lo riscrive in blu.
+           Le righe assenti dal profilo vengono omesse, non lasciate a meta'. -->
+      ${indirizzoPiede ? `<p style="margin:0 0 14px;">
+        <a href="${mapsUrl}" style="color:#B9B4AC;text-decoration:none;font-family:${FONT_TESTO};font-size:12px;line-height:1.7;">${indirizzoPiede}</a>
+      </p>` : ''}
       <!-- Una voce per riga: su schermo stretto i separatori restavano appesi a fine riga -->
-      <p style="margin:0;font-family:${FONT_TESTO};font-size:12px;line-height:2;">
-        <a href="tel:${d.restPhone.replace(/\s/g, '')}" style="color:${C.oro};text-decoration:none;">${d.restPhone}</a><br>
-        <a href="mailto:${d.restContactEmail}" style="color:${C.oro};text-decoration:none;">${d.restContactEmail}</a><br>
-        <a href="${siteUrl}" style="color:${C.oro};text-decoration:none;">Prenota un tavolo</a>
-      </p>
+      <p style="margin:0;font-family:${FONT_TESTO};font-size:12px;line-height:2;">${contattiPiede}</p>
     </td>
   </tr>`;
 }

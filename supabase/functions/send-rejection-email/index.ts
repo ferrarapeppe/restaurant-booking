@@ -115,10 +115,10 @@ Deno.serve(async (req) => {
     });
 
     const restName = restaurantName || 'Hio Oriental Bar';
-    const restAddress = restaurantAddress || 'Via Giuseppe Mazzini 5';
-    const restCity = restaurantCity || '90139 Palermo';
-    const restPhone = restaurantPhone || '+39 328 574 4906';
-    const restContactEmail = restaurantEmail || 'prenota@hiooriental.com';
+    const restAddress = restaurantAddress || '';
+    const restCity = restaurantCity || '';
+    const restPhone = restaurantPhone || '';
+    const restContactEmail = restaurantEmail || '';
 
     const guestName = [nome, cognome].filter(Boolean).join(' ').trim();
     const timeShort = (time || '').toString().substring(0, 5);
@@ -138,6 +138,12 @@ Deno.serve(async (req) => {
 
     const mapsUrl = `https://maps.google.com/?q=${encodeURIComponent(restAddress + ', ' + restCity)}`;
     const siteUrl = 'https://ferrarapeppe.github.io/restaurant-booking/booking.html';
+  const indirizzoPiede = [restAddress, restCity].filter(Boolean).join('<br>');
+  const contattiPiede = [
+    restPhone ? `<a href="tel:${restPhone.replace(/\s/g, '')}" style="color:${C.oro};text-decoration:none;">${restPhone}</a>` : '',
+    restContactEmail ? `<a href="mailto:${restContactEmail}" style="color:${C.oro};text-decoration:none;">${restContactEmail}</a>` : '',
+    `<a href="${siteUrl}" style="color:${C.oro};text-decoration:none;">Prenota un tavolo</a>`,
+  ].filter(Boolean).join('<br>');
 
     const html = `<!DOCTYPE html>
 <html lang="it">
@@ -169,7 +175,7 @@ Deno.serve(async (req) => {
     <td style="background:${C.nero};padding:34px 24px 26px;text-align:center;border-radius:12px 12px 0 0;">
       <img src="${LOGO_URL}" width="240" alt="${restName}"
         style="display:block;width:240px;max-width:75%;height:auto;margin:0 auto;border:0;color:${C.oro};font-family:${FONT_TITOLO};font-size:22px;font-weight:bold;letter-spacing:2px;">
-      <p style="color:#B9B4AC;font-family:${FONT_TESTO};font-size:13px;letter-spacing:0.5px;margin:14px 0 0;">${restAddress}, ${restCity}</p>
+      ${[restAddress, restCity].filter(Boolean).join(', ') ? `<p style="color:#B9B4AC;font-family:${FONT_TESTO};font-size:13px;letter-spacing:0.5px;margin:14px 0 0;">${[restAddress, restCity].filter(Boolean).join(', ')}</p>` : ''}
     </td>
   </tr>
 
@@ -225,16 +231,10 @@ Deno.serve(async (req) => {
   <tr>
     <td style="background:${C.nero};padding:24px 24px 28px;text-align:center;border-radius:0 0 12px 12px;">
       <p style="color:${C.oro};font-family:${FONT_TITOLO};font-size:14px;font-weight:bold;letter-spacing:3px;margin:0 0 12px;">${restName.toUpperCase()}</p>
-      <p style="margin:0 0 14px;">
-        <a href="${mapsUrl}" style="color:#B9B4AC;text-decoration:none;font-family:${FONT_TESTO};font-size:12px;line-height:1.7;">
-          ${restAddress}<br>${restCity}
-        </a>
-      </p>
-      <p style="margin:0;font-family:${FONT_TESTO};font-size:12px;line-height:2;">
-        <a href="tel:${restPhone.replace(/\s/g, '')}" style="color:${C.oro};text-decoration:none;">${restPhone}</a><br>
-        <a href="mailto:${restContactEmail}" style="color:${C.oro};text-decoration:none;">${restContactEmail}</a><br>
-        <a href="${siteUrl}" style="color:${C.oro};text-decoration:none;">Prenota un tavolo</a>
-      </p>
+      ${indirizzoPiede ? `<p style="margin:0 0 14px;">
+        <a href="${mapsUrl}" style="color:#B9B4AC;text-decoration:none;font-family:${FONT_TESTO};font-size:12px;line-height:1.7;">${indirizzoPiede}</a>
+      </p>` : ''}
+      <p style="margin:0;font-family:${FONT_TESTO};font-size:12px;line-height:2;">${contattiPiede}</p>
     </td>
   </tr>
 

@@ -1054,6 +1054,38 @@ class BookingCard extends StatelessWidget {
   }
 }
 
+/// Nome, indirizzo, telefono e e-mail letti dal profilo del ristorante
+/// (Impostazioni > Profilo ristorante), usati nelle email al cliente.
+/// Erano scritti fissi nel codice: correggendo il profilo le email non
+/// cambiavano, e mostravano un numero di telefono non più valido.
+/// Nessuna cache: così una modifica al profilo vale dall'email successiva.
+Future<Map<String, dynamic>> datiRistorante() async {
+  const vuoti = {
+    'restaurantName': 'Hio Oriental Bar',
+    'restaurantAddress': '',
+    'restaurantCity': '',
+    'restaurantPhone': '',
+    'restaurantEmail': '',
+  };
+  try {
+    final r = await Supabase.instance.client
+        .from('restaurants')
+        .select('name, address, city, phone, email')
+        .eq('id', '2b126a92-24d5-4e83-b38c-dfc82035a0cf')
+        .single();
+    return {
+      'restaurantName': (r['name'] ?? 'Hio Oriental Bar').toString(),
+      'restaurantAddress': (r['address'] ?? '').toString(),
+      'restaurantCity': (r['city'] ?? '').toString(),
+      'restaurantPhone': (r['phone'] ?? '').toString(),
+      'restaurantEmail': (r['email'] ?? '').toString(),
+    };
+  } catch (e) {
+    debugPrint('lettura profilo ristorante fallita: $e');
+    return vuoti;
+  }
+}
+
 /// Email al cliente quando la prenotazione viene ACCETTATA.
 /// Non fa riferimento al tavolo: l'assegnazione è interna e può cambiare
 /// in qualsiasi momento senza che il cliente ne debba sapere nulla.
@@ -1081,6 +1113,7 @@ Future<void> sendBookingAcceptedEmail(Map<String, dynamic> booking) async {
         await Supabase.instance.client.rpc('increment_visits_count', params: {'guest_id': guestId});
       } catch (_) {}
     }
+    final ristorante = await datiRistorante();
     await Supabase.instance.client.functions.invoke('send-table-assigned-email', body: {
       'email': email,
       'nome': g?['first_name'] ?? '',
@@ -1092,11 +1125,7 @@ Future<void> sendBookingAcceptedEmail(Map<String, dynamic> booking) async {
       'notes': booking['notes'] ?? '',
       'turno': turno,
       'area': area,
-      'restaurantName': 'Hio Oriental Bar',
-      'restaurantAddress': 'Via Giuseppe Mazzini 5',
-      'restaurantCity': '90139 Palermo',
-      'restaurantPhone': '+39 328 574 4906',
-      'restaurantEmail': 'info@hiooriental.com',
+      ...ristorante,
       'bookingId': booking['id'],
     });
   } catch (e) {
@@ -1161,11 +1190,7 @@ class _RejectionScreenState extends State<RejectionScreen> {
             'date': widget.booking['date'] ?? '',
             'time': (widget.booking['time_start'] ?? '').toString(),
             'persons': widget.booking['party_size'] ?? 0,
-            'restaurantName': 'Hio Oriental Bar',
-            'restaurantAddress': 'Via Giuseppe Mazzini 5',
-            'restaurantCity': '90139 Palermo',
-            'restaurantPhone': '+39 328 574 4906',
-            'restaurantEmail': 'prenota@hiooriental.com',
+            ...await datiRistorante(),
           });
         } catch (e) { debugPrint('send-rejection-email error: $e'); }
       }

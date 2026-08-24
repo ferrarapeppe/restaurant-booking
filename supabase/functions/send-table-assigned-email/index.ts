@@ -123,10 +123,10 @@ Deno.serve(async (req) => {
     const endTime = `${String(Math.floor(endMin / 60) % 24).padStart(2, '0')}:${String(endMin % 60).padStart(2, '0')}`;
 
     const restName = restaurantName || 'Hio Oriental Bar';
-    const restAddress = restaurantAddress || 'Via Giuseppe Mazzini 5';
-    const restCity = restaurantCity || '90139 Palermo';
-    const restPhone = restaurantPhone || '+39 328 574 4906';
-    const restContactEmail = restaurantEmail || 'info@hiooriental.com';
+    const restAddress = restaurantAddress || '';
+    const restCity = restaurantCity || '';
+    const restPhone = restaurantPhone || '';
+    const restContactEmail = restaurantEmail || '';
 
     const statusUrl = bookingId
       ? `https://ferrarapeppe.github.io/restaurant-booking/booking-status.html?id=${bookingId}`
@@ -193,6 +193,12 @@ const GAP = `<tr><td colspan="2" style="height:10px;"></td></tr>`;
 function buildHtml(d: D): string {
   const mapsUrl = `https://maps.google.com/?q=${encodeURIComponent(d.restAddress + ', ' + d.restCity)}`;
   const siteUrl = `https://ferrarapeppe.github.io/restaurant-booking/booking.html`;
+  const indirizzoPiede = [d.restAddress, d.restCity].filter(Boolean).join('<br>');
+  const contattiPiede = [
+    d.restPhone ? `<a href="tel:${d.restPhone.replace(/\s/g, '')}" style="color:${C.oro};text-decoration:none;">${d.restPhone}</a>` : '',
+    d.restContactEmail ? `<a href="mailto:${d.restContactEmail}" style="color:${C.oro};text-decoration:none;">${d.restContactEmail}</a>` : '',
+    `<a href="${siteUrl}" style="color:${C.oro};text-decoration:none;">Prenota un tavolo</a>`,
+  ].filter(Boolean).join('<br>');
   return `<!DOCTYPE html>
 <html lang="it">
 <head>
@@ -223,7 +229,7 @@ function buildHtml(d: D): string {
     <td style="background:${C.nero};padding:34px 24px 26px;text-align:center;border-radius:12px 12px 0 0;">
       <img src="${LOGO_URL}" width="240" alt="${d.restName}"
         style="display:block;width:240px;max-width:75%;height:auto;margin:0 auto;border:0;color:${C.oro};font-family:${FONT_TITOLO};font-size:22px;font-weight:bold;letter-spacing:2px;">
-      <p style="color:#B9B4AC;font-family:${FONT_TESTO};font-size:13px;letter-spacing:0.5px;margin:14px 0 0;">${d.restAddress}, ${d.restCity}</p>
+      ${[d.restAddress, d.restCity].filter(Boolean).join(', ') ? `<p style="color:#B9B4AC;font-family:${FONT_TESTO};font-size:13px;letter-spacing:0.5px;margin:14px 0 0;">${[d.restAddress, d.restCity].filter(Boolean).join(', ')}</p>` : ''}
     </td>
   </tr>
 
@@ -237,19 +243,8 @@ function buildHtml(d: D): string {
         <tr>
           <td style="background:${C.verdeChiaro};border-left:3px solid ${C.verde};padding:14px 16px;border-radius:0 8px 8px 0;">
             <p style="color:${C.testo};font-family:${FONT_TESTO};font-size:14px;line-height:1.65;margin:0;">
-              Abbiamo accettato la tua richiesta e <strong style="color:${C.verde};">ti aspettiamo</strong>.
-              Se devi annullare o dirci qualcosa, usa il pulsante qui sotto.
-            </p>
-          </td>
-        </tr>
-      </table>
-
-      <!-- Regola sul turno di cena -->
-      <table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 26px;">
-        <tr>
-          <td style="background:${C.oroChiaro};border-left:3px solid ${C.oro};padding:12px 16px;border-radius:0 8px 8px 0;">
-            <p style="color:${C.testo};font-family:${FONT_TESTO};font-size:13px;line-height:1.6;margin:0;">
-              Le prenotazioni sono valide esclusivamente per la cena.
+              Abbiamo accettato la tua richiesta di prenotazione, e <strong style="color:${C.verde};">non vediamo l'ora di accoglierti</strong>.
+              Per annullare o eventuali richieste, usa il pulsante in basso.
             </p>
           </td>
         </tr>
@@ -298,16 +293,10 @@ function buildHtml(d: D): string {
   <tr>
     <td style="background:${C.nero};padding:24px 24px 28px;text-align:center;border-radius:0 0 12px 12px;">
       <p style="color:${C.oro};font-family:${FONT_TITOLO};font-size:14px;font-weight:bold;letter-spacing:3px;margin:0 0 12px;">${d.restName.toUpperCase()}</p>
-      <p style="margin:0 0 14px;">
-        <a href="${mapsUrl}" style="color:#B9B4AC;text-decoration:none;font-family:${FONT_TESTO};font-size:12px;line-height:1.7;">
-          ${d.restAddress}<br>${d.restCity}
-        </a>
-      </p>
-      <p style="margin:0;font-family:${FONT_TESTO};font-size:12px;line-height:2;">
-        <a href="tel:${d.restPhone.replace(/\s/g, '')}" style="color:${C.oro};text-decoration:none;">${d.restPhone}</a><br>
-        <a href="mailto:${d.restContactEmail}" style="color:${C.oro};text-decoration:none;">${d.restContactEmail}</a><br>
-        <a href="${siteUrl}" style="color:${C.oro};text-decoration:none;">Prenota un tavolo</a>
-      </p>
+      ${indirizzoPiede ? `<p style="margin:0 0 14px;">
+        <a href="${mapsUrl}" style="color:#B9B4AC;text-decoration:none;font-family:${FONT_TESTO};font-size:12px;line-height:1.7;">${indirizzoPiede}</a>
+      </p>` : ''}
+      <p style="margin:0;font-family:${FONT_TESTO};font-size:12px;line-height:2;">${contattiPiede}</p>
     </td>
   </tr>
 
