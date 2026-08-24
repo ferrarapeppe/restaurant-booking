@@ -346,6 +346,26 @@ function statusInfo(status) {
   return map[status] || { label: status, color: '#5A5A5A', bg: '#F0EEEA', letter: ICONE.attesa };
 }
 
+// I messaggi sono testo scritto dagli utenti: vanno neutralizzati prima di
+// inserirli nella pagina, altrimenti del markup finirebbe interpretato.
+function escapeHtml(t) {
+  return String(t ?? '').replace(/[&<>"']/g, (c) => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+  })[c]);
+}
+
+function bollaMessaggio(m) {
+  const delCliente = m.sender === 'guest';
+  const quando = m.created_at
+    ? new Date(m.created_at).toLocaleString('it-IT', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
+    : '';
+  const intestazione = delCliente
+    ? `<div class="msg-time">${quando}</div>`
+    : `<div class="msg-avatar"><div class="avatar">HIO</div><span class="msg-time">${quando}</span></div>`;
+  return `${intestazione}
+    <div class="msg-bubble ${delCliente ? 'client' : 'restaurant'}">${escapeHtml(m.message)}</div>`;
+}
+
 function row(label, value) {
   if (!value) return '';
   return `<div class="detail-row">
@@ -404,15 +424,21 @@ async function load() {
 
   const si = statusInfo(b.status);
 
-  // Messaggi da mostrare
+  // Conversazione vera, dalla tabella booking_messages.
+  // Prima qui si mostrava il campo `notes` marcato come messaggio del cliente,
+  // più una frase fissa del ristorante: nessuno dei due era una conversazione.
   const msgs = [];
   if (b.notes) {
     msgs.push(`<div class="msg-time">${new Date(b.created_at).toLocaleDateString('it-IT')}</div>
-    <div class="msg-bubble client">${b.notes}</div>`);
+    <div class="msg-bubble client">${escapeHtml(b.notes)}</div>`);
   }
-  if (b.status === 'approved' || b.status === 'seated') {
-    msgs.push(`<div class="msg-avatar"><div class="avatar">HIO</div></div>
-    <div class="msg-bubble restaurant">Gentile cliente, la aspettiamo!</div>`);
+  const { data: conversazione } = await db
+    .from('booking_messages')
+    .select('sender, message, created_at')
+    .eq('booking_id', id)
+    .order('created_at', { ascending: true });
+  for (const m of conversazione || []) {
+    msgs.push(bollaMessaggio(m));
   }
   msgs.push(`<div class="msg-status">Stato: <strong>${si.label}</strong></div>`);
 
@@ -484,12 +510,12 @@ async function load() {
     </div>
   `;
 
-  document.getElementById('msg-send')?.addEventListener('click', () => sendMessage(b.id, nome));
+  document.getElementById('msg-send')?.addEventListener('click', () => sendMessage(b, rest));
 }
 
 load();
 
-async function sendMessage(bookingId, guestName) {
+async function sendMessage(b, rest) {
   const input = document.getElementById('msg-input');
   const btn = document.getElementById('msg-send');
   const text = input?.value?.trim();
@@ -497,18 +523,43 @@ async function sendMessage(bookingId, guestName) {
   btn.disabled = true;
   btn.textContent = 'Invio...';
   try {
-    await db.from('booking_messages').insert({
-      booking_id: bookingId,
+    // supabase-js NON solleva eccezioni su errore del database: lo restituisce
+    // nel risultato. Prima non veniva letto, quindi un salvataggio fallito
+    // mostrava comunque il messaggio a schermo e il cliente lo credeva inviato.
+    const { error } = await db.from('booking_messages').insert({
+      booking_id: b.id,
       sender: 'guest',
       message: text,
     });
+    if (error) throw new Error(error.message);
+
     const list = document.getElementById('msg-list');
     if (list) {
-      list.innerHTML += `<div class="msg-bubble client">${text}</div>`;
+      list.innerHTML += bollaMessaggio({ sender: 'guest', message: text, created_at: new Date().toISOString() });
     }
     input.value = '';
+
+    // Avvisa il ristorante: senza, il messaggio resterebbe da scoprire a mano
+    const g = b.guests || {};
+    try {
+      await fetch(SUPABASE_URL + '/functions/v1/send-guest-message-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + SUPABASE_ANON_KEY },
+        body: JSON.stringify({
+          messaggio: text,
+          nome: g.first_name || '', cognome: g.surname || '',
+          telefono: g.phone || '', emailCliente: g.email || '',
+          date: b.date || '', time: b.time_start || '', persons: b.party_size || 0,
+          bookingId: b.id,
+          restaurantName: rest?.name || '', restaurantAddress: rest?.address || '',
+          restaurantCity: rest?.city || '', restaurantEmail: rest?.email || '',
+        }),
+      });
+    } catch (errAvviso) {
+      console.warn('avviso al ristorante non inviato:', errAvviso);
+    }
   } catch(e) {
-    alert('Errore invio messaggio: ' + e.message);
+    alert('Messaggio non inviato: ' + e.message);
   } finally {
     btn.disabled = false;
     btn.textContent = 'Invia messaggio';
