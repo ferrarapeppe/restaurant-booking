@@ -5,6 +5,25 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// ─── Identita' visiva, allineata al sito ─────────────────────────────────────
+// Nelle email i font web non si caricano (Gmail e Outlook rimuovono <link>):
+// Georgia e' la famiglia di sistema piu' vicina al Playfair Display del sito.
+const C = {
+  nero:       '#0E0E0E',
+  neroSoft:   '#1A1A1A',
+  rosso:      '#B7182A',
+  oro:        '#C9B06E',
+  oroChiaro:  '#FBF7EE',
+  testo:      '#1A1A1A',
+  testoSoft:  '#5A5A5A',
+  testoTenue: '#9A948C',
+  bordo:      '#E4E1DC',
+  sfondo:     '#F4F2EF',
+};
+const FONT_TITOLO = `Georgia,'Times New Roman',serif`;
+const FONT_TESTO = `Helvetica,Arial,sans-serif`;
+const LOGO_URL = 'https://ferrarapeppe.github.io/restaurant-booking/logo.png';
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
@@ -67,7 +86,9 @@ Deno.serve(async (req) => {
     };
 
     // Email 1 — Richiesta di prenotazione ricevuta (al cliente + notifica al ristorante)
-    const email1Subject = `Richiesta di prenotazione ricevuta (${persons} ${persons === 1 ? 'persona' : 'persone'}, ${dateSubject} ${time})`;
+    const nomeCompleto = [nome, cognome].filter(Boolean).join(' ').trim();
+    const email1Subject = `Richiesta di prenotazione ricevuta${nomeCompleto ? ` da ${nomeCompleto}` : ''}`
+      + ` (${persons} ${persons === 1 ? 'persona' : 'persone'}, ${dateSubject} ${time})`;
     const email1Html = buildEmail1Html(data);
     await transporter.sendMail({
       from: `${restName} <${smtpUser}>`,
@@ -110,34 +131,40 @@ type EmailData = {
 function row(label: string, value: string): string {
   if (!value) return '';
   return `<tr>
-    <td style="padding:10px 0;border-bottom:1px solid #eee;color:#888;font-size:13px;width:150px;vertical-align:top;">${label}</td>
-    <td style="padding:10px 0;border-bottom:1px solid #eee;color:#1a1a2e;font-size:13px;">${value}</td>
+    <td style="padding:11px 0;border-bottom:1px solid ${C.bordo};color:${C.testoSoft};font-family:${FONT_TESTO};font-size:11px;font-weight:bold;letter-spacing:1px;text-transform:uppercase;width:132px;vertical-align:top;">${label}</td>
+    <td style="padding:11px 0;border-bottom:1px solid ${C.bordo};color:${C.testo};font-family:${FONT_TESTO};font-size:15px;font-weight:bold;word-break:break-word;overflow-wrap:anywhere;">${value}</td>
   </tr>`;
 }
 
-const GAP = `<tr><td colspan="2" style="height:8px;border-bottom:1px solid #eee;"></td></tr>`;
+const GAP = `<tr><td colspan="2" style="height:10px;"></td></tr>`;
 
 function detailsTable(d: EmailData): string {
-  return `<table width="100%" cellpadding="0" cellspacing="0" style="border-top:1px solid #eee;">
+  return `<table width="100%" cellpadding="0" cellspacing="0" style="border-top:2px solid ${C.oro};">
     ${row('Data', d.dateFormatted)}
-    ${row('Tempo', `${d.time} - ${d.endTime} (2:00 ore)`)}
-    ${d.area ? row('La zona', d.area) : ''}
+    ${row('Orario', `${d.time} &ndash; ${d.endTime}`)}
+    ${d.area ? row('Area', d.area) : ''}
     ${row('Persone', String(d.persons))}
+    ${d.turno ? row('Turno', d.turno) : ''}
     ${GAP}
+    ${row('Cognome', d.cognome)}
     ${row('Nome', d.nome)}
     ${row('Telefono', d.phone)}
     ${row('E-mail', d.email)}
-    ${d.notes ? GAP + row('Messaggio', d.notes) : ''}
-    ${GAP}
-    ${row('COGNOME', d.cognome)}
-    ${row('SCEGLI', d.turno)}
-  </table>`;
+    ${d.notes ? row('Messaggio', d.notes) : ''}
+  </table>
+  <p style="color:${C.testoSoft};font-family:${FONT_TESTO};font-size:12px;line-height:1.6;margin:12px 0 0;">
+    Il tavolo resta riservato per 2 ore.
+  </p>`;
 }
 
-function header(restName: string): string {
+function header(restName: string, restAddress: string, restCity: string): string {
+  const indirizzo = [restAddress, restCity].filter(Boolean).join(', ');
+  // Se il client blocca le immagini resta il testo alternativo, gia' in oro su nero
   return `<tr>
-    <td style="background:#1a1a1a;padding:32px;text-align:center;border-radius:8px 8px 0 0;">
-      <h1 style="color:white;margin:0;font-size:24px;font-weight:700;letter-spacing:1px;">${restName}</h1>
+    <td style="background:${C.nero};padding:34px 24px 26px;text-align:center;border-radius:12px 12px 0 0;">
+      <img src="${LOGO_URL}" width="240" alt="${restName}"
+        style="display:block;width:240px;max-width:75%;height:auto;margin:0 auto;border:0;color:${C.oro};font-family:${FONT_TITOLO};font-size:22px;font-weight:bold;letter-spacing:2px;">
+      ${indirizzo ? `<p style="color:#B9B4AC;font-family:${FONT_TESTO};font-size:13px;letter-spacing:0.5px;margin:14px 0 0;">${indirizzo}</p>` : ''}
     </td>
   </tr>`;
 }
@@ -146,37 +173,44 @@ function footer(d: EmailData): string {
   const mapsUrl = `https://maps.google.com/?q=${encodeURIComponent(d.restAddress + ', ' + d.restCity)}`;
   const siteUrl = `https://ferrarapeppe.github.io/restaurant-booking/booking.html`;
   return `<tr>
-    <td style="background:white;padding:24px 40px 36px;border-radius:0 0 8px 8px;">
-      <div style="border-top:1px solid #eee;padding-top:24px;">
-        <p style="color:#555;font-size:13px;margin:0 0 2px;">Distinti saluti</p>
-        <p style="color:#1a1a2e;font-size:13px;font-weight:700;margin:0 0 28px;">${d.restName}</p>
-        <p style="color:#bbb;font-size:11px;text-align:center;margin:0 0 2px;">${d.restName}</p>
-        <p style="color:#bbb;font-size:11px;text-align:center;margin:0 0 2px;">${d.restAddress}</p>
-        <p style="color:#bbb;font-size:11px;text-align:center;margin:0 0 10px;">${d.restCity}</p>
-        <p style="font-size:11px;text-align:center;margin:0 0 6px;">
-          <a href="${mapsUrl}" style="color:#888;text-decoration:underline;">Mostra sulla mappa</a>
-          &nbsp;&nbsp;
-          <a href="tel:${d.restPhone}" style="color:#888;text-decoration:underline;">${d.restPhone}</a>
-          &nbsp;&nbsp;
-          <a href="mailto:${d.restContactEmail}" style="color:#888;text-decoration:underline;">${d.restContactEmail}</a>
-        </p>
-        <p style="font-size:11px;text-align:center;margin:0;">
-          <a href="${siteUrl}" style="color:#888;text-decoration:underline;">Sito web</a>
-        </p>
+    <td style="background:white;padding:0 32px 30px;">
+      <div style="border-top:1px solid ${C.bordo};padding-top:22px;">
+        <p style="color:${C.testoSoft};font-family:${FONT_TESTO};font-size:14px;margin:0 0 2px;">A presto,</p>
+        <p style="color:${C.testo};font-family:${FONT_TITOLO};font-size:15px;font-weight:bold;letter-spacing:1px;margin:0;">${d.restName}</p>
       </div>
+    </td>
+  </tr>
+  <tr>
+    <td style="background:${C.nero};padding:24px 24px 28px;text-align:center;border-radius:0 0 12px 12px;">
+      <p style="color:${C.oro};font-family:${FONT_TITOLO};font-size:14px;font-weight:bold;letter-spacing:3px;margin:0 0 8px;">${d.restName.toUpperCase()}</p>
+      <p style="color:#B9B4AC;font-family:${FONT_TESTO};font-size:12px;line-height:1.6;margin:0 0 14px;">${d.restAddress}<br>${d.restCity}</p>
+      <p style="font-family:${FONT_TESTO};font-size:12px;line-height:2;margin:0;">
+        <a href="${mapsUrl}" style="color:${C.oro};text-decoration:none;">Mappa</a>
+        <span style="color:#4A4741;">&nbsp;&middot;&nbsp;</span>
+        <a href="tel:${d.restPhone}" style="color:${C.oro};text-decoration:none;">${d.restPhone}</a>
+        <span style="color:#4A4741;">&nbsp;&middot;&nbsp;</span>
+        <a href="mailto:${d.restContactEmail}" style="color:${C.oro};text-decoration:none;">${d.restContactEmail}</a>
+        <span style="color:#4A4741;">&nbsp;&middot;&nbsp;</span>
+        <a href="${siteUrl}" style="color:${C.oro};text-decoration:none;">Prenota</a>
+      </p>
     </td>
   </tr>`;
 }
 
-function wrap(restName: string, body: string): string {
+function wrap(d: EmailData, body: string): string {
   return `<!DOCTYPE html>
 <html lang="it">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
-<body style="margin:0;padding:0;background:#f5f5f5;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
-<table width="100%" cellpadding="0" cellspacing="0" style="background:#f5f5f5;padding:24px 0;">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <meta name="supported-color-schemes" content="light">
+</head>
+<body style="margin:0;padding:0;background:${C.sfondo};font-family:${FONT_TESTO};">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:${C.sfondo};padding:24px 12px;">
 <tr><td>
-<table width="600" align="center" cellpadding="0" cellspacing="0" style="max-width:600px;margin:0 auto;">
-  ${header(restName)}
+<table width="100%" align="center" cellpadding="0" cellspacing="0" style="width:100%;max-width:600px;margin:0 auto;border-collapse:separate;">
+  ${header(d.restName, d.restAddress, d.restCity)}
   ${body}
 </table>
 </td></tr>
@@ -189,25 +223,37 @@ function wrap(restName: string, body: string): string {
 
 function buildEmail1Html(d: EmailData): string {
   const body = `<tr>
-    <td style="background:white;padding:40px 40px 24px;">
-      <h2 style="color:#1a1a2e;font-size:20px;font-weight:700;line-height:1.35;margin:0 0 14px;">Abbiamo ricevuto correttamente la tua richiesta di prenotazione.</h2>
-      <p style="color:#c0392b;font-size:14px;line-height:1.7;margin:0 0 14px;">
-        Ti ricordiamo che <strong>questa comunicazione non costituisce una conferma di prenotazione</strong>.
-        La disponibilità verrà verificata dal nostro staff e riceverai una conferma definitiva il prima possibile.
-      </p>
-      <p style="color:#1a1a2e;font-size:14px;line-height:1.7;margin:0 0 28px;">
+    <td style="background:white;padding:34px 32px 26px;">
+      <h2 style="color:${C.neroSoft};font-family:${FONT_TITOLO};font-size:21px;font-weight:bold;line-height:1.35;margin:0 0 16px;">
+        Abbiamo ricevuto correttamente la tua richiesta di prenotazione.
+      </h2>
+      <table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 22px;">
+        <tr>
+          <td style="background:${C.oroChiaro};border-left:3px solid ${C.oro};padding:14px 16px;border-radius:0 8px 8px 0;">
+            <p style="color:${C.testo};font-family:${FONT_TESTO};font-size:14px;line-height:1.65;margin:0;">
+              Ti ricordiamo che <strong style="color:${C.rosso};">questa comunicazione non costituisce una conferma di prenotazione</strong>.
+              La disponibilità verrà verificata dal nostro staff e riceverai una conferma definitiva il prima possibile.
+            </p>
+          </td>
+        </tr>
+      </table>
+      <p style="color:${C.testo};font-family:${FONT_TESTO};font-size:15px;line-height:1.7;margin:0 0 26px;">
         Grazie per averci contattato.
       </p>
       ${detailsTable(d)}
-      <div style="text-align:center;margin:36px 0 0;">
-        <a href="${d.statusUrl}" style="background:#3b4cc0;color:white;text-decoration:none;padding:14px 36px;border-radius:6px;font-size:15px;font-weight:600;display:inline-block;">
-          Visualizza la prenotazione
-        </a>
-      </div>
+      <table width="100%" cellpadding="0" cellspacing="0" style="margin:30px 0 0;">
+        <tr>
+          <td align="center">
+            <a href="${d.statusUrl}" style="background:${C.rosso};color:#ffffff;text-decoration:none;padding:15px 34px;border-radius:8px;font-family:${FONT_TESTO};font-size:15px;font-weight:bold;display:inline-block;">
+              Vedi la tua prenotazione
+            </a>
+          </td>
+        </tr>
+      </table>
     </td>
   </tr>
   ${footer(d)}`;
-  return wrap(d.restName, body);
+  return wrap(d, body);
 }
 
 // ─── Email 2: Nuovo messaggio ─────────────────────────────────────────────────
@@ -215,22 +261,32 @@ function buildEmail1Html(d: EmailData): string {
 function buildEmail2Html(d: EmailData): string {
   const replyUrl = `mailto:${d.restContactEmail}?subject=Re: Prenotazione ${d.dateFormatted}`;
   const body = `<tr>
-    <td style="background:white;padding:40px 40px 24px;">
-      <h2 style="color:#1a1a2e;font-size:20px;font-weight:700;margin:0 0 8px;">Nuovo messaggio riguardante la tua prenotazione</h2>
-      <p style="color:#1a1a2e;font-size:15px;font-weight:700;margin:0 0 24px;">Gentile cliente la aspettiamo</p>
-      <div style="text-align:center;margin:0 0 28px;">
-        <a href="${replyUrl}" style="background:#e91e8c;color:white;text-decoration:none;padding:12px 32px;border-radius:6px;font-size:15px;font-weight:600;display:inline-block;">
-          Rispondere
-        </a>
-      </div>
+    <td style="background:white;padding:34px 32px 26px;">
+      <h2 style="color:${C.neroSoft};font-family:${FONT_TITOLO};font-size:21px;font-weight:bold;line-height:1.35;margin:0 0 10px;">
+        Nuovo messaggio sulla tua prenotazione
+      </h2>
+      <p style="color:${C.testo};font-family:${FONT_TESTO};font-size:15px;line-height:1.7;margin:0 0 24px;">Gentile cliente, la aspettiamo.</p>
+      <table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 26px;">
+        <tr>
+          <td align="center">
+            <a href="${replyUrl}" style="background:#ffffff;color:${C.rosso};text-decoration:none;padding:13px 30px;border:2px solid ${C.rosso};border-radius:8px;font-family:${FONT_TESTO};font-size:15px;font-weight:bold;display:inline-block;">
+              Rispondi
+            </a>
+          </td>
+        </tr>
+      </table>
       ${detailsTable(d)}
-      <div style="text-align:center;margin:36px 0 0;">
-        <a href="${d.statusUrl}" style="background:#3b4cc0;color:white;text-decoration:none;padding:14px 36px;border-radius:6px;font-size:15px;font-weight:600;display:inline-block;">
-          Visualizza la prenotazione
-        </a>
-      </div>
+      <table width="100%" cellpadding="0" cellspacing="0" style="margin:30px 0 0;">
+        <tr>
+          <td align="center">
+            <a href="${d.statusUrl}" style="background:${C.rosso};color:#ffffff;text-decoration:none;padding:15px 34px;border-radius:8px;font-family:${FONT_TESTO};font-size:15px;font-weight:bold;display:inline-block;">
+              Vedi la tua prenotazione
+            </a>
+          </td>
+        </tr>
+      </table>
     </td>
   </tr>
   ${footer(d)}`;
-  return wrap(d.restName, body);
+  return wrap(d, body);
 }
