@@ -131,8 +131,8 @@ type EmailData = {
 function row(label: string, value: string): string {
   if (!value) return '';
   return `<tr>
-    <td style="padding:11px 0;border-bottom:1px solid ${C.bordo};color:${C.testoSoft};font-family:${FONT_TESTO};font-size:11px;font-weight:bold;letter-spacing:1px;text-transform:uppercase;width:132px;vertical-align:top;">${label}</td>
-    <td style="padding:11px 0;border-bottom:1px solid ${C.bordo};color:${C.testo};font-family:${FONT_TESTO};font-size:15px;font-weight:bold;word-break:break-word;overflow-wrap:anywhere;">${value}</td>
+    <td style="padding:11px 0;border-bottom:1px solid ${C.bordo};color:${C.testoSoft};font-family:${FONT_TESTO};font-size:11px;font-weight:bold;letter-spacing:1px;text-transform:uppercase;width:104px;vertical-align:top;">${label}</td>
+    <td style="padding:11px 0;border-bottom:1px solid ${C.bordo};color:${C.testo};font-family:${FONT_TESTO};font-size:15px;font-weight:bold;word-break:break-word;">${value}</td>
   </tr>`;
 }
 
@@ -148,8 +148,8 @@ function detailsTable(d: EmailData): string {
     ${GAP}
     ${row('Cognome', d.cognome)}
     ${row('Nome', d.nome)}
-    ${row('Telefono', d.phone)}
-    ${row('E-mail', d.email)}
+    ${row('Telefono', d.phone ? `<a href="tel:${d.phone.replace(/\s/g, '')}" style="color:${C.testo};text-decoration:none;">${d.phone}</a>` : '')}
+    ${row('E-mail', d.email ? `<a href="mailto:${d.email}" style="color:${C.testo};text-decoration:none;">${d.email}</a>` : '')}
     ${d.notes ? row('Messaggio', d.notes) : ''}
   </table>
   <p style="color:${C.testoSoft};font-family:${FONT_TESTO};font-size:12px;line-height:1.6;margin:12px 0 0;">
@@ -182,16 +182,18 @@ function footer(d: EmailData): string {
   </tr>
   <tr>
     <td style="background:${C.nero};padding:24px 24px 28px;text-align:center;border-radius:0 0 12px 12px;">
-      <p style="color:${C.oro};font-family:${FONT_TITOLO};font-size:14px;font-weight:bold;letter-spacing:3px;margin:0 0 8px;">${d.restName.toUpperCase()}</p>
-      <p style="color:#B9B4AC;font-family:${FONT_TESTO};font-size:12px;line-height:1.6;margin:0 0 14px;">${d.restAddress}<br>${d.restCity}</p>
-      <p style="font-family:${FONT_TESTO};font-size:12px;line-height:2;margin:0;">
-        <a href="${mapsUrl}" style="color:${C.oro};text-decoration:none;">Mappa</a>
-        <span style="color:#4A4741;">&nbsp;&middot;&nbsp;</span>
-        <a href="tel:${d.restPhone}" style="color:${C.oro};text-decoration:none;">${d.restPhone}</a>
-        <span style="color:#4A4741;">&nbsp;&middot;&nbsp;</span>
-        <a href="mailto:${d.restContactEmail}" style="color:${C.oro};text-decoration:none;">${d.restContactEmail}</a>
-        <span style="color:#4A4741;">&nbsp;&middot;&nbsp;</span>
-        <a href="${siteUrl}" style="color:${C.oro};text-decoration:none;">Prenota</a>
+      <p style="color:${C.oro};font-family:${FONT_TITOLO};font-size:14px;font-weight:bold;letter-spacing:3px;margin:0 0 12px;">${d.restName.toUpperCase()}</p>
+      <!-- Link dichiarato esplicitamente: cosi' il client non lo riscrive in blu -->
+      <p style="margin:0 0 14px;">
+        <a href="${mapsUrl}" style="color:#B9B4AC;text-decoration:none;font-family:${FONT_TESTO};font-size:12px;line-height:1.7;">
+          ${d.restAddress}<br>${d.restCity}
+        </a>
+      </p>
+      <!-- Una voce per riga: su schermo stretto i separatori restavano appesi a fine riga -->
+      <p style="margin:0;font-family:${FONT_TESTO};font-size:12px;line-height:2;">
+        <a href="tel:${d.restPhone.replace(/\s/g, '')}" style="color:${C.oro};text-decoration:none;">${d.restPhone}</a><br>
+        <a href="mailto:${d.restContactEmail}" style="color:${C.oro};text-decoration:none;">${d.restContactEmail}</a><br>
+        <a href="${siteUrl}" style="color:${C.oro};text-decoration:none;">Prenota un tavolo</a>
       </p>
     </td>
   </tr>`;
@@ -205,6 +207,18 @@ function wrap(d: EmailData, body: string): string {
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="color-scheme" content="light">
   <meta name="supported-color-schemes" content="light">
+  <!-- iOS e Gmail trasformano da soli indirizzi, telefoni e mail in link blu sottolineati -->
+  <meta name="format-detection" content="telephone=no,date=no,address=no,email=no,url=no">
+  <style>
+    a[x-apple-data-detectors] {
+      color: inherit !important;
+      text-decoration: none !important;
+      font-size: inherit !important;
+      font-family: inherit !important;
+      font-weight: inherit !important;
+      line-height: inherit !important;
+    }
+  </style>
 </head>
 <body style="margin:0;padding:0;background:${C.sfondo};font-family:${FONT_TESTO};">
 <table width="100%" cellpadding="0" cellspacing="0" style="background:${C.sfondo};padding:24px 12px;">
