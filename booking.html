@@ -689,8 +689,25 @@ let state = {
   time: null,
   restaurant: null,
   openingHours: [],
+  specialHours: [],
   areas: [],
 };
+
+// Data locale in formato YYYY-MM-DD (toISOString userebbe UTC e sbaglierebbe giorno)
+function dataLocaleISO(d) {
+  return d.getFullYear() + '-' +
+    String(d.getMonth() + 1).padStart(2, '0') + '-' +
+    String(d.getDate()).padStart(2, '0');
+}
+
+// Un orario speciale impostato dall'app sovrascrive la regola settimanale
+function fasciaPerData(date) {
+  const iso = dataLocaleISO(date);
+  const speciale = state.specialHours.find(h => (h.special_date || '').toString().slice(0, 10) === iso);
+  if (speciale) return speciale;
+  const dow = (date.getDay() + 6) % 7; // 0 = lunedì
+  return state.openingHours.find(h => h.day_of_week === dow);
+}
 
 // Le prenotazioni online aprono dal 1 settembre 2026
 const APERTURA_PRENOTAZIONI = new Date(2026, 8, 1);
@@ -716,11 +733,13 @@ const DAYS_FULL = ['Lunedì','Martedì','Mercoledì','Giovedì','Venerdì','Saba
 async function init() {
   // Carica dati ristorante
   const { data: rest } = await db.from('restaurants').select('*').eq('id', RESTAURANT_ID).single();
-  const { data: hours } = await db.from('opening_hours').select('*').eq('restaurant_id', RESTAURANT_ID).is('special_date', null).order('day_of_week');
+  const { data: fasce } = await db.from('opening_hours').select('*').eq('restaurant_id', RESTAURANT_ID).order('day_of_week');
   const { data: areas } = await db.from('areas').select('*').eq('restaurant_id', RESTAURANT_ID).order('sort_order');
 
   state.restaurant = rest;
-  state.openingHours = hours || [];
+  // Orari settimanali e date speciali arrivano dalla stessa tabella
+  state.openingHours = (fasce || []).filter(h => !h.special_date);
+  state.specialHours = (fasce || []).filter(h => h.special_date);
   state.areas = areas || [];
 
   if (rest) {
@@ -819,9 +838,8 @@ function renderStep2() {
 
   for (let d = 1; d <= lastDay.getDate(); d++) {
     const date = new Date(year, month, d);
-    const dow = (date.getDay() + 6) % 7; // 0=Lunedì
     const isPast = date < minDate;
-    const hour = state.openingHours.find(h => h.day_of_week === dow);
+    const hour = fasciaPerData(date);
     const isClosed = !hour || hour.is_closed;
     const isSelected = state.date && date.toDateString() === state.date.toDateString();
     const isToday = date.toDateString() === today.toDateString();
@@ -839,8 +857,7 @@ function renderStep2() {
 }
 
 function renderStep3() {
-  const dow = state.date ? (state.date.getDay() + 6) % 7 : 0;
-  const hour = state.openingHours.find(h => h.day_of_week === dow);
+  const hour = state.date ? fasciaPerData(state.date) : null;
 
   let html = '<div class="step-title">Area Ristorante e Orario?</div>';
 
