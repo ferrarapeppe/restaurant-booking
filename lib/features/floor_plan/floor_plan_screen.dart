@@ -1664,9 +1664,7 @@ extension FloorPlanPending on _FloorPlanScreenState {
         debugPrint('increment_visits_count error: $e');
       }
     }
-    final tableId = booking['table_id'] as String;
-    final tableData = _tables.firstWhere((t) => t['id'] == tableId, orElse: () => {'name': ''});
-    _sendTableAssignedEmail(booking, tableData);
+    _sendBookingAcceptedEmail(booking);
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Prenotazione accettata!'), backgroundColor: Color(0xFF2E7D52)),
@@ -1684,10 +1682,9 @@ extension FloorPlanPending on _FloorPlanScreenState {
     ));
   }
 
-  Future<void> _sendTableAssignedEmail(
-    Map<String, dynamic> booking,
-    Map<String, dynamic> table,
-  ) async {
+  /// Email al cliente quando la prenotazione viene ACCETTATA.
+  /// Nessun riferimento al tavolo: l'assegnazione è interna e modificabile.
+  Future<void> _sendBookingAcceptedEmail(Map<String, dynamic> booking) async {
     final g = booking['guests'];
     final email = g?['email'] as String?;
     if (email == null || email.isEmpty) return;
@@ -1716,7 +1713,6 @@ extension FloorPlanPending on _FloorPlanScreenState {
         'notes': booking['notes'] ?? '',
         'turno': turno,
         'area': area,
-        'tableName': table['name']?.toString() ?? '',
         'restaurantName': 'Hio Oriental Bar',
         'restaurantAddress': 'Via Giuseppe Mazzini 5',
         'restaurantCity': '90139 Palermo',
@@ -1780,7 +1776,8 @@ extension FloorPlanPending on _FloorPlanScreenState {
                           debugPrint('increment_visits_count error: $e');
                         }
                       }
-                      _sendTableAssignedEmail(booking, t);
+                      // Qui la prenotazione viene anche accettata, quindi l'email va inviata
+                      _sendBookingAcceptedEmail(booking);
                       if (!mounted) return;
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(content: Text('Tavolo ${t['name']} assegnato!')),

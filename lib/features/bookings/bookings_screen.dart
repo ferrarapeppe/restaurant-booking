@@ -256,8 +256,13 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
                           guestName: _guestName(b),
                           onTap: () => _showBookingDetail(context, b),
                           onStatusChange: (newStatus) async {
+                            final precedente = b['status'];
                             await _supabase.from('bookings')
                                 .update({'status': newStatus}).eq('id', b['id']);
+                            // L'email parte solo al passaggio ad "accettata"
+                            if (newStatus == 'approved' && precedente != 'approved') {
+                              sendBookingAcceptedEmail(b);
+                            }
                             _loadBookings();
                           },
                           onReject: () => Navigator.push(context, MaterialPageRoute(
@@ -643,6 +648,23 @@ class _BookingDetailSheetState extends State<BookingDetailSheet>
         'notes': _noteCtrl.text.trim(),
         'table_id': _editTableId,
       }).eq('id', widget.booking['id']);
+      // L'email parte solo al passaggio ad "accettata", mai al cambio di tavolo
+      if (_editStatus == 'approved' && widget.booking['status'] != 'approved') {
+        sendBookingAcceptedEmail({
+          ...widget.booking,
+          'date': dateStr,
+          'time_start': '$_editTime:00',
+          'party_size': _editPartySize,
+          'notes': _noteCtrl.text.trim(),
+          'guests': {
+            ...?(widget.booking['guests'] as Map<String, dynamic>?),
+            'first_name': _nomeCtrl.text.trim(),
+            'surname': _cognomeCtrl.text.trim(),
+            'phone': _phoneCtrl.text.trim(),
+            'email': _emailCtrl.text.trim(),
+          },
+        });
+      }
       widget.onSaved();
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Prenotazione salvata'), backgroundColor: AppColors.accent),
@@ -861,10 +883,7 @@ class _BookingDetailSheetState extends State<BookingDetailSheet>
                         await _supabase.from('bookings')
                             .update({'status': 'approved'})
                             .eq('id', widget.booking['id']);
-                        sendTableAssignedEmail(
-                          widget.booking,
-                          widget.booking['tables'] as Map<String, dynamic>? ?? {},
-                        );
+                        sendBookingAcceptedEmail(widget.booking);
                         if (!context.mounted) return;
                         widget.onSaved();
                       } catch (e) {
@@ -1035,10 +1054,10 @@ class BookingCard extends StatelessWidget {
   }
 }
 
-Future<void> sendTableAssignedEmail(
-  Map<String, dynamic> booking,
-  Map<String, dynamic> table,
-) async {
+/// Email al cliente quando la prenotazione viene ACCETTATA.
+/// Non fa riferimento al tavolo: l'assegnazione è interna e può cambiare
+/// in qualsiasi momento senza che il cliente ne debba sapere nulla.
+Future<void> sendBookingAcceptedEmail(Map<String, dynamic> booking) async {
   final g = booking['guests'];
   final email = g?['email'] as String?;
   if (email == null || email.isEmpty) return;
@@ -1073,7 +1092,6 @@ Future<void> sendTableAssignedEmail(
       'notes': booking['notes'] ?? '',
       'turno': turno,
       'area': area,
-      'tableName': table['name']?.toString() ?? '',
       'restaurantName': 'Hio Oriental Bar',
       'restaurantAddress': 'Via Giuseppe Mazzini 5',
       'restaurantCity': '90139 Palermo',
