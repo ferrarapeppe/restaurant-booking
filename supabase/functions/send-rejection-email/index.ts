@@ -254,7 +254,7 @@ Deno.serve(async (req) => {
       html,
     });
 
-    return new Response(JSON.stringify({ success: true, motivo: motivo ?? null }), {
+    return new Response(JSON.stringify({ success: true, canale: Deno.env.get('RESEND_API_KEY') ? 'resend' : 'smtp', motivo: motivo ?? null }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (e) {
