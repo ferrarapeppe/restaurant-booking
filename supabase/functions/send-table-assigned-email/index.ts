@@ -27,6 +27,41 @@ async function inviaConRitenta(
   throw ultimoErrore;
 }
 
+// ─── Scelta del canale di invio ──────────────────────────────────────────────
+// Se RESEND_API_KEY e' configurata si usa Resend, altrimenti si resta sull'SMTP
+// di Aruba. Il passaggio si attiva e si annulla aggiungendo o togliendo il
+// segreto, senza rideployare.
+async function inviaEmail(
+  transporter: { sendMail: (m: unknown) => Promise<unknown> },
+  messaggio: { from: string; to: string; subject: string; html: string },
+): Promise<unknown> {
+  const chiaveResend = Deno.env.get('RESEND_API_KEY');
+  if (chiaveResend) return await inviaConResend(chiaveResend, messaggio);
+  return await inviaConRitenta(transporter, messaggio);
+}
+
+async function inviaConResend(
+  chiave: string,
+  messaggio: { from: string; to: string; subject: string; html: string },
+): Promise<unknown> {
+  const res = await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${chiave}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      from: messaggio.from,
+      to: [messaggio.to],
+      subject: messaggio.subject,
+      html: messaggio.html,
+    }),
+  });
+  const corpo = await res.text();
+  if (!res.ok) throw new Error(`Resend ${res.status}: ${corpo}`);
+  return corpo;
+}
+
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -113,7 +148,7 @@ Deno.serve(async (req) => {
     const subject = `Prenotazione confermata${nomeCompleto ? ` per ${nomeCompleto}` : ''}`
       + ` (${persons} ${persons === 1 ? 'persona' : 'persone'}, ${dateSubject} ${timeShort})`;
 
-    await inviaConRitenta(transporter, {
+    await inviaEmail(transporter, {
       from: `${restName} <${smtpUser}>`,
       to: email,
       subject,
