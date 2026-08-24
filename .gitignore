@@ -28,3 +28,9 @@ doc/api/
 .flutter-plugins
 .flutter-plugins-dependencies
 .env
+
+# Skill di design installate localmente (UI/UX Pro Max) — strumenti, non codice dell'app
+.claude/
+
+# File temporanei della Supabase CLI
+supabase/.temp/

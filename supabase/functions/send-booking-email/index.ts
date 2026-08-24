@@ -190,10 +190,13 @@ function wrap(restName: string, body: string): string {
 function buildEmail1Html(d: EmailData): string {
   const body = `<tr>
     <td style="background:white;padding:40px 40px 24px;">
-      <h2 style="color:#1a1a2e;font-size:20px;font-weight:700;margin:0 0 12px;">Richiesta di prenotazione ricevuta</h2>
-      <p style="color:#c0392b;font-size:14px;line-height:1.7;margin:0 0 28px;">
-        Grazie per la tua richiesta di prenotazione, ti risponderemo il prima possibile.
-        Tieni presente che <strong>questa non è una conferma della tua prenotazione</strong>.
+      <h2 style="color:#1a1a2e;font-size:20px;font-weight:700;line-height:1.35;margin:0 0 14px;">Abbiamo ricevuto correttamente la tua richiesta di prenotazione.</h2>
+      <p style="color:#c0392b;font-size:14px;line-height:1.7;margin:0 0 14px;">
+        Ti ricordiamo che <strong>questa comunicazione non costituisce una conferma di prenotazione</strong>.
+        La disponibilità verrà verificata dal nostro staff e riceverai una conferma definitiva il prima possibile.
+      </p>
+      <p style="color:#1a1a2e;font-size:14px;line-height:1.7;margin:0 0 28px;">
+        Grazie per averci contattato.
       </p>
       ${detailsTable(d)}
       <div style="text-align:center;margin:36px 0 0;">
