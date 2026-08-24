@@ -22,6 +22,11 @@ class _RestaurantProfileScreenState extends State<RestaurantProfileScreen> {
   final _websiteCtrl = TextEditingController();
   final _rulesCtrl = TextEditingController();
 
+  /// Da quando il modulo pubblico accetta prenotazioni. Vuota = da subito.
+  /// Vive nella colonna `settings` del ristorante, che era libera.
+  DateTime? _prenotazioniDal;
+  Map<String, dynamic> _altreImpostazioni = {};
+
   @override
   void initState() {
     super.initState();
@@ -51,8 +56,28 @@ class _RestaurantProfileScreenState extends State<RestaurantProfileScreen> {
       _emailCtrl.text = res['email'] ?? '';
       _websiteCtrl.text = res['website'] ?? '';
       _rulesCtrl.text = res['booking_rules'] ?? '';
+      final s = res['settings'];
+      if (s is Map) {
+        _altreImpostazioni = Map<String, dynamic>.from(s);
+        _prenotazioniDal = DateTime.tryParse((s['prenotazioni_dal'] ?? '').toString());
+      }
     } catch (_) {}
     setState(() => _loading = false);
+  }
+
+  static String _iso(DateTime d) =>
+      '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
+
+  Future<void> _scegliData() async {
+    final oggi = DateTime.now();
+    final scelta = await showDatePicker(
+      context: context,
+      initialDate: _prenotazioniDal ?? oggi,
+      firstDate: DateTime(oggi.year - 1),
+      lastDate: DateTime(oggi.year + 3),
+      locale: const Locale('it', 'IT'),
+    );
+    if (scelta != null) setState(() => _prenotazioniDal = scelta);
   }
 
   Future<void> _save() async {
@@ -66,6 +91,11 @@ class _RestaurantProfileScreenState extends State<RestaurantProfileScreen> {
         'email': _emailCtrl.text.trim(),
         'website': _websiteCtrl.text.trim(),
         'booking_rules': _rulesCtrl.text.trim(),
+        // Le altre chiavi di settings vanno riscritte, altrimenti si perdono
+        'settings': {
+          ..._altreImpostazioni,
+          if (_prenotazioniDal != null) 'prenotazioni_dal': _iso(_prenotazioniDal!) else 'prenotazioni_dal': null,
+        },
       }).eq('id', _restaurantId);
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Profilo salvato'), backgroundColor: AppColors.accent),
@@ -141,6 +171,49 @@ class _RestaurantProfileScreenState extends State<RestaurantProfileScreen> {
                 _ProfileField(label: 'Email', controller: _emailCtrl, icon: Icons.email_outlined, type: TextInputType.emailAddress),
                 const SizedBox(height: 10),
                 _ProfileField(label: 'Sito web', controller: _websiteCtrl, icon: Icons.language_outlined, type: TextInputType.url),
+                const SizedBox(height: 24),
+                const _SectionTitle('Apertura delle prenotazioni online'),
+                const SizedBox(height: 8),
+                const Text(
+                  'Prima di questa data il modulo non accetta prenotazioni: nel calendario '
+                  'i giorni precedenti restano spenti. Lascia vuoto per accettare da subito.',
+                  style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
+                ),
+                const SizedBox(height: 12),
+                InkWell(
+                  onTap: _scegliData,
+                  borderRadius: BorderRadius.circular(8),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                    decoration: BoxDecoration(
+                      color: AppColors.surface,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: AppColors.divider),
+                    ),
+                    child: Row(children: [
+                      const Icon(Icons.event_available_outlined, size: 20, color: AppColors.accent),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          _prenotazioniDal == null
+                              ? 'Nessuna data: si prenota da subito'
+                              : 'Si prenota a partire dal ${_iso(_prenotazioniDal!)}',
+                          style: TextStyle(
+                            color: _prenotazioniDal == null ? AppColors.textMuted : AppColors.textPrimary,
+                            fontSize: 15,
+                          ),
+                        ),
+                      ),
+                      if (_prenotazioniDal != null)
+                        IconButton(
+                          tooltip: 'Togli la limitazione',
+                          icon: const Icon(Icons.close, size: 18, color: AppColors.textSecondary),
+                          onPressed: () => setState(() => _prenotazioniDal = null),
+                        ),
+                      const Icon(Icons.calendar_today_outlined, size: 18, color: AppColors.textSecondary),
+                    ]),
+                  ),
+                ),
                 const SizedBox(height: 24),
                 const _SectionTitle('Regole di prenotazione'),
                 const SizedBox(height: 8),
