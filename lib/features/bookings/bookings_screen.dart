@@ -1157,7 +1157,15 @@ class _RejectionScreenState extends State<RejectionScreen> {
             'cognome': g?['surname'] ?? '',
             'motivo': _selectedMotivo,
             'messaggio': _msgCtrl.text.trim(),
+            // Senza data e ora il cliente con piu' richieste non sa quale è stata rifiutata
+            'date': widget.booking['date'] ?? '',
+            'time': (widget.booking['time_start'] ?? '').toString(),
+            'persons': widget.booking['party_size'] ?? 0,
             'restaurantName': 'Hio Oriental Bar',
+            'restaurantAddress': 'Via Giuseppe Mazzini 5',
+            'restaurantCity': '90139 Palermo',
+            'restaurantPhone': '+39 328 574 4906',
+            'restaurantEmail': 'prenota@hiooriental.com',
           });
         } catch (e) { debugPrint('send-rejection-email error: $e'); }
       }
@@ -1239,7 +1247,8 @@ class _RejectionScreenState extends State<RejectionScreen> {
                 icon: const Icon(Icons.thumb_down, size: 18),
                 label: const Text('Rifiuta', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF2E7D52),
+                  // Azione distruttiva: era verde, colore che qui significa "accetta"
+                  backgroundColor: const Color(0xFFDC3545),
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
