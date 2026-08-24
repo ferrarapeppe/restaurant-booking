@@ -1,5 +1,33 @@
 import nodemailer from 'npm:nodemailer@6.9.9';
 
+// ─── Invio con ritentativi ───────────────────────────────────────────────────
+// Aruba applica greylisting: rifiuta temporaneamente la posta da IP che non
+// conosce, aspettandosi un secondo tentativo dallo stesso indirizzo. Ma le
+// edge function di Supabase escono da IP che cambiano a ogni chiamata, quindi
+// l'invio riusciva solo quando capitava su un IP gia' autorizzato.
+// Ritentare aumenta le probabilita' di finire su uno di quelli.
+async function inviaConRitenta(
+  transporter: { sendMail: (m: unknown) => Promise<unknown> },
+  messaggio: unknown,
+  tentativi = 4,
+): Promise<unknown> {
+  let ultimoErrore: unknown;
+  for (let i = 0; i < tentativi; i++) {
+    try {
+      return await transporter.sendMail(messaggio);
+    } catch (e) {
+      ultimoErrore = e;
+      const testo = String(e);
+      const temporaneo = /temporarily rejected|temporaneamente rifiutata|Greylist|greylist|\b4\.\d\.\d\b|450|451|550 5\.1\.0/.test(testo);
+      if (!temporaneo || i === tentativi - 1) throw e;
+      console.warn(`invio rifiutato temporaneamente (tentativo ${i + 1}/${tentativi}): ${testo}`);
+      await new Promise((r) => setTimeout(r, 1200 * (i + 1)));
+    }
+  }
+  throw ultimoErrore;
+}
+
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -85,7 +113,7 @@ Deno.serve(async (req) => {
     const subject = `Prenotazione confermata${nomeCompleto ? ` per ${nomeCompleto}` : ''}`
       + ` (${persons} ${persons === 1 ? 'persona' : 'persone'}, ${dateSubject} ${timeShort})`;
 
-    await transporter.sendMail({
+    await inviaConRitenta(transporter, {
       from: `${restName} <${smtpUser}>`,
       to: email,
       subject,
