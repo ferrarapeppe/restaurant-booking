@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class AppColors {
   // Colori principali HIO
@@ -23,15 +24,50 @@ class AppColors {
 
   // UI
   static const divider = Color(0xFFE0E0E0);
-  static const badgeGreen = Color(0xFF28A745);
-  static const accentGreen = Color(0xFF28A745);
+  static const badgeGreen = Color(0xFF2E7D52);
+  static const accentGreen = Color(0xFF2E7D52);
   static const badgeGrey = Color(0xFF6B7280);
-  static const closed = Color(0xFFEF4444);
+  static const closed = Color(0xFFB7182A);
+
+  // ── Stati della prenotazione ────────────────────────────────────────────
+  // Stesse tonalità che il cliente vede nella pagina di riepilogo, così
+  // personale e cliente parlano lo stesso linguaggio visivo.
+  static const statoAttesa = gold;                  // in attesa di conferma
+  static const statoConfermato = Color(0xFF2E7D52); // confermata
+  static const statoAlTavolo = Color(0xFF1B6B8F);   // al tavolo
+  static const statoConcluso = Color(0xFF6B7280);   // conclusa
+  static const statoAnnullato = accent;             // annullata, non presentato
+
+  // Sfondi tenui abbinati, per pastiglie e riquadri di stato
+  static const statoAttesaSfondo = goldLight;
+  static const statoConfermatoSfondo = Color(0xFFEAF5EF);
+  static const statoAnnullatoSfondo = accentLight;
 }
 
 class AppTheme {
-  static ThemeData get light => ThemeData(
+  /// Stessa coppia tipografica del modulo di prenotazione e delle email:
+  /// Playfair Display SC per i titoli, Karla per il testo corrente.
+  static TextTheme _testo(TextTheme base) {
+    final corpo = GoogleFonts.karlaTextTheme(base);
+    return corpo.copyWith(
+      displayLarge: GoogleFonts.playfairDisplaySc(textStyle: base.displayLarge, fontWeight: FontWeight.bold),
+      displayMedium: GoogleFonts.playfairDisplaySc(textStyle: base.displayMedium, fontWeight: FontWeight.bold),
+      displaySmall: GoogleFonts.playfairDisplaySc(textStyle: base.displaySmall, fontWeight: FontWeight.bold),
+      headlineLarge: GoogleFonts.playfairDisplaySc(textStyle: base.headlineLarge, fontWeight: FontWeight.bold),
+      headlineMedium: GoogleFonts.playfairDisplaySc(textStyle: base.headlineMedium, fontWeight: FontWeight.bold),
+      headlineSmall: GoogleFonts.playfairDisplaySc(textStyle: base.headlineSmall, fontWeight: FontWeight.bold),
+      titleLarge: GoogleFonts.playfairDisplaySc(textStyle: base.titleLarge, fontWeight: FontWeight.bold),
+    );
+  }
+
+  static ThemeData get light {
+    final base = ThemeData.light();
+    return _componi(base);
+  }
+
+  static ThemeData _componi(ThemeData base) => ThemeData(
     brightness: Brightness.light,
+    textTheme: _testo(base.textTheme),
     scaffoldBackgroundColor: AppColors.background,
     colorScheme: const ColorScheme.light(
       primary: AppColors.accent,
@@ -39,11 +75,12 @@ class AppTheme {
       surface: AppColors.surface,
       background: AppColors.background,
     ),
-    appBarTheme: const AppBarTheme(
+    appBarTheme: AppBarTheme(
       backgroundColor: Colors.white,
       elevation: 0,
-      iconTheme: IconThemeData(color: AppColors.textPrimary),
-      titleTextStyle: TextStyle(
+      iconTheme: const IconThemeData(color: AppColors.textPrimary),
+      // Gli stili in linea non ereditano dal textTheme: il font va indicato qui
+      titleTextStyle: GoogleFonts.playfairDisplaySc(
         color: AppColors.accent,
         fontSize: 20,
         fontWeight: FontWeight.bold,
@@ -99,10 +136,10 @@ class AppTheme {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
     ),
-    dialogTheme: const DialogTheme(
+    dialogTheme: DialogTheme(
       backgroundColor: AppColors.surface,
-      titleTextStyle: TextStyle(color: AppColors.accent, fontSize: 18, fontWeight: FontWeight.bold),
-      contentTextStyle: TextStyle(color: AppColors.textPrimary),
+      titleTextStyle: GoogleFonts.playfairDisplaySc(color: AppColors.accent, fontSize: 18, fontWeight: FontWeight.bold),
+      contentTextStyle: GoogleFonts.karla(color: AppColors.textPrimary),
     ),
     bottomSheetTheme: const BottomSheetThemeData(
       backgroundColor: AppColors.surface,

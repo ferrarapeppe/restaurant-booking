@@ -73,13 +73,13 @@ class FloorplanScreen extends ConsumerWidget {
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             child: Row(
               children: [
-                _LegendDot(color: const Color(0xFF28A745), label: 'Libero'),
+                _LegendDot(color: AppColors.statoConfermato, label: 'Libero'),
                 const SizedBox(width: 16),
-                _LegendDot(color: const Color(0xFF007BFF), label: 'Occupato'),
+                _LegendDot(color: AppColors.statoAlTavolo, label: 'Occupato'),
                 const SizedBox(width: 16),
-                _LegendDot(color: const Color(0xFFFFC107), label: 'Prenotato'),
+                _LegendDot(color: AppColors.statoAttesa, label: 'Prenotato'),
                 const SizedBox(width: 16),
-                _LegendDot(color: const Color(0xFF6C757D), label: 'Inattivo'),
+                _LegendDot(color: AppColors.statoConcluso, label: 'Inattivo'),
               ],
             ),
           ),
@@ -158,7 +158,7 @@ class _FloorplanCanvasState extends ConsumerState<_FloorplanCanvas> {
       child: Container(
         width: double.infinity,
         height: double.infinity,
-        color: const Color(0xFFF8F9FA),
+        color: AppColors.surface,
         child: Stack(
           children: [
             // Griglia di sfondo
@@ -219,19 +219,19 @@ class _FloorplanCanvasState extends ConsumerState<_FloorplanCanvas> {
           const SizedBox(height: 16),
           const Divider(height: 1),
           ListTile(
-            leading: const CircleAvatar(radius: 8, backgroundColor: Color(0xFF28A745)),
+            leading: const CircleAvatar(radius: 8, backgroundColor: AppColors.accent),
             title: const Text('Libero'),
             trailing: currentStatus == 'free' ? const Icon(Icons.check, color: AppColors.accent) : null,
             onTap: () { _setTableStatus(table.id, 'free'); Navigator.pop(context); },
           ),
           ListTile(
-            leading: const CircleAvatar(radius: 8, backgroundColor: Color(0xFF007BFF)),
+            leading: const CircleAvatar(radius: 8, backgroundColor: AppColors.textSecondary),
             title: const Text('Occupato'),
             trailing: currentStatus == 'occupied' ? const Icon(Icons.check, color: AppColors.accent) : null,
             onTap: () { _setTableStatus(table.id, 'occupied'); Navigator.pop(context); },
           ),
           ListTile(
-            leading: const CircleAvatar(radius: 8, backgroundColor: Color(0xFFFFC107)),
+            leading: const CircleAvatar(radius: 8, backgroundColor: AppColors.gold),
             title: const Text('Prenotato'),
             trailing: currentStatus == 'reserved' ? const Icon(Icons.check, color: AppColors.accent) : null,
             onTap: () { _setTableStatus(table.id, 'reserved'); Navigator.pop(context); },
@@ -251,9 +251,9 @@ class _TableWidget extends StatelessWidget {
 
   Color get _statusColor {
     switch (status) {
-      case 'occupied': return const Color(0xFF007BFF);
-      case 'reserved': return const Color(0xFFFFC107);
-      default: return const Color(0xFF28A745);
+      case 'occupied': return AppColors.textSecondary;
+      case 'reserved': return AppColors.gold;
+      default: return AppColors.accent;
     }
   }
 
@@ -428,7 +428,7 @@ class _GridPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = const Color(0xFFE5E7EB)
+      ..color = AppColors.divider
       ..strokeWidth = 0.5;
     const step = 40.0;
     for (double x = 0; x < 1000; x += step) {

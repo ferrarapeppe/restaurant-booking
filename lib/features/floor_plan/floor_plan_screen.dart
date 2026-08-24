@@ -153,10 +153,10 @@ class _FloorPlanScreenState extends State<FloorPlanScreen> {
 
   Color _statusColor(TableStatus s) {
     switch (s) {
-      case TableStatus.free: return const Color(0xFF2E7D52);
-      case TableStatus.booked: return const Color(0xFFE65100);
-      case TableStatus.occupied: return const Color(0xFFE65100);
-      case TableStatus.unavailable: return const Color(0xFF424242);
+      case TableStatus.free: return AppColors.accent;
+      case TableStatus.booked: return AppColors.accent;
+      case TableStatus.occupied: return AppColors.accent;
+      case TableStatus.unavailable: return AppColors.textPrimary;
     }
   }
 
@@ -288,15 +288,15 @@ class _FloorPlanScreenState extends State<FloorPlanScreen> {
                 // Barra prenotazioni pending
                 if (_pendingBookings.isNotEmpty)
                   Container(
-                    color: const Color(0xFFFFC107).withOpacity(0.15),
+                    color: AppColors.gold.withOpacity(0.15),
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                     child: Row(children: [
-                      const Icon(Icons.pending_actions, color: Color(0xFFFFC107), size: 18),
+                      const Icon(Icons.pending_actions, color: AppColors.gold, size: 18),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
                           '${_pendingBookings.length} prenotazion${_pendingBookings.length == 1 ? "e" : "i"} in attesa',
-                          style: const TextStyle(color: Color(0xFFFFC107), fontSize: 13, fontWeight: FontWeight.w600),
+                          style: const TextStyle(color: AppColors.gold, fontSize: 13, fontWeight: FontWeight.w600),
                         ),
                       ),
                       GestureDetector(
@@ -304,7 +304,7 @@ class _FloorPlanScreenState extends State<FloorPlanScreen> {
                         child: Container(
                           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFFFC107),
+                            color: AppColors.gold,
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: const Text('Vedi', style: TextStyle(color: Colors.black, fontSize: 12, fontWeight: FontWeight.bold)),
@@ -356,7 +356,7 @@ class _FloorPlanScreenState extends State<FloorPlanScreen> {
             ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => context.push('/bookings/new'),
-        backgroundColor: const Color(0xFF2E7D52),
+        backgroundColor: AppColors.accent,
         child: const Icon(Icons.add, color: Colors.white),
       ),
     );
@@ -548,7 +548,7 @@ class _TimelineBarState extends State<_TimelineBar> {
                   child: Container(
                     margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 2),
                     decoration: BoxDecoration(
-                      color: isSelected ? const Color(0xFF2E7D52) : Colors.transparent,
+                      color: isSelected ? AppColors.accent : Colors.transparent,
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Column(
@@ -844,7 +844,7 @@ class _TableDetailSheetState extends State<_TableDetailSheet>
       if (mounted) {
         Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Prenotazione salvata'), backgroundColor: Color(0xFF2E7D52)),
+          const SnackBar(content: Text('Prenotazione salvata'), backgroundColor: AppColors.accent),
         );
       }
     } catch (e) {
@@ -893,7 +893,7 @@ class _TableDetailSheetState extends State<_TableDetailSheet>
       if (mounted) {
         Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Prenotazione creata'), backgroundColor: Color(0xFF2E7D52)),
+          const SnackBar(content: Text('Prenotazione creata'), backgroundColor: AppColors.accent),
         );
       }
     } catch (e) {
@@ -938,9 +938,9 @@ class _TableDetailSheetState extends State<_TableDetailSheet>
 
   Color get _statusColor {
     switch (_editStatus) {
-      case 'approved': return const Color(0xFF2E7D52);
-      case 'seated': return const Color(0xFF1565C0);
-      case 'pending': return const Color(0xFFFFC107);
+      case 'approved': return AppColors.statoConfermato;
+      case 'seated': return AppColors.textSecondary;
+      case 'pending': return AppColors.statoAttesa;
       default: return Colors.grey;
     }
   }
@@ -964,7 +964,7 @@ class _TableDetailSheetState extends State<_TableDetailSheet>
           ),
           TabBar(
             controller: _tabController,
-            indicatorColor: const Color(0xFF2E7D52),
+            indicatorColor: AppColors.accent,
             labelColor: AppColors.textPrimary,
             unselectedLabelColor: AppColors.textMuted,
             labelStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, letterSpacing: 1),
@@ -1076,7 +1076,7 @@ class _TableDetailSheetState extends State<_TableDetailSheet>
                         Switch(
                           value: _notifyEmail,
                           onChanged: (v) => setState(() => _notifyEmail = v),
-                          activeColor: const Color(0xFF2E7D52),
+                          activeColor: AppColors.accent,
                         ),
                         const SizedBox(width: 8),
                         const Text('E-mail', style: TextStyle(color: AppColors.textSecondary, fontSize: 15)),
@@ -1208,16 +1208,16 @@ class _TableDetailSheetState extends State<_TableDetailSheet>
                   _ActionButton(icon: Icons.close, onTap: () => Navigator.pop(context)),
                   const SizedBox(width: 12),
                   _saving
-                      ? const CircularProgressIndicator(color: Color(0xFF2E7D52))
-                      : _ActionButton(icon: Icons.check, color: const Color(0xFF2E7D52), onTap: _save),
+                      ? const CircularProgressIndicator(color: AppColors.accent)
+                      : _ActionButton(icon: Icons.check, color: AppColors.accent, onTap: _save),
                 ] else ...[
                   _ActionButton(icon: Icons.more_horiz, onTap: () {}),
                   const SizedBox(width: 12),
                   _ActionButton(icon: Icons.close, onTap: () => Navigator.pop(context)),
                   const SizedBox(width: 12),
                   _saving
-                      ? const CircularProgressIndicator(color: Color(0xFF2E7D52))
-                      : _ActionButton(icon: Icons.check, color: const Color(0xFF2E7D52), onTap: _saveNew),
+                      ? const CircularProgressIndicator(color: AppColors.accent)
+                      : _ActionButton(icon: Icons.check, color: AppColors.accent, onTap: _saveNew),
                 ],
               ],
             ),
@@ -1336,7 +1336,7 @@ class _MessageInputState extends State<_MessageInput> {
             child: Container(
               width: 36, height: 36,
               decoration: BoxDecoration(
-                color: const Color(0xFF2E7D52),
+                color: AppColors.accent,
                 shape: BoxShape.circle,
               ),
               child: Icon(
@@ -1423,7 +1423,7 @@ class _RadioOption extends StatelessWidget {
             Radio<int>(
               value: value, groupValue: groupValue,
               onChanged: (v) => onChanged(v!),
-              activeColor: const Color(0xFFC9B06E),
+              activeColor: AppColors.gold,
               materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
             ),
             const SizedBox(width: 4),
@@ -1531,7 +1531,7 @@ extension FloorPlanPending on _FloorPlanScreenState {
                   decoration: BoxDecoration(
                     color: AppColors.cardLight,
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: const Color(0xFFE65100).withOpacity(0.5)),
+                    border: Border.all(color: AppColors.accent.withOpacity(0.5)),
                   ),
                   child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                     Row(children: [
@@ -1557,7 +1557,7 @@ extension FloorPlanPending on _FloorPlanScreenState {
                             ? 'Tavolo ${b['tables']['name']}  (${b['tables']['capacity']} posti)'
                             : 'Nessun tavolo assegnato',
                         style: TextStyle(
-                          color: b['tables'] != null ? AppColors.accent : const Color(0xFFFFC107),
+                          color: b['tables'] != null ? AppColors.accent : AppColors.gold,
                           fontSize: 13, fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -1568,7 +1568,7 @@ extension FloorPlanPending on _FloorPlanScreenState {
                         child: ElevatedButton(
                           onPressed: () { Navigator.pop(context); _acceptBooking(b); },
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF2E7D52),
+                            backgroundColor: AppColors.accent,
                             padding: const EdgeInsets.symmetric(vertical: 8),
                           ),
                           child: const Text('Accetta', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
@@ -1615,7 +1615,7 @@ extension FloorPlanPending on _FloorPlanScreenState {
     _sendBookingAcceptedEmail(booking);
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Prenotazione accettata!'), backgroundColor: Color(0xFF2E7D52)),
+      const SnackBar(content: Text('Prenotazione accettata!'), backgroundColor: AppColors.accent),
     );
     _loadData();
   }
@@ -1731,7 +1731,7 @@ extension FloorPlanPending on _FloorPlanScreenState {
                     child: Container(
                       width: 72, height: 72,
                       decoration: BoxDecoration(
-                        color: const Color(0xFF2E7D52),
+                        color: AppColors.accent,
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [

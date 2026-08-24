@@ -176,10 +176,10 @@ class _ScheduleBodyState extends ConsumerState<_ScheduleBody> {
 
   Color _statusColor(String status) {
     switch (status) {
-      case 'approved': return const Color(0xFF4A5568);
-      case 'seated':   return const Color(0xFF2E7D52);
-      case 'pending':  return const Color(0xFFFFC107);
-      case 'walkin':   return const Color(0xFF007BFF);
+      case 'approved': return AppColors.textPrimary;
+      case 'seated':   return AppColors.statoConfermato;
+      case 'pending':  return AppColors.statoAttesa;
+      case 'walkin':   return AppColors.statoAlTavolo;
       default:         return AppColors.textMuted;
     }
   }
@@ -295,7 +295,7 @@ class _ScheduleBodyState extends ConsumerState<_ScheduleBody> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
             decoration: BoxDecoration(
-              color: const Color(0xFF2E7D52),
+              color: AppColors.accent,
               borderRadius: BorderRadius.circular(12),
             ),
             child: const Text('Aperto',
@@ -443,7 +443,7 @@ class _ScheduleBodyState extends ConsumerState<_ScheduleBody> {
                 ? Container(
                     padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFFFC107),
+                      color: AppColors.gold,
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: Text(name,
@@ -479,7 +479,7 @@ class _ScheduleBodyState extends ConsumerState<_ScheduleBody> {
     final timeEnd = (b['time_end'] ?? '').toString();
     final x = _labelWidth + _timeToX(timeStart);
     final w = timeEnd.isNotEmpty ? _durationToWidth(timeStart, timeEnd) : _slotWidth * 4.0;
-    const color = Color(0xFFFFC107);
+    const color = AppColors.gold;
 
     return Container(
       height: _rowHeight,
@@ -489,7 +489,7 @@ class _ScheduleBodyState extends ConsumerState<_ScheduleBody> {
         Row(children: [
           Container(
             width: _labelWidth,
-            color: const Color(0xFFFFC107).withValues(alpha:0.08),
+            color: AppColors.gold.withValues(alpha:0.08),
           ),
           ...slots.map((_) => Container(
               width: _slotWidth,

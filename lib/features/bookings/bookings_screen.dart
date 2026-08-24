@@ -173,7 +173,7 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
               const SizedBox(width: 10),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
-                decoration: BoxDecoration(color: const Color(0xFF2E7D52), borderRadius: BorderRadius.circular(12)),
+                decoration: BoxDecoration(color: AppColors.accent, borderRadius: BorderRadius.circular(12)),
                 child: const Text('Aperto', style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
               ),
               const Spacer(),
@@ -237,7 +237,7 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
         const Divider(height: 1, color: AppColors.divider),
         Expanded(
           child: _loading
-              ? const Center(child: CircularProgressIndicator(color: Color(0xFF2E7D52)))
+              ? const Center(child: CircularProgressIndicator(color: AppColors.accent))
               : _bookingsWithDetails.isEmpty
                   ? Center(
                       child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
@@ -278,7 +278,7 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
       ]),
       floatingActionButton: FloatingActionButton(
         onPressed: () => context.push('/bookings/new'),
-        backgroundColor: const Color(0xFF2E7D52),
+        backgroundColor: AppColors.accent,
         child: const Icon(Icons.add, color: Colors.white),
       ),
     );
@@ -296,13 +296,13 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
           final isSelected = _statusFilter == opt['value'];
           return ListTile(
             leading: Icon(opt['icon'] as IconData,
-                color: isSelected ? const Color(0xFF2E7D52) : AppColors.textSecondary),
+                color: isSelected ? AppColors.accent : AppColors.textSecondary),
             title: Text(opt['label'] as String,
                 style: TextStyle(
-                  color: isSelected ? const Color(0xFF2E7D52) : AppColors.textPrimary,
+                  color: isSelected ? AppColors.accent : AppColors.textPrimary,
                   fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                 )),
-            trailing: isSelected ? const Icon(Icons.check, color: Color(0xFF2E7D52)) : null,
+            trailing: isSelected ? const Icon(Icons.check, color: AppColors.accent) : null,
             onTap: () {
               setState(() => _statusFilter = opt['value'] as String);
               Navigator.pop(context);
@@ -341,12 +341,12 @@ const _kStatusChoices = [
 
 Color _statusDotColor(String status) {
   switch (status) {
-    case 'approved': return const Color(0xFFFFC107);
-    case 'seated':   return const Color(0xFF2E7D52);
+    case 'approved': return AppColors.statoAttesa;
+    case 'seated':   return AppColors.statoConfermato;
     case 'left':     return Colors.grey;
     case 'canceled':
     case 'no_show':  return Colors.red;
-    case 'pending':  return const Color(0xFFFFC107);
+    case 'pending':  return AppColors.statoAttesa;
     default:         return AppColors.textMuted;
   }
 }
@@ -392,7 +392,7 @@ class _BookingRow extends StatelessWidget {
                 child: Container(
                   width: 30, height: 30,
                   decoration: const BoxDecoration(
-                      color: Color(0xFF2E7D52), shape: BoxShape.circle),
+                      color: AppColors.accent, shape: BoxShape.circle),
                   child: const Icon(Icons.check, color: Colors.white, size: 17),
                 ),
               ),
@@ -403,7 +403,7 @@ class _BookingRow extends StatelessWidget {
                 child: Container(
                   width: 30, height: 30,
                   decoration: const BoxDecoration(
-                      color: Color(0xFFDC3545), shape: BoxShape.circle),
+                      color: AppColors.accent, shape: BoxShape.circle),
                   child: const Icon(Icons.close, color: Colors.white, size: 17),
                 ),
               ),
@@ -467,7 +467,7 @@ class _BookingRow extends StatelessWidget {
               // Colonna ora — teal
               Container(
                 width: 72,
-                color: const Color(0xFF00897B),
+                color: AppColors.textPrimary,
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -505,11 +505,11 @@ class _BookingRow extends StatelessWidget {
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       color: partySize >= 3
-                          ? const Color(0xFFE6781A)
+                          ? AppColors.gold
                           : Colors.transparent,
                       border: partySize < 3
                           ? Border.all(
-                              color: const Color(0xFFE6781A).withValues(alpha: 0.7))
+                              color: AppColors.gold.withValues(alpha: 0.7))
                           : null,
                     ),
                     child: Center(
@@ -517,7 +517,7 @@ class _BookingRow extends StatelessWidget {
                           style: TextStyle(
                               color: partySize >= 3
                                   ? Colors.white
-                                  : const Color(0xFFE6781A),
+                                  : AppColors.gold,
                               fontSize: 12,
                               fontWeight: FontWeight.bold)),
                     ),
@@ -545,7 +545,7 @@ class _BookingRow extends StatelessWidget {
                               width: 32, height: 32,
                               decoration: const BoxDecoration(
                                   shape: BoxShape.circle,
-                                  color: Color(0xFF4A5568)),
+                                  color: AppColors.textPrimary),
                               child: Center(
                                 child: Text(tableName,
                                     style: const TextStyle(
@@ -706,7 +706,7 @@ class _BookingDetailSheetState extends State<BookingDetailSheet>
             return ListTile(
               leading: Container(
                 width: 32, height: 32,
-                decoration: const BoxDecoration(shape: BoxShape.circle, color: Color(0xFF4A5568)),
+                decoration: const BoxDecoration(shape: BoxShape.circle, color: AppColors.textPrimary),
                 child: Center(child: Text(t['name'] ?? '', style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold))),
               ),
               title: Text('Tavolo ${t['name']}', style: const TextStyle(color: AppColors.textPrimary)),
@@ -797,7 +797,7 @@ class _BookingDetailSheetState extends State<BookingDetailSheet>
                             ),
                           )
                         : const Text('Tocca per assegnare un tavolo',
-                            style: TextStyle(color: Color(0xFFFFC107), fontSize: 14)),
+                            style: TextStyle(color: AppColors.gold, fontSize: 14)),
                   ),
                   const Icon(Icons.edit_outlined, color: AppColors.textMuted, size: 16),
                 ])),
@@ -875,7 +875,7 @@ class _BookingDetailSheetState extends State<BookingDetailSheet>
                     icon: const Icon(Icons.check, size: 16),
                     label: const Text('Accetta'),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF2E7D52),
+                      backgroundColor: AppColors.accent,
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 12),
                     ),
@@ -896,7 +896,7 @@ class _BookingDetailSheetState extends State<BookingDetailSheet>
                     icon: const Icon(Icons.close, size: 16),
                     label: const Text('Rifiuta'),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFDC3545),
+                      backgroundColor: AppColors.accent,
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 12),
                     ),
@@ -911,7 +911,7 @@ class _BookingDetailSheetState extends State<BookingDetailSheet>
               _ActionBtn(icon: Icons.close, onTap: () => Navigator.pop(context)),
               const SizedBox(width: 12),
               _saving
-                  ? const CircularProgressIndicator(color: Color(0xFF2E7D52))
+                  ? const CircularProgressIndicator(color: AppColors.accent)
                   : _ActionBtn(icon: Icons.check, color: AppColors.accent, onTap: _save),
             ]),
           ]),
@@ -982,12 +982,12 @@ class BookingCard extends StatelessWidget {
 
   Color _statusColor(String status) {
     switch (status) {
-      case 'approved': return const Color(0xFF28A745);
-      case 'pending':   return const Color(0xFFFFC107);
-      case 'seated':    return const Color(0xFF007BFF);
-      case 'left':      return const Color(0xFF6C757D);
-      case 'no_show':    return const Color(0xFFDC3545);
-      case 'walkin':    return const Color(0xFFFF8C00);
+      case 'approved': return AppColors.statoConfermato;
+      case 'pending':   return AppColors.statoAttesa;
+      case 'seated':    return AppColors.statoAlTavolo;
+      case 'left':      return AppColors.statoConcluso;
+      case 'no_show':    return AppColors.statoAnnullato;
+      case 'walkin':    return AppColors.gold;
       default:          return AppColors.textSecondary;
     }
   }
@@ -1200,13 +1200,13 @@ class _RejectionScreenState extends State<RejectionScreen> {
             // Dropdown Motivo
             Container(
               decoration: BoxDecoration(
-                border: Border.all(color: const Color(0xFF2E7D52), width: 1.5),
+                border: Border.all(color: AppColors.accent, width: 1.5),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                 const Padding(
                   padding: EdgeInsets.fromLTRB(12, 8, 12, 0),
-                  child: Text('Motivo', style: TextStyle(color: Color(0xFF2E7D52), fontSize: 12, fontWeight: FontWeight.w600)),
+                  child: Text('Motivo', style: TextStyle(color: AppColors.accent, fontSize: 12, fontWeight: FontWeight.w600)),
                 ),
                 DropdownButton<String>(
                   value: _selectedMotivo,
@@ -1253,7 +1253,7 @@ class _RejectionScreenState extends State<RejectionScreen> {
                 label: const Text('Rifiuta', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                 style: ElevatedButton.styleFrom(
                   // Azione distruttiva: era verde, colore che qui significa "accetta"
-                  backgroundColor: const Color(0xFFDC3545),
+                  backgroundColor: AppColors.accent,
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),

@@ -70,7 +70,7 @@ class GuestsScreen extends ConsumerWidget {
                   const SizedBox(width: 8),
                   _StatChip(
                     label: '${guests.where((g) => (g.tags).contains('vip')).length} VIP',
-                    color: const Color(0xFFFFD700),
+                    color: AppColors.gold,
                   ),
                 ],
               ),
@@ -181,7 +181,7 @@ class _GuestCard extends StatelessWidget {
         decoration: BoxDecoration(
           color: AppColors.surface,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: isVip ? const Color(0xFFFFD700) : AppColors.divider, width: isVip ? 1.5 : 1),
+          border: Border.all(color: isVip ? AppColors.gold : AppColors.divider, width: isVip ? 1.5 : 1),
           boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 4, offset: const Offset(0, 2))],
         ),
         child: Row(
@@ -200,8 +200,8 @@ class _GuestCard extends StatelessWidget {
                       const SizedBox(width: 4),
                       const Text('😊', style: TextStyle(fontSize: 14)),
                       const SizedBox(width: 4),
-                      if (isVip) _TagBadge(label: 'VIP', color: const Color(0xFFFFD700), textColor: const Color(0xFF856404)),
-                      if (isNoShow) _TagBadge(label: 'No-show', color: const Color(0xFFFFE0E0), textColor: const Color(0xFFDC3545)),
+                      if (isVip) _TagBadge(label: 'VIP', color: AppColors.gold, textColor: AppColors.textPrimary),
+                      if (isNoShow) _TagBadge(label: 'No-show', color: AppColors.accentLight, textColor: AppColors.accent),
                     ],
                   ),
                   const SizedBox(height: 4),
@@ -250,9 +250,9 @@ class _GuestCard extends StatelessWidget {
                           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                           decoration: BoxDecoration(
                             color: tag == 'vip'
-                                ? const Color(0xFFFFD700)
+                                ? AppColors.gold
                                 : tag == 'no_show'
-                                    ? const Color(0xFFFFE0E0)
+                                    ? AppColors.accentLight
                                     : AppColors.accentLight,
                             borderRadius: BorderRadius.circular(6),
                           ),
@@ -260,9 +260,9 @@ class _GuestCard extends StatelessWidget {
                             tag,
                             style: TextStyle(
                               color: tag == 'vip'
-                                  ? const Color(0xFF856404)
+                                  ? AppColors.textPrimary
                                   : tag == 'no_show'
-                                      ? const Color(0xFFDC3545)
+                                      ? AppColors.accent
                                       : AppColors.accent,
                               fontSize: 10,
                               fontWeight: FontWeight.w600,
@@ -497,8 +497,8 @@ class _GuestDetailScreenState extends ConsumerState<GuestDetailScreen> {
                   if (isVip)
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                      decoration: BoxDecoration(color: const Color(0xFFFFD700), borderRadius: BorderRadius.circular(8)),
-                      child: const Text('VIP', style: TextStyle(color: Color(0xFF856404), fontWeight: FontWeight.bold, fontSize: 12)),
+                      decoration: BoxDecoration(color: AppColors.gold, borderRadius: BorderRadius.circular(8)),
+                      child: const Text('VIP', style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.bold, fontSize: 12)),
                     ),
                 ],
               ),
@@ -820,11 +820,11 @@ class _GuestDetailScreenState extends ConsumerState<GuestDetailScreen> {
 
   Color _statusColor(String status) {
     switch (status) {
-      case 'approved': return const Color(0xFF28A745);
-      case 'seated': return const Color(0xFF007BFF);
-      case 'left': return const Color(0xFF6C757D);
-      case 'no_show': return const Color(0xFFDC3545);
-      default: return const Color(0xFFFFC107);
+      case 'approved': return AppColors.statoConfermato;
+      case 'seated': return AppColors.statoAlTavolo;
+      case 'left': return AppColors.statoConcluso;
+      case 'no_show': return AppColors.statoAnnullato;
+      default: return AppColors.gold;
     }
   }
 
@@ -925,8 +925,8 @@ class _GuestAvatar extends StatelessWidget {
 
   Color _colorFromName(String name) {
     final colors = [
-      const Color(0xFF6B4C9A), const Color(0xFF2E7D52), const Color(0xFFB7182A),
-      const Color(0xFF1565C0), const Color(0xFF795548), const Color(0xFF00838F),
+      AppColors.textSecondary, AppColors.accent, AppColors.accent,
+      AppColors.textSecondary, AppColors.textSecondary, AppColors.textSecondary,
     ];
     int hash = 0;
     for (final c in name.codeUnits) hash = (hash * 31 + c) & 0xFFFFFFFF;
@@ -935,7 +935,7 @@ class _GuestAvatar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = isVip ? const Color(0xFFB8860B) : _colorFromName(name);
+    final color = isVip ? AppColors.textPrimary : _colorFromName(name);
     return CircleAvatar(
       radius: size / 2,
       backgroundColor: color,

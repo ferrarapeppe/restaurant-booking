@@ -68,7 +68,7 @@ class _RestaurantProfileScreenState extends State<RestaurantProfileScreen> {
         'booking_rules': _rulesCtrl.text.trim(),
       }).eq('id', _restaurantId);
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Profilo salvato'), backgroundColor: Color(0xFF2E7D52)),
+        const SnackBar(content: Text('Profilo salvato'), backgroundColor: AppColors.accent),
       );
     } catch (e) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(
@@ -95,13 +95,13 @@ class _RestaurantProfileScreenState extends State<RestaurantProfileScreen> {
           TextButton(
             onPressed: _saving ? null : _save,
             child: _saving
-                ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Color(0xFF2E7D52), strokeWidth: 2))
-                : const Text('Salva', style: TextStyle(color: Color(0xFF2E7D52), fontSize: 16, fontWeight: FontWeight.bold)),
+                ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: AppColors.accent, strokeWidth: 2))
+                : const Text('Salva', style: TextStyle(color: AppColors.accent, fontSize: 16, fontWeight: FontWeight.bold)),
           ),
         ],
       ),
       body: _loading
-          ? const Center(child: CircularProgressIndicator(color: Color(0xFF2E7D52)))
+          ? const Center(child: CircularProgressIndicator(color: AppColors.accent))
           : ListView(
               padding: const EdgeInsets.all(16),
               children: [
@@ -111,7 +111,7 @@ class _RestaurantProfileScreenState extends State<RestaurantProfileScreen> {
                     Container(
                       width: 100, height: 100,
                       decoration: BoxDecoration(
-                        color: const Color(0xFFB7182A),
+                        color: AppColors.accent,
                         borderRadius: BorderRadius.circular(50),
                       ),
                       child: const Center(
@@ -175,7 +175,7 @@ class _RestaurantProfileScreenState extends State<RestaurantProfileScreen> {
                   child: ElevatedButton(
                     onPressed: _saving ? null : _save,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF2E7D52),
+                      backgroundColor: AppColors.accent,
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     ),

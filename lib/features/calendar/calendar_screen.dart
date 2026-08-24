@@ -178,15 +178,15 @@ class _DayCell extends StatelessWidget {
           )),
         ),
         if (isClosed)
-          _Pill(label: 'Chiuso', bg: const Color(0xFF3A2A00), fg: const Color(0xFFFFC107))
+          _Pill(label: 'Chiuso', bg: AppColors.statoAttesaSfondo, fg: AppColors.gold)
         else if (counts != null && _isCurrentMonth) ...[
           if ((counts?['pending'] ?? 0) > 0) ...[
-            _Pill(label: '${counts!['pending']} in attesa', bg: const Color(0xFF3A3000), fg: const Color(0xFFFFC107)),
+            _Pill(label: '${counts!['pending']} in attesa', bg: AppColors.statoAttesaSfondo, fg: AppColors.gold),
             const SizedBox(height: 2),
           ],
-          _Pill(label: '${counts?['prenotazioni'] ?? 0} prenotaz.', bg: const Color(0xFF1A3A1A), fg: const Color(0xFF66BB6A)),
+          _Pill(label: '${counts?['prenotazioni'] ?? 0} prenotaz.', bg: AppColors.statoConfermatoSfondo, fg: AppColors.statoConfermato),
           const SizedBox(height: 2),
-          _Pill(label: '${counts?['ospiti'] ?? 0} persone', bg: const Color(0xFF1A1A3A), fg: const Color(0xFF64B5F6)),
+          _Pill(label: '${counts?['ospiti'] ?? 0} persone', bg: AppColors.cardLight, fg: AppColors.statoAlTavolo),
         ],
       ]),
     );

@@ -149,7 +149,7 @@ class _TablesScreenState extends State<TablesScreen> with SingleTickerProviderSt
                 child: const Text('Annulla')),
             ElevatedButton(
               onPressed: () => Navigator.pop(ctx, true),
-              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF2E7D52)),
+              style: ElevatedButton.styleFrom(backgroundColor: AppColors.accent),
               child: const Text('Aggiungi'),
             ),
           ],
@@ -206,7 +206,7 @@ class _TablesScreenState extends State<TablesScreen> with SingleTickerProviderSt
                 child: const Text('Annulla')),
             ElevatedButton(
               onPressed: () => Navigator.pop(ctx, true),
-              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF2E7D52)),
+              style: ElevatedButton.styleFrom(backgroundColor: AppColors.accent),
               child: const Text('Salva'),
             ),
           ],
@@ -275,7 +275,7 @@ class _TablesScreenState extends State<TablesScreen> with SingleTickerProviderSt
         ),
       ),
       body: _loading
-          ? const Center(child: CircularProgressIndicator(color: Color(0xFF2E7D52)))
+          ? const Center(child: CircularProgressIndicator(color: AppColors.accent))
           : TabBarView(
               controller: _tabController,
               children: [
@@ -464,14 +464,14 @@ class _InputDialog extends StatelessWidget {
           labelText: label,
           labelStyle: const TextStyle(color: AppColors.textSecondary),
           enabledBorder: const UnderlineInputBorder(borderSide: BorderSide(color: AppColors.divider)),
-          focusedBorder: const UnderlineInputBorder(borderSide: BorderSide(color: Color(0xFF2E7D52))),
+          focusedBorder: const UnderlineInputBorder(borderSide: BorderSide(color: AppColors.accent)),
         ),
       ),
       actions: [
         TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Annulla')),
         ElevatedButton(
           onPressed: () => Navigator.pop(context, true),
-          style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF2E7D52)),
+          style: ElevatedButton.styleFrom(backgroundColor: AppColors.accent),
           child: const Text('Conferma'),
         ),
       ],
@@ -495,7 +495,7 @@ class _DialogField extends StatelessWidget {
         labelText: label,
         labelStyle: const TextStyle(color: AppColors.textSecondary),
         enabledBorder: const UnderlineInputBorder(borderSide: BorderSide(color: AppColors.divider)),
-        focusedBorder: const UnderlineInputBorder(borderSide: BorderSide(color: Color(0xFF2E7D52))),
+        focusedBorder: const UnderlineInputBorder(borderSide: BorderSide(color: AppColors.accent)),
       ),
     );
   }

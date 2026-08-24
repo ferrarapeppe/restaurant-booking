@@ -21,12 +21,12 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
 
   Map<String, dynamic> _getStatusInfo(String status) {
     switch (status) {
-      case 'approved': return {'label': 'Confermato', 'color': const Color(0xFF28A745)};
-      case 'pending': return {'label': 'In attesa', 'color': const Color(0xFFFFC107)};
-      case 'seated': return {'label': 'Seduto', 'color': const Color(0xFF007BFF)};
-      case 'left': return {'label': 'Partito', 'color': const Color(0xFF6C757D)};
-      case 'no_show': return {'label': 'No-show', 'color': const Color(0xFFDC3545)};
-      case 'walkin': return {'label': 'Walk-in', 'color': const Color(0xFFFF8C00)};
+      case 'approved': return {'label': 'Confermato', 'color': AppColors.statoConfermato};
+      case 'pending': return {'label': 'In attesa', 'color': AppColors.statoAttesa};
+      case 'seated': return {'label': 'Seduto', 'color': AppColors.statoAlTavolo};
+      case 'left': return {'label': 'Partito', 'color': AppColors.statoConcluso};
+      case 'no_show': return {'label': 'No-show', 'color': AppColors.statoAnnullato};
+      case 'walkin': return {'label': 'Walk-in', 'color': AppColors.gold};
       default: return {'label': status, 'color': AppColors.textSecondary};
     }
   }
@@ -106,7 +106,7 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
                 _ActionButton(
                   icon: Icons.check_circle_outline,
                   label: 'Confermato',
-                  color: const Color(0xFF28A745),
+                  color: AppColors.accent,
                   active: _status == 'approved',
                   onTap: () => setState(() => _status = 'approved'),
                 ),
@@ -114,7 +114,7 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
                 _ActionButton(
                   icon: Icons.chair_outlined,
                   label: 'Seduto',
-                  color: const Color(0xFF007BFF),
+                  color: AppColors.textSecondary,
                   active: _status == 'seated',
                   onTap: () => setState(() => _status = 'seated'),
                 ),
@@ -122,7 +122,7 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
                 _ActionButton(
                   icon: Icons.logout,
                   label: 'Partito',
-                  color: const Color(0xFF6C757D),
+                  color: AppColors.textSecondary,
                   active: _status == 'left',
                   onTap: () => setState(() => _status = 'left'),
                 ),
@@ -130,7 +130,7 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
                 _ActionButton(
                   icon: Icons.cancel_outlined,
                   label: 'No-show',
-                  color: const Color(0xFFDC3545),
+                  color: AppColors.accent,
                   active: _status == 'no_show',
                   onTap: () => setState(() => _status = 'no_show'),
                 ),
@@ -214,10 +214,10 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
               width: double.infinity,
               child: OutlinedButton.icon(
                 onPressed: () => _showCancelDialog(context),
-                icon: const Icon(Icons.cancel_outlined, color: Color(0xFFDC3545)),
-                label: const Text('Cancella prenotazione', style: TextStyle(color: Color(0xFFDC3545))),
+                icon: const Icon(Icons.cancel_outlined, color: AppColors.accent),
+                label: const Text('Cancella prenotazione', style: TextStyle(color: AppColors.accent)),
                 style: OutlinedButton.styleFrom(
-                  side: const BorderSide(color: Color(0xFFDC3545)),
+                  side: const BorderSide(color: AppColors.accent),
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 ),
@@ -260,7 +260,7 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
           ListTile(leading: const Icon(Icons.edit_outlined, color: AppColors.accent), title: const Text('Modifica prenotazione'), onTap: () => Navigator.pop(context)),
           ListTile(leading: const Icon(Icons.person_outline, color: AppColors.accent), title: const Text('Vai al profilo cliente'), onTap: () => Navigator.pop(context)),
           ListTile(leading: const Icon(Icons.print_outlined, color: AppColors.textSecondary), title: const Text('Stampa'), onTap: () => Navigator.pop(context)),
-          ListTile(leading: const Icon(Icons.cancel_outlined, color: Color(0xFFDC3545)), title: const Text('Cancella', style: TextStyle(color: Color(0xFFDC3545))), onTap: () => Navigator.pop(context)),
+          ListTile(leading: const Icon(Icons.cancel_outlined, color: AppColors.accent), title: const Text('Cancella', style: TextStyle(color: AppColors.accent)), onTap: () => Navigator.pop(context)),
           const SizedBox(height: 16),
         ],
       ),
@@ -277,7 +277,7 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
           TextButton(onPressed: () => Navigator.pop(context), child: const Text('Annulla')),
           TextButton(
             onPressed: () { Navigator.pop(context); Navigator.pop(context); },
-            child: const Text('Cancella', style: TextStyle(color: Color(0xFFDC3545))),
+            child: const Text('Cancella', style: TextStyle(color: AppColors.accent)),
           ),
         ],
       ),

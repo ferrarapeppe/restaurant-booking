@@ -114,7 +114,7 @@ class _OpeningHoursScreenState extends State<OpeningHoursScreen> {
         ],
       ),
       body: _loading
-          ? const Center(child: CircularProgressIndicator(color: Color(0xFF2E7D52)))
+          ? const Center(child: CircularProgressIndicator(color: AppColors.accent))
           : ListView(
               padding: const EdgeInsets.all(16),
               children: [
@@ -522,7 +522,7 @@ class _OpeningHoursFormState extends State<_OpeningHoursForm> with SingleTickerP
               // Chiuso toggle
               Row(children: [
                 const Expanded(child: Text('Chiuso', style: TextStyle(color: AppColors.textPrimary, fontSize: 15))),
-                Switch(value: _isClosed, onChanged: (v) => setState(() => _isClosed = v), activeColor: const Color(0xFF2E7D52)),
+                Switch(value: _isClosed, onChanged: (v) => setState(() => _isClosed = v), activeColor: AppColors.accent),
               ]),
               if (!_isClosed) ...[
                 const SizedBox(height: 12),
@@ -571,7 +571,7 @@ class _OpeningHoursFormState extends State<_OpeningHoursForm> with SingleTickerP
                     const Text('ULTIMO SLOT DI PRENOTAZIONE',
                         style: TextStyle(color: AppColors.textSecondary, fontSize: 11, letterSpacing: 1)),
                     const SizedBox(height: 8),
-                    Text(lastSlot, style: const TextStyle(color: Color(0xFF2E7D52), fontSize: 32, fontWeight: FontWeight.bold)),
+                    Text(lastSlot, style: const TextStyle(color: AppColors.accent, fontSize: 32, fontWeight: FontWeight.bold)),
                     const SizedBox(height: 4),
                     Text(
                       'Gli ospiti che prenotano alle $lastSlot ceneranno per 2:00 e usciranno all\'orario di chiusura.',
@@ -584,7 +584,7 @@ class _OpeningHoursFormState extends State<_OpeningHoursForm> with SingleTickerP
                       child: LinearProgressIndicator(
                         value: 0.85,
                         backgroundColor: Colors.red.withOpacity(0.4),
-                        valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF2E7D52)),
+                        valueColor: const AlwaysStoppedAnimation<Color>(AppColors.accent),
                         minHeight: 8,
                       ),
                     ),
@@ -659,7 +659,7 @@ class _OpeningHoursFormState extends State<_OpeningHoursForm> with SingleTickerP
               child: ElevatedButton(
                 onPressed: _saving ? null : _save,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF2E7D52),
+                  backgroundColor: AppColors.accent,
                   padding: const EdgeInsets.symmetric(vertical: 14),
                 ),
                 child: _saving ? const CircularProgressIndicator(color: Colors.white) : const Text('Salva', style: TextStyle(fontSize: 16)),
