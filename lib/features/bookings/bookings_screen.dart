@@ -845,29 +845,9 @@ class _BookingDetailSheetState extends State<BookingDetailSheet>
               )),
               const SizedBox(height: 20),
             ]),
-            Column(children: [
-              Expanded(child: ListView(padding: const EdgeInsets.all(16), children: [
-                Container(padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(color: AppColors.cardLight, borderRadius: BorderRadius.circular(8)),
-                    child: const Text('Prenotazione creata', style: TextStyle(color: AppColors.textPrimary))),
-              ])),
-              Container(
-                decoration: const BoxDecoration(border: Border(top: BorderSide(color: AppColors.divider))),
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                child: Row(children: [
-                  Expanded(child: TextField(
-                    controller: _msgCtrl,
-                    style: const TextStyle(color: AppColors.textPrimary),
-                    decoration: const InputDecoration(
-                      hintText: 'Nota interna...',
-                      hintStyle: TextStyle(color: AppColors.textMuted),
-                      border: InputBorder.none, isDense: true,
-                    ),
-                  )),
-                  const Icon(Icons.send, color: AppColors.textSecondary, size: 20),
-                ]),
-              ),
-            ]),
+            // Prima: un segnaposto "Prenotazione creata" e un campo il cui
+            // pulsante di invio non era collegato a nulla.
+            ConversazioneCliente(bookingId: widget.booking['id'] as String),
           ]),
         ),
         Container(
@@ -1287,6 +1267,192 @@ class _RejectionScreenState extends State<RejectionScreen> {
             ]),
           ]),
         ),
+      ),
+    );
+  }
+}
+
+// ── Conversazione con il cliente ──────────────────────────────────────────────
+/// Legge e scrive nella tabella `booking_messages`, la stessa usata dalla
+/// pagina di riepilogo che il cliente riceve via email.
+///
+/// Prima l'app scriveva nel campo `notes` della prenotazione: sovrascriveva
+/// la nota lasciata in fase di prenotazione, e il cliente vedeva la risposta
+/// del locale attribuita a sé stesso. I messaggi che il cliente scriveva,
+/// dal canto loro, non arrivavano da nessuna parte.
+class ConversazioneCliente extends StatefulWidget {
+  final String bookingId;
+  const ConversazioneCliente({super.key, required this.bookingId});
+
+  @override
+  State<ConversazioneCliente> createState() => _ConversazioneClienteState();
+}
+
+class _ConversazioneClienteState extends State<ConversazioneCliente> {
+  final _supabase = Supabase.instance.client;
+  final _ctrl = TextEditingController();
+  List<Map<String, dynamic>> _messaggi = [];
+  bool _caricamento = true;
+  bool _invio = false;
+  String? _errore;
+
+  @override
+  void initState() {
+    super.initState();
+    _carica();
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  Future<void> _carica() async {
+    setState(() { _caricamento = true; _errore = null; });
+    try {
+      final res = await _supabase
+          .from('booking_messages')
+          .select('id, sender, message, created_at')
+          .eq('booking_id', widget.bookingId)
+          .order('created_at', ascending: true);
+      if (!mounted) return;
+      setState(() {
+        _messaggi = List<Map<String, dynamic>>.from(res);
+        _caricamento = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() { _errore = e.toString(); _caricamento = false; });
+    }
+  }
+
+  Future<void> _invia() async {
+    final testo = _ctrl.text.trim();
+    if (testo.isEmpty || _invio) return;
+    setState(() => _invio = true);
+    try {
+      await _supabase.from('booking_messages').insert({
+        'booking_id': widget.bookingId,
+        'sender': 'restaurant',
+        'message': testo,
+      });
+      _ctrl.clear();
+      await _carica();
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Messaggio non inviato: $e'), backgroundColor: AppColors.accent),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _invio = false);
+    }
+  }
+
+  String _quando(String? iso) {
+    final d = DateTime.tryParse(iso ?? '')?.toLocal();
+    if (d == null) return '';
+    return DateFormat('d MMM, HH:mm', 'it_IT').format(d);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(children: [
+      Expanded(
+        child: _caricamento
+            ? const Center(child: CircularProgressIndicator(color: AppColors.accent))
+            : _errore != null
+                ? _Avviso(testo: 'Messaggi non caricati.\n$_errore', onRiprova: _carica)
+                : _messaggi.isEmpty
+                    ? const _Avviso(testo: 'Nessun messaggio.\nQui compaiono i messaggi scambiati con il cliente.')
+                    : ListView.builder(
+                        padding: const EdgeInsets.all(16),
+                        itemCount: _messaggi.length,
+                        itemBuilder: (_, i) {
+                          final m = _messaggi[i];
+                          final delCliente = m['sender'] == 'guest';
+                          return Align(
+                            alignment: delCliente ? Alignment.centerLeft : Alignment.centerRight,
+                            child: Container(
+                              margin: const EdgeInsets.only(bottom: 10),
+                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                              constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.72),
+                              decoration: BoxDecoration(
+                                color: delCliente ? AppColors.cardLight : AppColors.accent,
+                                borderRadius: BorderRadius.circular(12),
+                                border: delCliente ? Border.all(color: AppColors.divider) : null,
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    (m['message'] ?? '').toString(),
+                                    style: TextStyle(
+                                      color: delCliente ? AppColors.textPrimary : Colors.white,
+                                      fontSize: 14,
+                                      height: 1.4,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    '${delCliente ? 'Cliente' : 'Ristorante'} · ${_quando(m['created_at']?.toString())}',
+                                    style: TextStyle(
+                                      color: delCliente ? AppColors.textMuted : Colors.white70,
+                                      fontSize: 10,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+      ),
+      Container(
+        decoration: const BoxDecoration(border: Border(top: BorderSide(color: AppColors.divider))),
+        padding: const EdgeInsets.fromLTRB(16, 8, 8, 8),
+        child: Row(children: [
+          Expanded(child: TextField(
+            controller: _ctrl,
+            minLines: 1, maxLines: 4,
+            style: const TextStyle(color: AppColors.textPrimary),
+            decoration: const InputDecoration(
+              hintText: 'Rispondi al cliente...',
+              hintStyle: TextStyle(color: AppColors.textMuted),
+              border: InputBorder.none, isDense: true,
+            ),
+          )),
+          IconButton(
+            icon: _invio
+                ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.accent))
+                : const Icon(Icons.send, color: AppColors.accent, size: 22),
+            onPressed: _invio ? null : _invia,
+          ),
+        ]),
+      ),
+    ]);
+  }
+}
+
+class _Avviso extends StatelessWidget {
+  final String testo;
+  final VoidCallback? onRiprova;
+  const _Avviso({required this.testo, this.onRiprova});
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(mainAxisSize: MainAxisSize.min, children: [
+          Text(testo, textAlign: TextAlign.center,
+              style: const TextStyle(color: AppColors.textMuted, fontSize: 13, height: 1.5)),
+          if (onRiprova != null) ...[
+            const SizedBox(height: 12),
+            TextButton(onPressed: onRiprova, child: const Text('Riprova')),
+          ],
+        ]),
       ),
     );
   }

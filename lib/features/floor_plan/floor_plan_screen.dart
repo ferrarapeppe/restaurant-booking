@@ -1176,74 +1176,22 @@ class _TableDetailSheetState extends State<_TableDetailSheet>
 
                   ],
                 ),
-                // ── TAB MESSAGGI, NOTE ──
-                Column(
-                  children: [
-                    Expanded(
-                      child: ListView(
-                        padding: const EdgeInsets.fromLTRB(16, 16, 16, 80),
-                        children: [
-                          if (isOccupied) ...[
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                CircleAvatar(
-                                  radius: 14,
-                                  backgroundColor: const Color(0xFF2E7D52),
-                                  child: Text(
-                                    _nomeCtrl.text.isNotEmpty ? _nomeCtrl.text[0].toUpperCase() : '?',
-                                    style: const TextStyle(color: Colors.white, fontSize: 12),
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                Text(
-                                  '${_nomeCtrl.text} ${_cognomeCtrl.text}  •  poco fa'.trim(),
-                                  style: const TextStyle(color: AppColors.textSecondary, fontSize: 13),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 8),
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                              decoration: BoxDecoration(color: AppColors.cardLight, borderRadius: BorderRadius.circular(8)),
-                              child: const Text('Prenotazione creata', style: TextStyle(color: AppColors.textSecondary)),
-                            ),
-                          ] else
-                            const Center(
-                              child: Padding(
-                                padding: EdgeInsets.only(top: 40),
-                                child: Text('Nessun messaggio', style: TextStyle(color: AppColors.textMuted)),
-                              ),
-                            ),
-                        ],
-                      ),
-                    ),
-                    Container(
-                      decoration: const BoxDecoration(border: Border(top: BorderSide(color: AppColors.divider))),
-                      child: DefaultTabController(
-                        length: 2,
-                        child: Column(children: [
-                          const TabBar(
-                            indicatorColor: Color(0xFF2E7D52),
-                            labelColor: Colors.white,
-                            unselectedLabelColor: AppColors.textMuted,
-                            labelStyle: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
-                            tabs: [Tab(text: 'MESSAGGIO'), Tab(text: 'NOTA')],
+                // ── TAB MESSAGGI ──
+                // Prima: il campo "MESSAGGIO" scriveva in `notes`, sovrascrivendo
+                // la nota lasciata dal cliente in fase di prenotazione, e il campo
+                // "NOTA" scriveva in `internal_notes`, che pero' contiene il JSON
+                // con turno e area: ci avrebbe distrutto dentro quei dati.
+                widget.booking == null
+                    ? const Center(
+                        child: Padding(
+                          padding: EdgeInsets.all(24),
+                          child: Text(
+                            'Nessuna prenotazione selezionata.',
+                            style: TextStyle(color: AppColors.textMuted),
                           ),
-                          SizedBox(
-                            height: 56,
-                            child: TabBarView(children: [
-                              _MessageInput(controller: _msgCtrl, hint: 'Messaggio all\'ospite...', color: AppColors.surface, onSend: () async { debugPrint('SEND MSG booking=${widget.booking?["id"]} text=${_msgCtrl.text}'); if (_msgCtrl.text.trim().isEmpty) return; if (widget.booking != null) { try { await Supabase.instance.client.from('bookings').update({'notes': _msgCtrl.text.trim()}).eq('id', widget.booking!['id'] as String); debugPrint('SEND OK'); } catch(e) { debugPrint('SEND ERR: \$e'); } } else { debugPrint('SEND: booking is null'); } }),
-
-                              _MessageInput(controller: _noteCtrl, hint: 'Nota interna privata...', color: const Color(0xFFE3F2FD), isNote: true, onSend: () async { if (_noteCtrl.text.trim().isEmpty) return; if (widget.booking != null) { await Supabase.instance.client.from('bookings').update({'internal_notes': _noteCtrl.text.trim()}).eq('id', widget.booking!['id'] as String); } }),
-
-                            ]),
-                          ),
-                        ]),
-                      ),
-                    ),
-                  ],
-                ),
+                        ),
+                      )
+                    : ConversazioneCliente(bookingId: widget.booking!['id'] as String),
               ],
             ),
           ),
