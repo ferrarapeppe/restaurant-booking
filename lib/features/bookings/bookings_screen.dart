@@ -90,13 +90,37 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
   StatoGiornata _statoGiornata = StatoGiornata.inCaricamento;
   String? _idBloccoGiornata;
   bool _cambioStatoInCorso = false;
+  DateTime? _aperturaPrenotazioni;
 
   static const _titoloBlocco = 'Prenotazioni online sospese';
 
   Future<void> _caricaStatoGiornata() async {
-    final dateStr = DateFormat('yyyy-MM-dd').format(ref.read(selectedDateProvider));
-    final giornoSettimana = (ref.read(selectedDateProvider).weekday - 1) % 7;
+    final data = ref.read(selectedDateProvider);
+    final dateStr = DateFormat('yyyy-MM-dd').format(data);
+    final giornoSettimana = (data.weekday - 1) % 7;
     try {
+      // Il modulo non accetta prenotazioni prima della data di apertura
+      // impostata in Impostazioni > Profilo ristorante, ne' per giorni passati:
+      // senza questo controllo il comando diceva "aperte" anche allora.
+      final profilo = await _supabase
+          .from('restaurants').select('settings').eq('id', _restaurantId).single();
+      final impostazioni = profilo['settings'];
+      final aperturaIso = impostazioni is Map ? impostazioni['prenotazioni_dal']?.toString() : null;
+      final apertura = DateTime.tryParse(aperturaIso ?? '');
+      final ora = DateTime.now();
+      final oggi = DateTime(ora.year, ora.month, ora.day);
+      final giorno = DateTime(data.year, data.month, data.day);
+      final minima = (apertura != null && apertura.isAfter(oggi)) ? apertura : oggi;
+      if (giorno.isBefore(minima)) {
+        if (!mounted) return;
+        setState(() {
+          _statoGiornata = StatoGiornata.nonAncoraAperte;
+          _idBloccoGiornata = null;
+          _aperturaPrenotazioni = apertura;
+        });
+        return;
+      }
+      _aperturaPrenotazioni = apertura;
       final res = await _supabase
           .from('opening_hours')
           .select('id, is_closed, special_date, day_of_week')
@@ -136,6 +160,14 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
     if (_cambioStatoInCorso) return;
     if (_statoGiornata == StatoGiornata.chiusuraSettimanale) {
       _avviso('È il giorno di chiusura settimanale. Si cambia da Impostazioni → Orari di apertura.');
+      return;
+    }
+    if (_statoGiornata == StatoGiornata.nonAncoraAperte) {
+      final d = _aperturaPrenotazioni;
+      _avviso(d == null
+          ? 'Data passata: il modulo non accetta prenotazioni.'
+          : 'Le prenotazioni online aprono il ${DateFormat('d MMMM yyyy', 'it_IT').format(d)}. '
+            'Si cambia da Impostazioni → Profilo ristorante.');
       return;
     }
     final data = ref.read(selectedDateProvider);
@@ -1556,7 +1588,7 @@ class _Avviso extends StatelessWidget {
 
 
 // ── Stato delle prenotazioni online per una giornata ─────────────────────────
-enum StatoGiornata { inCaricamento, aperte, chiuse, chiusuraSettimanale, sconosciuto }
+enum StatoGiornata { inCaricamento, aperte, chiuse, chiusuraSettimanale, nonAncoraAperte, sconosciuto }
 
 /// Sostituisce il badge "Aperto", che era scritto fisso e diceva sempre
 /// "Aperto" anche nel giorno di chiusura.
@@ -1592,6 +1624,11 @@ class _InterruttorePrenotazioniOnline extends StatelessWidget {
         sfondo = AppColors.accentLight;
         testo = AppColors.accent;
         icona = Icons.lock_outline;
+      case StatoGiornata.nonAncoraAperte:
+        etichetta = 'Non ancora aperte';
+        sfondo = AppColors.cardLight;
+        testo = AppColors.textSecondary;
+        icona = Icons.schedule_outlined;
       case StatoGiornata.chiusuraSettimanale:
         etichetta = 'Giorno di chiusura';
         sfondo = AppColors.cardLight;
@@ -1605,7 +1642,10 @@ class _InterruttorePrenotazioniOnline extends StatelessWidget {
       message: attivabile
           ? 'Tocca per ${stato == StatoGiornata.aperte ? 'chiudere' : 'riaprire'} le prenotazioni dal sito. '
             "Voi potete comunque inserirle dall'app."
-          : 'La chiusura settimanale si cambia da Impostazioni → Orari di apertura',
+          : stato == StatoGiornata.nonAncoraAperte
+              ? 'Il modulo non accetta ancora prenotazioni per questa data. '
+                'La data di apertura si imposta da Impostazioni → Profilo ristorante'
+              : 'La chiusura settimanale si cambia da Impostazioni → Orari di apertura',
       child: InkWell(
         onTap: inCorso ? null : onCambia,
         borderRadius: BorderRadius.circular(12),
