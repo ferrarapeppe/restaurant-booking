@@ -8,7 +8,6 @@
   <title>Prenota — Hio Oriental Bar</title>
   <link rel="icon" href="favicon.png" type="image/png">
   <link rel="apple-touch-icon" href="logo.png">
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Karla:wght@400;500;600;700&family=Playfair+Display+SC:wght@400;700&display=swap" rel="stylesheet">
@@ -677,8 +676,24 @@ const SUPABASE_URL = 'https://jxdnldyabhzmfnterzil.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp4ZG5sZHlhYmh6bWZudGVyemlsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4NDY2ODYsImV4cCI6MjA4NzQyMjY4Nn0.1oBMQj7EDpRfYrf3_lb4dOVQy29I2JOC8Hjr2IV_q1s';
 const RESTAURANT_ID = '2b126a92-24d5-4e83-b38c-dfc82035a0cf';
 
-const { createClient } = supabase;
-const db = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+// Il modulo non parla piu' direttamente al database: passa dallo sportello
+// public-booking. La chiave qui sotto e' pubblica per progetto e ora non da'
+// piu' accesso ai dati, serve solo a farsi riconoscere dalla funzione.
+async function chiamaSportello(corpo) {
+  const risposta = await fetch(SUPABASE_URL + '/functions/v1/public-booking', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + SUPABASE_ANON_KEY,
+    },
+    body: JSON.stringify(corpo),
+  });
+  const dati = await risposta.json().catch(() => ({}));
+  if (!risposta.ok || dati.error) {
+    throw new Error(dati.error || ('Errore ' + risposta.status));
+  }
+  return dati;
+}
 
 // Stato
 let state = {
@@ -741,16 +756,15 @@ const MONTHS_IT_CAP = ['Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno','
 const DAYS_FULL = ['Lunedì','Martedì','Mercoledì','Giovedì','Venerdì','Sabato','Domenica'];
 
 async function init() {
-  // Carica dati ristorante
-  const { data: rest } = await db.from('restaurants').select('*').eq('id', RESTAURANT_ID).single();
-  const { data: fasce } = await db.from('opening_hours').select('*').eq('restaurant_id', RESTAURANT_ID).order('day_of_week');
-  const { data: areas } = await db.from('areas').select('*').eq('restaurant_id', RESTAURANT_ID).order('sort_order');
+  const cfg = await chiamaSportello({ azione: 'configurazione' });
+  const rest = cfg.ristorante;
+  const fasce = cfg.orari || [];
 
   state.restaurant = rest;
   // Orari settimanali e date speciali arrivano dalla stessa tabella
-  state.openingHours = (fasce || []).filter(h => !h.special_date);
-  state.specialHours = (fasce || []).filter(h => h.special_date);
-  state.areas = areas || [];
+  state.openingHours = fasce.filter(h => !h.special_date);
+  state.specialHours = fasce.filter(h => h.special_date);
+  state.areas = cfg.aree || [];
 
   if (rest) {
     document.getElementById('rest-name').innerHTML = 'Prenota un tavolo da <strong>' + rest.name + '</strong>';
@@ -1135,124 +1149,28 @@ async function submitBooking() {
   btn.textContent = 'Invio in corso...';
 
   try {
-    // Crea o trova guest
-    let guestId = null;
-    if (email || phone) {
-      let query = db.from('guests').select('id').eq('restaurant_id', RESTAURANT_ID);
-      if (email) query = query.eq('email', email);
-      else query = query.eq('phone', phone);
-      const { data: existing } = await query.limit(1);
-      if (existing && existing.length > 0) {
-        guestId = existing[0].id;
-        await db.from('guests').update({
-          name: nome + (cognome ? ' ' + cognome : ''),
-          first_name: nome, surname: cognome || '',
-          phone: phone || undefined, email: email || undefined,
-        }).eq('id', guestId);
-      } else {
-        const { data: newGuest } = await db.from('guests').insert({
-          restaurant_id: RESTAURANT_ID,
-          name: nome + (cognome ? ' ' + cognome : ''),
-          first_name: nome, surname: cognome || '',
-          phone: phone || null, email: email || null,
-          visits_count: 0, tags: [],
-        }).select().single();
-        guestId = newGuest?.id;
-      }
-    }
-
     // Formatta data
     const dateStr = state.date.getFullYear() + '-' +
       String(state.date.getMonth()+1).padStart(2,'0') + '-' +
       String(state.date.getDate()).padStart(2,'0');
 
-    // Turno e area selezionati
+    // Turno selezionato
     const turnoEl = document.querySelector('input[name="turno"]:checked');
     const turnoVal = turnoEl ? turnoEl.parentElement?.textContent?.trim() : '';
-    const areaName = state.areas.find(a => a.id === state.area)?.name || '';
 
-    // Crea prenotazione e ottieni l'ID
-    const { data: newBooking } = await db.from('bookings').insert({
-      restaurant_id: RESTAURANT_ID,
-      guest_id: guestId,
-      date: dateStr,
-      time_start: state.time + ':00',
-      time_end: calcEndTime(state.time) + ':00',
-      party_size: state.persons,
-      status: 'pending',
-      source: 'web',
-      notes: notes || null,
-      internal_notes: JSON.stringify({ turno: turnoVal, area: areaName }),
-    }).select('id').single();
-
-    const bookingId = newBooking?.id || null;
-
-    // Auto-assegna tavolo libero nella zona scelta
-    if (bookingId && state.area) {
-      try {
-        const timeStart = state.time + ':00';
-        const timeEnd = calcEndTime(state.time) + ':00';
-
-        const { data: tables } = await db.from('tables')
-          .select('id, name, capacity')
-          .eq('area_id', state.area)
-          .gte('capacity', state.persons)
-          .order('capacity');
-
-        if (tables && tables.length > 0) {
-          for (const table of tables) {
-            const { data: conflicts } = await db.from('bookings')
-              .select('id')
-              .eq('table_id', table.id)
-              .eq('date', dateStr)
-              .not('status', 'in', '(canceled,no_show)')
-              .lt('time_start', timeEnd)
-              .gt('time_end', timeStart)
-              .limit(1);
-
-            if (!conflicts || conflicts.length === 0) {
-              await db.from('bookings').update({ table_id: table.id }).eq('id', bookingId);
-              break;
-            }
-          }
-        }
-      } catch (tableErr) {
-        console.warn('Auto-assegnazione tavolo fallita:', tableErr);
-      }
-    }
-
-    // Invia email di conferma al cliente (se ha fornito email)
-    if (email) {
-      try {
-        await fetch(SUPABASE_URL + '/functions/v1/send-booking-email', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': 'Bearer ' + SUPABASE_ANON_KEY,
-          },
-          body: JSON.stringify({
-            nome,
-            cognome,
-            email,
-            phone,
-            date: state.date.toISOString(),
-            time: state.time,
-            persons: state.persons,
-            notes: notes || '',
-            turno: turnoVal || '',
-            area: areaName || '',
-            restaurantName: state.restaurant?.name || 'Hio Oriental Bar',
-            restaurantAddress: state.restaurant?.address || '',
-            restaurantCity: [state.restaurant?.zip_code, state.restaurant?.city].filter(Boolean).join(' ') || '',
-            restaurantPhone: state.restaurant?.phone || '',
-            restaurantEmail: state.restaurant?.email || '',
-            bookingId,
-          }),
-        });
-      } catch (emailErr) {
-        console.warn('Email non inviata:', emailErr);
-      }
-    }
+    // Cliente, prenotazione, assegnazione del tavolo e mail di conferma
+    // avvengono tutti lato server, in un passaggio solo.
+    const esito = await chiamaSportello({
+      azione: 'prenota',
+      nome, cognome, email, telefono: phone,
+      data: dateStr,
+      ora: state.time,
+      persone: state.persons,
+      area: state.area,
+      note: notes || '',
+      turno: turnoVal || '',
+    });
+    const bookingId = esito.bookingId || null;
 
     if (bookingId) {
       window.location.href = 'booking-status.html?id=' + bookingId;
