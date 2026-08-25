@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:restaurant_booking/shared/widgets/app_drawer.dart';
 import 'package:restaurant_booking/shared/theme/app_theme.dart';
+import 'package:restaurant_booking/shared/widgets/azioni_barra.dart';
 import 'package:restaurant_booking/core/providers/booking_providers.dart';
 import 'package:restaurant_booking/features/bookings/bookings_screen.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' as supabase_flutter;
@@ -72,6 +73,7 @@ class _ReservationsScreenState extends ConsumerState<ReservationsScreen> {
         ),
         centerTitle: true,
         actions: [
+          ...azioniBarra(context),
           IconButton(
             icon: const Icon(Icons.calendar_today_outlined, color: Colors.white70),
             onPressed: () async {
@@ -86,16 +88,8 @@ class _ReservationsScreenState extends ConsumerState<ReservationsScreen> {
               }
             },
           ),
-          IconButton(
-            icon: const Icon(Icons.search, color: Colors.white70),
-            onPressed: () {},
-          ),
           Stack(
             children: [
-              IconButton(
-                icon: const Icon(Icons.notifications_none, color: Colors.white70),
-                onPressed: () {},
-              ),
             ],
           ),
         ],

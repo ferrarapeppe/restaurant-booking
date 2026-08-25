@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:restaurant_booking/shared/widgets/app_drawer.dart';
 import 'package:restaurant_booking/shared/theme/app_theme.dart';
+import 'package:restaurant_booking/shared/widgets/azioni_barra.dart';
 import 'package:restaurant_booking/shared/widgets/contenuto_centrato.dart';
 
 // ── Settings Screen ───────────────────────────────────────────────────────────
@@ -22,8 +23,7 @@ class SettingsScreen extends StatelessWidget {
         )),
         title: const Text('Impostazioni', style: TextStyle(color: AppColors.gold)),
         actions: [
-          IconButton(icon: const Icon(Icons.search, color: Colors.white70), onPressed: () {}),
-          IconButton(icon: const Icon(Icons.notifications_outlined, color: Colors.white70), onPressed: () {}),
+          ...azioniBarra(context),
         ],
       ),
       body: LayoutBuilder(builder: (context, vincoli) {

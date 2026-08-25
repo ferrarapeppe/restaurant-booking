@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:go_router/go_router.dart';
 import 'package:restaurant_booking/shared/widgets/app_drawer.dart';
 import 'package:restaurant_booking/shared/theme/app_theme.dart';
+import 'package:restaurant_booking/shared/widgets/azioni_barra.dart';
 import 'package:restaurant_booking/shared/widgets/contenuto_centrato.dart';
 import 'package:restaurant_booking/core/providers/booking_providers.dart';
 import 'package:restaurant_booking/features/bookings/stato_giornata.dart';
@@ -37,7 +38,7 @@ class CalendarScreen extends ConsumerWidget {
         )),
         title: const Text('Calendario', style: TextStyle(color: AppColors.gold, fontWeight: FontWeight.bold)),
         actions: [
-          IconButton(icon: const Icon(Icons.search, color: Colors.white70), onPressed: () {}),
+          ...azioniBarra(context),
         ],
       ),
       body: const ContenutoCentrato(

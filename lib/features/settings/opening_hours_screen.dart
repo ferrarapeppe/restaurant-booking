@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:restaurant_booking/shared/theme/app_theme.dart';
+import 'package:restaurant_booking/shared/widgets/azioni_barra.dart';
 import 'package:restaurant_booking/shared/widgets/contenuto_centrato.dart';
 
 class OpeningHoursScreen extends StatefulWidget {
@@ -110,8 +111,7 @@ class _OpeningHoursScreenState extends State<OpeningHoursScreen> {
         ),
         title: const Text('Orari di apertura', style: TextStyle(color: AppColors.gold, fontWeight: FontWeight.bold)),
         actions: [
-          IconButton(icon: const Icon(Icons.search, color: Colors.white70), onPressed: () {}),
-          IconButton(icon: const Icon(Icons.notifications_outlined, color: Colors.white70), onPressed: () {}),
+          ...azioniBarra(context),
         ],
       ),
       body: ContenutoCentrato(larghezzaMassima: 900,

@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:restaurant_booking/shared/widgets/app_drawer.dart';
 import 'package:restaurant_booking/shared/theme/app_theme.dart';
+import 'package:restaurant_booking/shared/widgets/azioni_barra.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:restaurant_booking/core/providers/booking_providers.dart';
@@ -217,12 +218,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           filterQuality: FilterQuality.high,
         ),
         actions: [
-          IconButton(
-              icon: const Icon(Icons.search, color: Colors.white70),
-              onPressed: () {}),
-          IconButton(
-              icon: const Icon(Icons.notifications_outlined, color: Colors.white70),
-              onPressed: () {}),
+          ...azioniBarra(context),
           const SizedBox(width: 8),
         ],
       ),

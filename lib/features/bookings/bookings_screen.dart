@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:restaurant_booking/shared/widgets/app_drawer.dart';
 import 'package:restaurant_booking/shared/theme/app_theme.dart';
+import 'package:restaurant_booking/shared/widgets/azioni_barra.dart';
 import 'package:restaurant_booking/core/providers/booking_providers.dart';
 import 'package:restaurant_booking/features/bookings/stato_giornata.dart';
 import 'package:restaurant_booking/features/bookings/scelte_modulo.dart';
@@ -278,9 +279,7 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
         ),
         centerTitle: true,
         actions: [
-          IconButton(icon: const Icon(Icons.calendar_today_outlined, color: Colors.white), onPressed: () {}),
-          IconButton(icon: const Icon(Icons.search, color: Colors.white), onPressed: () {}),
-          IconButton(icon: const Icon(Icons.notifications_outlined, color: Colors.white), onPressed: () {}),
+          ...azioniBarra(context, percorsoData: '/bookings'),
         ],
       ),
       // Un pannello bianco su fondo tortora, come le schede delle altre

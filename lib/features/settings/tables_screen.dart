@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:restaurant_booking/shared/theme/app_theme.dart';
+import 'package:restaurant_booking/shared/widgets/azioni_barra.dart';
 import 'package:restaurant_booking/shared/widgets/contenuto_centrato.dart';
 
 class TablesScreen extends StatefulWidget {
@@ -259,8 +260,7 @@ class _TablesScreenState extends State<TablesScreen> with SingleTickerProviderSt
         ),
         title: const Text('Tavoli', style: TextStyle(color: AppColors.gold, fontSize: 20, fontWeight: FontWeight.bold)),
         actions: [
-          IconButton(icon: const Icon(Icons.search, color: Colors.white70), onPressed: () {}),
-          IconButton(icon: const Icon(Icons.notifications_outlined, color: Colors.white70), onPressed: () {}),
+          ...azioniBarra(context),
         ],
         bottom: TabBar(
           controller: _tabController,
