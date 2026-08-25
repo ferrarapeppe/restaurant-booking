@@ -6,6 +6,7 @@ import 'package:restaurant_booking/data/models/booking_model.dart';
 import 'package:restaurant_booking/core/providers/guest_providers.dart';
 import 'package:restaurant_booking/features/bookings/booking_detail_screen.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:restaurant_booking/features/guests/esporta_rubrica.dart';
 
 class GuestsScreen extends ConsumerWidget {
   const GuestsScreen({super.key});
@@ -29,6 +30,20 @@ class GuestsScreen extends ConsumerWidget {
         title: const Text('Clienti', style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.bold)),
         actions: [
           IconButton(
+            tooltip: 'Esporta in rubrica',
+            icon: const Icon(Icons.contact_phone_outlined, color: AppColors.textSecondary),
+            onPressed: () => showModalBottomSheet(
+              context: context,
+              isScrollControlled: true,
+              backgroundColor: AppColors.surface,
+              shape: const RoundedRectangleBorder(
+                borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+              ),
+              builder: (_) => const SchedaEsportaRubrica(),
+            ),
+          ),
+          IconButton(
+            tooltip: 'Nuovo cliente',
             icon: const Icon(Icons.person_add_outlined, color: AppColors.accent),
             onPressed: () => _showAddGuestSheet(context, ref),
           ),
