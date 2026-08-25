@@ -8,6 +8,7 @@ import 'package:restaurant_booking/shared/widgets/app_drawer.dart';
 import 'package:restaurant_booking/shared/theme/app_theme.dart';
 import 'package:restaurant_booking/core/providers/booking_providers.dart';
 import 'package:restaurant_booking/features/bookings/stato_giornata.dart';
+import 'package:restaurant_booking/features/bookings/scelte_modulo.dart';
 
 class BookingsScreen extends ConsumerStatefulWidget {
   final DateTime? initialDate;
@@ -59,7 +60,7 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
       debugPrint('BOOKINGS LOAD date=$dateStr status=$_statusFilter');
       var query = _supabase
           .from('bookings')
-          .select('*, guests(first_name, surname, name, phone, email), tables(name, capacity, area_id, areas(name))')
+          .select('*, guests(first_name, surname, name, phone, email, tags), tables(name, capacity, area_id, areas(name))')
           .eq('restaurant_id', _restaurantId);
       if (_sourceFilter == 'web') {
         query = query.eq('source', 'web').eq('status', 'pending');
@@ -236,14 +237,15 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Row(children: [
               Text(capitalDay, style: const TextStyle(color: AppColors.textPrimary, fontSize: 20, fontWeight: FontWeight.bold)),
-              const SizedBox(width: 10),
-              _InterruttorePrenotazioniOnline(
+              const Spacer(),
+              _MenuGiornata(
                 stato: _statoGiornata,
                 inCorso: _cambioStatoInCorso,
+                motivo: _statoGiornata == StatoGiornata.nonAncoraAperte
+                    ? _regole?.motivoNonAperta(ref.read(selectedDateProvider))
+                    : null,
                 onCambia: _cambiaPrenotazioniOnline,
               ),
-              const Spacer(),
-              IconButton(icon: const Icon(Icons.more_vert, color: AppColors.textSecondary), onPressed: () {}),
             ]),
             const SizedBox(height: 8),
             Row(children: [
@@ -289,20 +291,52 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
           ]),
         ),
         const Divider(height: 1, color: AppColors.divider),
-        Container(
-          color: AppColors.surface,
-          padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 8),
-          child: const Row(children: [
-            SizedBox(width: 72, child: Padding(padding: EdgeInsets.only(left: 8), child: Text('Ora', style: TextStyle(color: AppColors.textSecondary, fontSize: 12)))),
-            Expanded(child: Padding(padding: EdgeInsets.only(left: 12), child: Text('Nome', style: TextStyle(color: AppColors.textSecondary, fontSize: 12)))),
-            SizedBox(width: 36, child: Center(child: Text('P', style: TextStyle(color: AppColors.textSecondary, fontSize: 12)))),
-            SizedBox(width: 86, child: Padding(padding: EdgeInsets.only(left: 4), child: Text('Tavolo/i', style: TextStyle(color: AppColors.textSecondary, fontSize: 12)))),
-            SizedBox(width: 70, child: Center(child: Text('Stato', style: TextStyle(color: AppColors.textSecondary, fontSize: 12)))),
-          ]),
-        ),
-        const Divider(height: 1, color: AppColors.divider),
+        // Sette colonne non entrano su uno schermo stretto. Invece di
+        // schiacciarle fino a renderle illeggibili, la tabella scorre in
+        // orizzontale sotto una larghezza minima, intestazione compresa.
         Expanded(
-          child: _loading
+          child: LayoutBuilder(builder: (context, vincoli) {
+            const larghezzaMinima = 720.0;
+            final larghezza = vincoli.maxWidth < larghezzaMinima
+                ? larghezzaMinima
+                : vincoli.maxWidth;
+            return SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: SizedBox(
+                width: larghezza,
+                height: vincoli.maxHeight,
+                child: Column(children: [
+                  Container(
+                    color: AppColors.surface,
+                    padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 10),
+                    child: const Row(children: [
+                      _Intestazione(larghezza: 72, testo: 'Ora', sinistra: 8),
+                      _Intestazione(larghezza: 36, testo: 'P', centrata: true),
+                      _Intestazione(testo: 'Nome e Cognome', sinistra: 12),
+                      _Intestazione(larghezza: 96, testo: 'Tag', sinistra: 4),
+                      _Intestazione(larghezza: 160, testo: 'Turno', sinistra: 4),
+                      _Intestazione(larghezza: 86, testo: 'Tavolo', sinistra: 4),
+                      _Intestazione(larghezza: 70, testo: 'Stato', centrata: true),
+                    ]),
+                  ),
+                  const Divider(height: 1, color: AppColors.divider),
+                  Expanded(child: _corpoTabella(context)),
+                ]),
+              ),
+            );
+          }),
+        ),
+      ]),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => context.push('/bookings/new'),
+        backgroundColor: AppColors.accent,
+        child: const Icon(Icons.add, color: Colors.white),
+      ),
+    );
+  }
+
+  Widget _corpoTabella(BuildContext context) {
+    return _loading
               ? const Center(child: CircularProgressIndicator(color: AppColors.accent))
               : _bookingsWithDetails.isEmpty
                   ? Center(
@@ -318,6 +352,10 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
                       itemBuilder: (context, index) {
                         final b = _bookingsWithDetails[index];
                         return _BookingRow(
+                          // Senza chiave, aggiornando l'elenco Flutter puo'
+                          // riusare la riga sbagliata per una prenotazione
+                          // diversa.
+                          key: ValueKey(b['id']),
                           booking: b,
                           guestName: _guestName(b),
                           onTap: () => _showBookingDetail(context, b),
@@ -339,15 +377,7 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
                           )),
                         );
                       },
-                    ),
-        ),
-      ]),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => context.push('/bookings/new'),
-        backgroundColor: AppColors.accent,
-        child: const Icon(Icons.add, color: Colors.white),
-      ),
-    );
+                    );
   }
 
   void _showStatusFilter(BuildContext context) {
@@ -426,6 +456,7 @@ class _BookingRow extends StatelessWidget {
   final VoidCallback? onReject;
 
   const _BookingRow({
+    super.key,
     required this.booking,
     required this.guestName,
     required this.onTap,
@@ -446,6 +477,15 @@ class _BookingRow extends StatelessWidget {
     final areaName =
         (table?['areas'] as Map<String, dynamic>?)?['name']?.toString() ?? '';
     final isPending = status == 'pending';
+    final etichette = [
+      for (final t in ((booking['guests'] as Map?)?['tags'] as List? ?? const []))
+        t.toString().trim()
+    ].where((t) => t.isNotEmpty).toList();
+    // Area e turno scelti nel modulo. Finche' non c'e' un tavolo assegnato,
+    // l'area del tavolo non esiste: senza questa, la colonna diceva solo "—"
+    // e la scelta del cliente non si vedeva da nessuna parte.
+    final scelte = ScelteModulo.da(booking['internal_notes']);
+    final areaMostrata = areaName.isNotEmpty ? areaName : scelte.area;
 
     // Colonna Stato — estratta fuori dal GestureDetector del dettaglio
     Widget statoColumn = SizedBox(
@@ -550,19 +590,7 @@ class _BookingRow extends StatelessWidget {
                   ],
                 ),
               ),
-              // Nome
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                  child: Text(guestName,
-                      style: const TextStyle(
-                          color: AppColors.textPrimary,
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600),
-                      overflow: TextOverflow.ellipsis),
-                ),
-              ),
-              // Party size circle (P)
+              // Persone (P)
               SizedBox(
                 width: 36,
                 child: Center(
@@ -583,49 +611,135 @@ class _BookingRow extends StatelessWidget {
                           style: TextStyle(
                               color: partySize >= 3
                                   ? Colors.white
-                                  : AppColors.gold,
-                              fontSize: 12,
+                                  : AppColors.goldDark,
+                              fontSize: 13,
                               fontWeight: FontWeight.bold)),
                     ),
                   ),
                 ),
               ),
-              // Tavolo/i
+              // Nome e Cognome
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  child: Text(guestName,
+                      style: const TextStyle(
+                          color: AppColors.textPrimary,
+                          fontSize: 14,
+                          letterSpacing: 0.2,
+                          fontWeight: FontWeight.w700),
+                      overflow: TextOverflow.ellipsis),
+                ),
+              ),
+              // Tag del cliente
+              SizedBox(
+                width: 96,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+                  child: etichette.isEmpty
+                      ? const Center(
+                          child: Text('—',
+                              style: TextStyle(
+                                  color: AppColors.textMuted, fontSize: 14)))
+                      : Wrap(
+                          spacing: 4, runSpacing: 4,
+                          alignment: WrapAlignment.start,
+                          crossAxisAlignment: WrapCrossAlignment.center,
+                          children: [
+                            for (final t in etichette.take(2))
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: AppColors.goldLight,
+                                  borderRadius: BorderRadius.circular(4),
+                                  border: Border.all(
+                                      color: AppColors.gold.withValues(alpha: 0.45)),
+                                ),
+                                child: Text(t,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(
+                                        color: AppColors.goldDark,
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w700)),
+                              ),
+                            // Gli altri si contano invece di traboccare fuori
+                            if (etichette.length > 2)
+                              Text('+${etichette.length - 2}',
+                                  style: const TextStyle(
+                                      color: AppColors.textSecondary,
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w700)),
+                          ],
+                        ),
+                ),
+              ),
+              // Turno scelto nel modulo, per esteso
+              SizedBox(
+                width: 160,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: scelte.turno.isEmpty
+                        ? const Text('—',
+                            style: TextStyle(color: AppColors.textMuted, fontSize: 14))
+                        : Text(scelte.turno,
+                            softWrap: true,
+                            style: const TextStyle(
+                                color: AppColors.textSecondary,
+                                fontSize: 11,
+                                height: 1.35,
+                                fontWeight: FontWeight.w600)),
+                  ),
+                ),
+              ),
+              // Tavolo
               SizedBox(
                 width: 86,
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
-                  child: tableName.isNotEmpty
-                      ? Column(
+                  child: (tableName.isEmpty && areaMostrata.isEmpty)
+                      ? const Center(
+                          child: Text('—',
+                              style: TextStyle(
+                                  color: AppColors.textMuted, fontSize: 14)))
+                      : Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            if (areaName.isNotEmpty)
-                              Text(areaName.toUpperCase(),
-                                  style: const TextStyle(
+                            if (areaMostrata.isNotEmpty)
+                              Text(areaMostrata.toUpperCase(),
+                                  style: TextStyle(
+                                      color: tableName.isEmpty
+                                          ? AppColors.goldDark
+                                          : AppColors.textSecondary,
+                                      fontSize: 11,
+                                      letterSpacing: 0.3,
+                                      fontWeight: FontWeight.w700)),
+                            const SizedBox(height: 3),
+                            if (tableName.isNotEmpty)
+                              Container(
+                                width: 32, height: 32,
+                                decoration: const BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    color: AppColors.textPrimary),
+                                child: Center(
+                                  child: Text(tableName,
+                                      style: const TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.bold)),
+                                ),
+                              )
+                            else
+                              // Area richiesta, tavolo ancora da assegnare
+                              const Text('da assegnare',
+                                  style: TextStyle(
                                       color: AppColors.textSecondary,
-                                      fontSize: 9,
-                                      fontWeight: FontWeight.w600)),
-                            const SizedBox(height: 2),
-                            Container(
-                              width: 32, height: 32,
-                              decoration: const BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  color: AppColors.textPrimary),
-                              child: Center(
-                                child: Text(tableName,
-                                    style: const TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.bold)),
-                              ),
-                            ),
+                                      fontSize: 11,
+                                      fontStyle: FontStyle.italic)),
                           ],
-                        )
-                      : const Center(
-                          child: Text('—',
-                              style: TextStyle(
-                                  color: AppColors.textMuted, fontSize: 14))),
+                        ),
                 ),
               ),
             ]),
@@ -659,6 +773,7 @@ class _BookingDetailSheetState extends State<BookingDetailSheet>
   String? _editTableId;
   String _editTableName = '';
   int _editTableCapacity = 0;
+  ScelteModulo _scelte = const ScelteModulo();
   bool _saving = false;
 
   @override
@@ -672,6 +787,7 @@ class _BookingDetailSheetState extends State<BookingDetailSheet>
     _editStatus = (b['status'] as String?) ?? 'approved';
     _editSource = (b['source'] as String?) ?? 'phone';
     _editTableId = b['table_id'] as String?;
+    _scelte = ScelteModulo.da(b['internal_notes']);
     final t = b['tables'] as Map<String, dynamic>?;
     _editTableName = t?['name']?.toString() ?? '';
     _editTableCapacity = (t?['capacity'] as int?) ?? 0;
@@ -844,6 +960,27 @@ class _BookingDetailSheetState extends State<BookingDetailSheet>
                 IconButton(icon: const Icon(Icons.add_circle_outline, color: AppColors.textSecondary, size: 20),
                     onPressed: () => setState(() => _editPartySize = (_editPartySize + 1).clamp(1, 20))),
               ])),
+              // Cosa ha scelto il cliente compilando il modulo. Sono dati suoi,
+              // non modificabili da qui: il tavolo si assegna sotto.
+              if (!_scelte.vuote) ...[
+                const Divider(color: AppColors.divider),
+                if (_scelte.area.isNotEmpty)
+                  _DetailRow(
+                    label: 'Area',
+                    child: Text(_scelte.area.toUpperCase(),
+                        style: const TextStyle(
+                            color: AppColors.textPrimary,
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600)),
+                  ),
+                if (_scelte.turno.isNotEmpty)
+                  _DetailRow(
+                    label: 'Turno',
+                    child: Text(_scelte.turno,
+                        style: const TextStyle(
+                            color: AppColors.textPrimary, fontSize: 14)),
+                  ),
+              ],
               const Divider(color: AppColors.divider),
               GestureDetector(
                 onTap: _pickTable,
@@ -1525,81 +1662,126 @@ class _Avviso extends StatelessWidget {
 }
 
 
-// ── Stato delle prenotazioni online per una giornata ─────────────────────────
-// `StatoGiornata` e le regole stanno in stato_giornata.dart, condivise col
-// calendario.
-
-/// Sostituisce il badge "Aperto", che era scritto fisso e diceva sempre
-/// "Aperto" anche nel giorno di chiusura.
-class _InterruttorePrenotazioniOnline extends StatelessWidget {
-  final StatoGiornata stato;
-  final bool inCorso;
-  final VoidCallback onCambia;
-  const _InterruttorePrenotazioniOnline({
-    required this.stato, required this.inCorso, required this.onCambia,
+/// Una cella dell'intestazione della tabella.
+///
+/// Maiuscoletto spaziato: le intestazioni si leggono a colpo d'occhio e non si
+/// confondono con i dati, senza doverle ingrandire.
+class _Intestazione extends StatelessWidget {
+  final double? larghezza;
+  final String testo;
+  final double sinistra;
+  final bool centrata;
+  const _Intestazione({
+    this.larghezza,
+    required this.testo,
+    this.sinistra = 0,
+    this.centrata = false,
   });
 
   @override
   Widget build(BuildContext context) {
-    final etichetta = AspettoStato.di(stato).etichetta;
-    late final Color sfondo;
-    late final Color testo;
-    late final IconData icona;
-
-    switch (stato) {
-      case StatoGiornata.inCaricamento:
-      case StatoGiornata.sconosciuto:
-        sfondo = AppColors.cardLight;
-        testo = AppColors.textMuted;
-        icona = Icons.hourglass_empty;
-      case StatoGiornata.aperte:
-        sfondo = AppColors.statoConfermatoSfondo;
-        testo = AppColors.statoConfermato;
-        icona = Icons.lock_open_outlined;
-      case StatoGiornata.chiuse:
-        sfondo = AppColors.accentLight;
-        testo = AppColors.accent;
-        icona = Icons.lock_outline;
-      case StatoGiornata.nonAncoraAperte:
-        sfondo = AppColors.cardLight;
-        testo = AppColors.textSecondary;
-        icona = Icons.schedule_outlined;
-      case StatoGiornata.chiusuraSettimanale:
-        sfondo = AppColors.cardLight;
-        testo = AppColors.textSecondary;
-        icona = Icons.event_busy_outlined;
-    }
-
-    final attivabile = stato == StatoGiornata.aperte || stato == StatoGiornata.chiuse;
-
-    return Tooltip(
-      message: attivabile
-          ? 'Tocca per ${stato == StatoGiornata.aperte ? 'chiudere' : 'riaprire'} le prenotazioni dal sito. '
-            "Voi potete comunque inserirle dall'app."
-          : stato == StatoGiornata.nonAncoraAperte
-              ? 'Il modulo non accetta ancora prenotazioni per questa data. '
-                'La data di apertura si imposta da Impostazioni → Profilo ristorante'
-              : 'La chiusura settimanale si cambia da Impostazioni → Orari di apertura',
-      child: InkWell(
-        onTap: inCorso ? null : onCambia,
-        borderRadius: BorderRadius.circular(12),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-          decoration: BoxDecoration(
-            color: sfondo,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: testo.withValues(alpha: 0.35)),
-          ),
-          child: Row(mainAxisSize: MainAxisSize.min, children: [
-            if (inCorso)
-              SizedBox(width: 12, height: 12, child: CircularProgressIndicator(strokeWidth: 2, color: testo))
-            else
-              Icon(icona, size: 13, color: testo),
-            const SizedBox(width: 5),
-            Text(etichetta, style: TextStyle(color: testo, fontSize: 12, fontWeight: FontWeight.bold)),
-          ]),
-        ),
+    final etichetta = Text(
+      testo.toUpperCase(),
+      style: const TextStyle(
+        color: AppColors.textSecondary,
+        fontSize: 11,
+        fontWeight: FontWeight.w700,
+        letterSpacing: 0.6,
       ),
+    );
+    final contenuto = centrata
+        ? Center(child: etichetta)
+        : Padding(padding: EdgeInsets.only(left: sinistra), child: etichetta);
+    return larghezza == null
+        ? Expanded(child: contenuto)
+        : SizedBox(width: larghezza, child: contenuto);
+  }
+}
+
+// ── Menu della giornata ──────────────────────────────────────────────────────
+// `StatoGiornata` e le regole stanno in stato_giornata.dart, condivise col
+// calendario.
+
+/// I tre puntini in alto a destra. Da qui si aprono e si chiudono le
+/// prenotazioni dal sito: prima era un badge accanto alla data.
+class _MenuGiornata extends StatelessWidget {
+  final StatoGiornata stato;
+  final bool inCorso;
+  final String? motivo;
+  final VoidCallback onCambia;
+  const _MenuGiornata({
+    required this.stato,
+    required this.inCorso,
+    required this.motivo,
+    required this.onCambia,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final modificabile = stato == StatoGiornata.aperte || stato == StatoGiornata.chiuse;
+    final aperte = stato == StatoGiornata.aperte;
+
+    final (IconData icona, Color colore) = switch (stato) {
+      StatoGiornata.aperte => (Icons.lock_open_outlined, AppColors.statoConfermato),
+      StatoGiornata.chiuse => (Icons.lock_outline, AppColors.accent),
+      StatoGiornata.nonAncoraAperte => (Icons.schedule_outlined, AppColors.textSecondary),
+      StatoGiornata.chiusuraSettimanale => (Icons.event_busy_outlined, AppColors.textSecondary),
+      _ => (Icons.hourglass_empty, AppColors.textMuted),
+    };
+
+    // Il titolo dice l'azione quando si puo' agire, lo stato quando no.
+    final titolo = modificabile
+        ? (aperte ? 'Chiudi le prenotazioni online' : 'Riapri le prenotazioni online')
+        : 'Prenotazioni online';
+
+    final spiegazione = switch (stato) {
+      StatoGiornata.aperte => 'Ora il sito accetta prenotazioni per questa giornata.',
+      StatoGiornata.chiuse =>
+        "Ora il sito non le accetta. Voi potete comunque inserirle dall'app.",
+      StatoGiornata.chiusuraSettimanale =>
+        'Giorno di chiusura settimanale. Si cambia da Impostazioni → Orari di apertura.',
+      StatoGiornata.nonAncoraAperte =>
+        motivo ?? 'Il sito non accetta ancora prenotazioni per questa data.',
+      _ => 'Stato non ancora disponibile.',
+    };
+
+    return PopupMenuButton<String>(
+      icon: const Icon(Icons.more_vert, color: AppColors.textSecondary),
+      tooltip: 'Altre azioni',
+      color: AppColors.surface,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      onSelected: (_) => onCambia(),
+      itemBuilder: (context) => [
+        PopupMenuItem<String>(
+          value: 'prenotazioni',
+          enabled: modificabile && !inCorso,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 260),
+            child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              if (inCorso)
+                const SizedBox(
+                    width: 18, height: 18,
+                    child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.accent))
+              else
+                Icon(icona, size: 18, color: colore),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Text(titolo,
+                      style: TextStyle(
+                          color: modificabile ? AppColors.textPrimary : AppColors.textSecondary,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600)),
+                  const SizedBox(height: 2),
+                  Text(spiegazione,
+                      style: const TextStyle(
+                          color: AppColors.textSecondary, fontSize: 12, height: 1.3)),
+                ]),
+              ),
+            ]),
+          ),
+        ),
+      ],
     );
   }
 }

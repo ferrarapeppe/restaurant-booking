@@ -16,6 +16,10 @@ class AppColors {
   // Oro
   static const gold = Color(0xFFC9B06E);            // Oro HIO
   static const goldLight = Color(0xFFFBF7EE);       // Oro chiaro per sfondi
+  // L'oro HIO su fondo chiaro sta intorno a 2,2:1, sotto il minimo leggibile
+  // di 4,5:1. Per i testi piccoli si usa questa versione scura (~5,4:1),
+  // lasciando l'oro pieno a bordi, filetti e riempimenti.
+  static const goldDark = Color(0xFF8A6D1F);        // Oro scuro per i testi
 
   // Testi
   static const textPrimary = Color(0xFF1A1A1A);     // Quasi nero
