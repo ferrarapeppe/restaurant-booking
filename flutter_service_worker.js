@@ -37,7 +37,7 @@ const RESOURCES = {"version.json": "dca05162d8cc58448747c8e00c237df8",
 "main.dart.js": "79da2d59b6263b35142305903882da5c",
 "logo.png": "f58f36a5482f86e1e8555ccc72e9746a",
 "booking.html": "a0377a0b21dfcd86174bf15d85a2d792",
-"flutter_bootstrap.js": "c5d515360ef43cd36815b75ea547003b",
+"flutter_bootstrap.js": "f34087604d7e105b4e4c6ff01419ea08",
 "manifest.json": "2d43a3998fb27d5b655493dd358f6863"};
 // The application shell files that are downloaded before a service worker can
 // start.
