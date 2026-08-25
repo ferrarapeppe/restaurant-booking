@@ -5,6 +5,10 @@ on:
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
+    # L'organizzazione concede ai workflow la sola lettura, quindi il permesso
+    # di scrivere il ramo gh-pages va chiesto qui, limitato a questo lavoro.
+    permissions:
+      contents: write
     steps:
       - name: Checkout
         uses: actions/checkout@v4
