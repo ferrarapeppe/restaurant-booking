@@ -34,3 +34,7 @@ doc/api/
 
 # File temporanei della Supabase CLI
 supabase/.temp/
+
+# Rubriche esportate: contengono dati personali dei clienti, mai su GitHub
+*.vcf
+*.csv

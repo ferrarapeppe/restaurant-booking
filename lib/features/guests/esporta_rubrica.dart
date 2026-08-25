@@ -1,6 +1,7 @@
 // ignore: avoid_web_libraries_in_flutter
 import 'dart:html' as html;
 import 'dart:convert';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -76,10 +77,15 @@ class EsportaRubrica {
     return righe.join('\r\n');
   }
 
+  /// Tag di chi e' arrivato dall'agenda del telefono invece che da una
+  /// prenotazione: sul telefono c'e' gia', riesportarlo creerebbe un doppione.
+  static const tagRubrica = 'rubrica';
+
   /// Scarica il file. Restituisce quanti contatti sono finiti dentro e quanti
-  /// sono stati scartati perche' senza numero utilizzabile.
-  static Future<({int esportati, int scartati})> scarica({
+  /// sono stati scartati perche' senza numero utilizzabile o gia' in rubrica.
+  static Future<({int esportati, int scartati, int giaInRubrica})> scarica({
     DateTime? soloDopo,
+    bool escludiGiaInRubrica = true,
   }) async {
     var query = Supabase.instance.client
         .from('guests')
@@ -94,8 +100,16 @@ class EsportaRubrica {
 
     final schede = <String>[];
     var scartati = 0;
+    var giaInRubrica = 0;
     for (final r in righe) {
       final g = Map<String, dynamic>.from(r as Map);
+      final tag = [
+        for (final t in (g['tags'] as List? ?? const [])) t.toString().trim()
+      ];
+      if (escludiGiaInRubrica && tag.contains(tagRubrica)) {
+        giaInRubrica++;
+        continue;
+      }
       if (!numeroValido(g['phone']?.toString())) {
         scartati++;
         continue;
@@ -110,7 +124,10 @@ class EsportaRubrica {
     if (schede.isNotEmpty) {
       final contenuto = '${schede.join('\r\n')}\r\n';
       // Il BOM aiuta iOS a leggere gli accenti nei cognomi.
-      final byte = <int>[0xEF, 0xBB, 0xBF, ...utf8.encode(contenuto)];
+      // Serve un Uint8List e non una semplice lista di interi: al browser una
+      // lista arriva come array JavaScript e finisce nel file come testo
+      // "239,187,191,66,..." invece che come byte.
+      final byte = Uint8List.fromList([0xEF, 0xBB, 0xBF, ...utf8.encode(contenuto)]);
       final blob = html.Blob([byte], 'text/vcard;charset=utf-8');
       final url = html.Url.createObjectUrlFromBlob(blob);
       final oggi = DateFormat('yyyy-MM-dd').format(DateTime.now());
@@ -120,7 +137,11 @@ class EsportaRubrica {
       html.Url.revokeObjectUrl(url);
     }
 
-    return (esportati: schede.length, scartati: scartati);
+    return (
+      esportati: schede.length,
+      scartati: scartati,
+      giaInRubrica: giaInRubrica,
+    );
   }
 }
 
@@ -134,6 +155,7 @@ class SchedaEsportaRubrica extends StatefulWidget {
 
 class _SchedaEsportaRubricaState extends State<SchedaEsportaRubrica> {
   bool _soloNuovi = false;
+  bool _escludiRubrica = true;
   DateTime _dal = DateTime.now().subtract(const Duration(days: 30));
   bool _inCorso = false;
   String? _errore;
@@ -144,17 +166,24 @@ class _SchedaEsportaRubricaState extends State<SchedaEsportaRubrica> {
       _errore = null;
     });
     try {
-      final esito = await EsportaRubrica.scarica(soloDopo: _soloNuovi ? _dal : null);
+      final esito = await EsportaRubrica.scarica(
+        soloDopo: _soloNuovi ? _dal : null,
+        escludiGiaInRubrica: _escludiRubrica,
+      );
       if (!mounted) return;
       final messenger = ScaffoldMessenger.of(context);
       Navigator.pop(context);
+      final dettagli = [
+        if (esito.scartati > 0) '${esito.scartati} senza numero utilizzabile',
+        if (esito.giaInRubrica > 0) '${esito.giaInRubrica} già in rubrica',
+      ];
       messenger.showSnackBar(SnackBar(
         backgroundColor: esito.esportati > 0 ? AppColors.statoConfermato : AppColors.accent,
         duration: const Duration(seconds: 5),
         content: Text(esito.esportati == 0
             ? 'Nessun contatto da esportare.'
             : '${esito.esportati} contatti scaricati'
-                '${esito.scartati > 0 ? ' — ${esito.scartati} esclusi perché senza numero utilizzabile' : ''}.'),
+                '${dettagli.isEmpty ? '' : ' — esclusi: ${dettagli.join(', ')}'}.'),
       ));
     } catch (e) {
       if (!mounted) return;
@@ -194,6 +223,16 @@ class _SchedaEsportaRubricaState extends State<SchedaEsportaRubrica> {
             title: const Text('Solo i clienti nuovi',
                 style: TextStyle(color: AppColors.textPrimary, fontSize: 14)),
             subtitle: const Text('Per non riscaricare ogni volta tutta la rubrica',
+                style: TextStyle(color: AppColors.textSecondary, fontSize: 12)),
+          ),
+          SwitchListTile(
+            contentPadding: EdgeInsets.zero,
+            activeColor: AppColors.statoConfermato,
+            value: _escludiRubrica,
+            onChanged: (v) => setState(() => _escludiRubrica = v),
+            title: const Text('Salta chi è già in rubrica',
+                style: TextStyle(color: AppColors.textPrimary, fontSize: 14)),
+            subtitle: const Text('Riesportarli creerebbe doppioni sul telefono',
                 style: TextStyle(color: AppColors.textSecondary, fontSize: 12)),
           ),
           if (_soloNuovi)
