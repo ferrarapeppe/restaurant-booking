@@ -83,13 +83,13 @@ class EsportaRubrica {
 
   /// Scarica il file. Restituisce quanti contatti sono finiti dentro e quanti
   /// sono stati scartati perche' senza numero utilizzabile o gia' in rubrica.
-  static Future<({int esportati, int scartati, int giaInRubrica})> scarica({
+  static Future<({int esportati, int scartati, int giaInRubrica, List<String> ids})> scarica({
     DateTime? soloDopo,
     bool escludiGiaInRubrica = true,
   }) async {
     var query = Supabase.instance.client
         .from('guests')
-        .select('first_name, surname, name, email, phone, visits_count, tags, created_at')
+        .select('id, first_name, surname, name, email, phone, visits_count, tags, created_at')
         .eq('restaurant_id', _idRistorante);
 
     if (soloDopo != null) {
@@ -99,6 +99,7 @@ class EsportaRubrica {
     final righe = await query.order('surname');
 
     final schede = <String>[];
+    final ids = <String>[];
     var scartati = 0;
     var giaInRubrica = 0;
     for (final r in righe) {
@@ -119,6 +120,7 @@ class EsportaRubrica {
         continue;
       }
       schede.add(_scheda(g));
+      ids.add(g['id'].toString());
     }
 
     if (schede.isNotEmpty) {
@@ -141,7 +143,20 @@ class EsportaRubrica {
       esportati: schede.length,
       scartati: scartati,
       giaInRubrica: giaInRubrica,
+      ids: ids,
     );
+  }
+
+  /// Segna i clienti come gia' presenti nell'agenda del telefono.
+  ///
+  /// Va chiamata **dopo** l'importazione sul telefono, non prima: marcarli in
+  /// anticipo li escluderebbe per sempre dalle esportazioni successive anche
+  /// se l'importazione non fosse mai avvenuta.
+  static Future<int> segnaComeImportati(List<String> ids) async {
+    if (ids.isEmpty) return 0;
+    final n = await Supabase.instance.client
+        .rpc('segna_in_rubrica', params: {'ids': ids});
+    return (n as num?)?.toInt() ?? 0;
   }
 }
 
@@ -160,6 +175,13 @@ class _SchedaEsportaRubricaState extends State<SchedaEsportaRubrica> {
   bool _inCorso = false;
   String? _errore;
 
+  // Dopo lo scarico la scheda non si chiude: resta aperta per farsi confermare
+  // che l'importazione sul telefono e' davvero avvenuta.
+  List<String>? _scaricati;
+  int _quantiScaricati = 0;
+  int _quantiScartati = 0;
+  int _quantiGiaInRubrica = 0;
+
   Future<void> _esegui() async {
     setState(() {
       _inCorso = true;
@@ -171,19 +193,44 @@ class _SchedaEsportaRubricaState extends State<SchedaEsportaRubrica> {
         escludiGiaInRubrica: _escludiRubrica,
       );
       if (!mounted) return;
+      if (esito.esportati == 0) {
+        setState(() {
+          _errore = 'Nessun contatto da esportare: sono già tutti in rubrica.';
+          _inCorso = false;
+        });
+        return;
+      }
+      setState(() {
+        _scaricati = esito.ids;
+        _quantiScaricati = esito.esportati;
+        _quantiScartati = esito.scartati;
+        _quantiGiaInRubrica = esito.giaInRubrica;
+        _inCorso = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _errore = e.toString().replaceFirst('Exception: ', '');
+        _inCorso = false;
+      });
+    }
+  }
+
+  Future<void> _segna() async {
+    setState(() {
+      _inCorso = true;
+      _errore = null;
+    });
+    try {
+      final n = await EsportaRubrica.segnaComeImportati(_scaricati ?? const []);
+      if (!mounted) return;
       final messenger = ScaffoldMessenger.of(context);
       Navigator.pop(context);
-      final dettagli = [
-        if (esito.scartati > 0) '${esito.scartati} senza numero utilizzabile',
-        if (esito.giaInRubrica > 0) '${esito.giaInRubrica} già in rubrica',
-      ];
       messenger.showSnackBar(SnackBar(
-        backgroundColor: esito.esportati > 0 ? AppColors.statoConfermato : AppColors.accent,
-        duration: const Duration(seconds: 5),
-        content: Text(esito.esportati == 0
-            ? 'Nessun contatto da esportare.'
-            : '${esito.esportati} contatti scaricati'
-                '${dettagli.isEmpty ? '' : ' — esclusi: ${dettagli.join(', ')}'}.'),
+        backgroundColor: AppColors.statoConfermato,
+        duration: const Duration(seconds: 4),
+        content: Text('$n contatti segnati come già in rubrica: '
+            'non verranno più riproposti.'),
       ));
     } catch (e) {
       if (!mounted) return;
@@ -208,6 +255,7 @@ class _SchedaEsportaRubricaState extends State<SchedaEsportaRubrica> {
           const Text('Esporta in rubrica',
               style: TextStyle(color: AppColors.textPrimary, fontSize: 18, fontWeight: FontWeight.bold)),
           const SizedBox(height: 8),
+          if (_scaricati != null) ..._passoConferma() else ...[
           const Text(
             'Scarica un file da aprire sul telefono: i clienti entrano in rubrica '
             'col nome preceduto da "HIO", così non si confondono con i tuoi contatti '
@@ -276,8 +324,103 @@ class _SchedaEsportaRubricaState extends State<SchedaEsportaRubrica> {
               label: const Text('Scarica il file'),
             ),
           ),
+          ],
         ]),
       ),
     );
+  }
+
+  /// Secondo passo: il file e' stato scaricato, ora si aspetta che l'utente
+  /// confermi di averlo importato davvero sul telefono.
+  List<Widget> _passoConferma() {
+    final esclusi = [
+      if (_quantiScartati > 0) '$_quantiScartati senza numero utilizzabile',
+      if (_quantiGiaInRubrica > 0) '$_quantiGiaInRubrica già in rubrica',
+    ];
+
+    return [
+      Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: AppColors.statoConfermatoSfondo,
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Row(children: [
+          const Icon(Icons.check_circle_outline, color: AppColors.statoConfermato, size: 20),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text('$_quantiScaricati contatti scaricati',
+                  style: const TextStyle(
+                      color: AppColors.statoConfermato,
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold)),
+              if (esclusi.isNotEmpty)
+                Text('Esclusi: ${esclusi.join(', ')}',
+                    style: const TextStyle(color: AppColors.textSecondary, fontSize: 12)),
+            ]),
+          ),
+        ]),
+      ),
+      const SizedBox(height: 16),
+      const Text('Ora importali sul telefono',
+          style: TextStyle(
+              color: AppColors.textPrimary, fontSize: 15, fontWeight: FontWeight.bold)),
+      const SizedBox(height: 6),
+      const Text(
+        'Dal computer apri icloud.com/contacts e scegli "Importa vCard": '
+        'il telefono si aggiorna da solo. Torna qui solo quando è fatto.',
+        style: TextStyle(color: AppColors.textSecondary, fontSize: 13, height: 1.4),
+      ),
+      const SizedBox(height: 14),
+      Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: AppColors.goldLight,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: AppColors.gold.withValues(alpha: 0.4)),
+        ),
+        child: const Text(
+          'Conferma solo dopo aver importato davvero. Segnandoli prima, questi '
+          'nomi non verrebbero più riproposti e resterebbero fuori dalla rubrica.',
+          style: TextStyle(color: AppColors.goldDark, fontSize: 12, height: 1.4),
+        ),
+      ),
+      if (_errore != null) ...[
+        const SizedBox(height: 12),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          decoration: BoxDecoration(
+              color: AppColors.accentLight, borderRadius: BorderRadius.circular(8)),
+          child: Text(_errore!,
+              style: const TextStyle(color: AppColors.accent, fontSize: 13)),
+        ),
+      ],
+      const SizedBox(height: 20),
+      SizedBox(
+        width: double.infinity,
+        child: FilledButton.icon(
+          style: FilledButton.styleFrom(
+            backgroundColor: AppColors.statoConfermato,
+            padding: const EdgeInsets.symmetric(vertical: 14),
+          ),
+          onPressed: _inCorso ? null : _segna,
+          icon: _inCorso
+              ? const SizedBox(width: 18, height: 18,
+                  child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+              : const Icon(Icons.done_all, size: 18),
+          label: const Text('Fatto, segnali come importati'),
+        ),
+      ),
+      const SizedBox(height: 8),
+      SizedBox(
+        width: double.infinity,
+        child: TextButton(
+          onPressed: _inCorso ? null : () => Navigator.pop(context),
+          style: TextButton.styleFrom(foregroundColor: AppColors.textSecondary),
+          child: const Text('Non ora — li importo più tardi'),
+        ),
+      ),
+    ];
   }
 }
