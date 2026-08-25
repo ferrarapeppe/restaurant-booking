@@ -120773,7 +120773,7 @@ A.aUw.prototype={
 $0(){var s=J.D(this.a,"date"),r=B.c.O(J.a7(s==null?"":s),0,10)
 s=this.b
 A.b2(s,!1).bF(null)
-A.em(s).fq(0,"/floor-plan/"+r,null)},
+A.em(s).fq(0,"/bookings?date="+r,null)},
 $S:0}
 A.aUx.prototype={
 $0(){var s,r=t.nA.a(J.D(this.a,"bookings")),q=r==null?null:J.D(r,"date")
