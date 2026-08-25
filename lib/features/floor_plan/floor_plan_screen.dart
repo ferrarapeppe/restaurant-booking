@@ -285,6 +285,39 @@ class _FloorPlanScreenState extends State<FloorPlanScreen> {
                       },
                     ),
                   ),
+                // Tavoli mai posizionati: finche' non lo sono, la piantina non
+                // rispecchia la sala e serve a poco.
+                if (_tavoliSenzaPosizione > 0)
+                  Container(
+                    color: AppColors.accentLight,
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                    child: Row(children: [
+                      const Icon(Icons.grid_view_outlined, color: AppColors.accent, size: 18),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          _tavoliSenzaPosizione == 1
+                              ? 'Un tavolo non è ancora al suo posto'
+                              : '$_tavoliSenzaPosizione tavoli non sono ancora al loro posto',
+                          style: const TextStyle(
+                              color: AppColors.accent, fontSize: 13, fontWeight: FontWeight.w600),
+                        ),
+                      ),
+                      GestureDetector(
+                        onTap: _fissaDisposizione,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: AppColors.accent,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: const Text('Disponi in griglia',
+                              style: TextStyle(
+                                  color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
+                        ),
+                      ),
+                    ]),
+                  ),
                 // Barra prenotazioni pending
                 if (_pendingBookings.isNotEmpty)
                   Container(
@@ -371,6 +404,87 @@ class _FloorPlanScreenState extends State<FloorPlanScreen> {
     return _buildGridLayout();
   }
 
+  /// Dove mettere un tavolo che non e' mai stato spostato.
+  ///
+  /// Prima finivano tutti a (50,50), uno esattamente sopra l'altro: la
+  /// planimetria sembrava avere un tavolo solo, mentre erano tutti impilati
+  /// nello stesso punto. Ora si dispongono in griglia, visibili e trascinabili.
+  static Offset _posizioneDiRipiego(int indice) {
+    const colonne = 6;
+    const passoX = 115.0, passoY = 105.0, margine = 30.0;
+    return Offset(
+      margine + (indice % colonne) * passoX,
+      margine + (indice ~/ colonne) * passoY,
+    );
+  }
+
+  /// Un tavolo mai posizionato.
+  ///
+  /// In archivio le coordinate non sono nulle: sono tutte a zero. Uno zero-zero
+  /// non vuol dire "il tavolo sta nell'angolo in alto a sinistra", vuol dire
+  /// che nessuno l'ha mai spostato — ed e' il motivo per cui finivano tutti
+  /// nello stesso punto.
+  static bool _senzaPosizione(Map<String, dynamic> t) {
+    final x = (t['pos_x'] as num?)?.toDouble();
+    final y = (t['pos_y'] as num?)?.toDouble();
+    return x == null || y == null || (x == 0 && y == 0);
+  }
+
+  /// Quanti tavoli non hanno ancora una posizione vera.
+  int get _tavoliSenzaPosizione => _tables.where(_senzaPosizione).length;
+
+  /// Posto di ciascun tavolo dentro la propria area: la piantina si guarda
+  /// un'area per volta, quindi la griglia va contata li' dentro. Serve identico
+  /// al disegno e al salvataggio, altrimenti "Disponi in griglia" sposterebbe
+  /// i tavoli rispetto a come li vedevi un attimo prima.
+  Map<String, int> _indiciNellArea() {
+    final conteggio = <String, int>{};
+    final indici = <String, int>{};
+    for (final t in _tables) {
+      final area = (t['area_id'] ?? '').toString();
+      final i = conteggio[area] ?? 0;
+      indici[t['id'].toString()] = i;
+      conteggio[area] = i + 1;
+    }
+    return indici;
+  }
+
+  /// Fissa nel database la disposizione a griglia, cosi' smette di essere un
+  /// ripiego calcolato ogni volta e diventa un punto di partenza modificabile.
+  Future<void> _fissaDisposizione() async {
+    final indici = _indiciNellArea();
+    final daSistemare = <Map<String, dynamic>>[];
+    for (final t in _tables) {
+      if (_senzaPosizione(t)) {
+        final p = _posizioneDiRipiego(indici[t['id'].toString()] ?? 0);
+        daSistemare.add({'id': t['id'], 'x': p.dx, 'y': p.dy});
+      }
+    }
+    if (daSistemare.isEmpty) return;
+    var riusciti = 0;
+    for (final d in daSistemare) {
+      try {
+        final righe = await _supabase
+            .from('tables')
+            .update({'pos_x': d['x'], 'pos_y': d['y']})
+            .eq('id', d['id'] as String)
+            .select();
+        if (righe.isNotEmpty) riusciti++;
+      } catch (e) {
+        debugPrint('posizione non salvata: $e');
+      }
+    }
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      backgroundColor:
+          riusciti == daSistemare.length ? AppColors.badgeGreen : AppColors.accent,
+      content: Text(riusciti == daSistemare.length
+          ? '$riusciti tavoli disposti in griglia. Ora trascinali dove stanno davvero.'
+          : 'Salvati $riusciti tavoli su ${daSistemare.length}: il database ha rifiutato gli altri.'),
+    ));
+    _loadData();
+  }
+
   Widget _buildGridLayout() {
     return Padding(
       padding: const EdgeInsets.all(16),
@@ -396,14 +510,17 @@ class _FloorPlanScreenState extends State<FloorPlanScreen> {
     final filteredTables = _selectedAreaId != null
         ? _tables.where((t) => t['area_id'] == _selectedAreaId).toList()
         : _tables;
+    final indici = _indiciNellArea();
     return SizedBox(
       width: canvasW,
       height: canvasH,
       child: Stack(
         children: filteredTables.map((t) {
           final status = _tableStatuses[t['id']] ?? TableStatus.free;
-          final x = (t['pos_x'] as num?)?.toDouble() ?? 50;
-          final y = (t['pos_y'] as num?)?.toDouble() ?? 50;
+          final ripiego = _posizioneDiRipiego(indici[t['id'].toString()] ?? 0);
+          final senza = _senzaPosizione(t);
+          final x = senza ? ripiego.dx : (t['pos_x'] as num).toDouble();
+          final y = senza ? ripiego.dy : (t['pos_y'] as num).toDouble();
           return _DraggableTable(
             key: ValueKey(t['id']),
             table: t,
