@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:restaurant_booking/shared/theme/app_theme.dart';
+import 'package:restaurant_booking/shared/widgets/contenuto_centrato.dart';
 
 class TablesScreen extends StatefulWidget {
   const TablesScreen({super.key});
@@ -251,15 +252,15 @@ class _TablesScreenState extends State<TablesScreen> with SingleTickerProviderSt
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        backgroundColor: AppColors.surface,
+        backgroundColor: AppColors.nero,
         leading: IconButton(
-          icon: const Icon(Icons.chevron_left, color: AppColors.textPrimary, size: 28),
+          icon: const Icon(Icons.chevron_left, color: Colors.white, size: 28),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text('Tavoli', style: TextStyle(color: AppColors.textPrimary, fontSize: 20, fontWeight: FontWeight.bold)),
+        title: const Text('Tavoli', style: TextStyle(color: AppColors.gold, fontSize: 20, fontWeight: FontWeight.bold)),
         actions: [
-          IconButton(icon: const Icon(Icons.search, color: AppColors.textSecondary), onPressed: () {}),
-          IconButton(icon: const Icon(Icons.notifications_outlined, color: AppColors.textSecondary), onPressed: () {}),
+          IconButton(icon: const Icon(Icons.search, color: Colors.white70), onPressed: () {}),
+          IconButton(icon: const Icon(Icons.notifications_outlined, color: Colors.white70), onPressed: () {}),
         ],
         bottom: TabBar(
           controller: _tabController,
@@ -274,7 +275,8 @@ class _TablesScreenState extends State<TablesScreen> with SingleTickerProviderSt
           ],
         ),
       ),
-      body: _loading
+      body: ContenutoCentrato(larghezzaMassima: 900,
+      child: _loading
           ? const Center(child: CircularProgressIndicator(color: AppColors.accent))
           : TabBarView(
               controller: _tabController,
@@ -317,7 +319,7 @@ class _TablesScreenState extends State<TablesScreen> with SingleTickerProviderSt
                 // ── TAB PLANIMETRIA ──
                 const Center(child: Text('Planimetria editor — in costruzione', style: TextStyle(color: AppColors.textSecondary))),
               ],
-            ),
+            )),
     );
   }
 }

@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:restaurant_booking/shared/widgets/app_drawer.dart';
 import 'package:restaurant_booking/shared/theme/app_theme.dart';
+import 'package:restaurant_booking/shared/widgets/contenuto_centrato.dart';
 
 // ── Settings Screen ───────────────────────────────────────────────────────────
 class SettingsScreen extends StatelessWidget {
@@ -14,24 +15,27 @@ class SettingsScreen extends StatelessWidget {
       backgroundColor: AppColors.background,
       drawer: const AppDrawer(),
       appBar: AppBar(
-        backgroundColor: AppColors.surface,
+        backgroundColor: AppColors.nero,
         leading: Builder(builder: (ctx) => IconButton(
-          icon: const Icon(Icons.menu, color: AppColors.textPrimary),
+          icon: const Icon(Icons.menu, color: Colors.white),
           onPressed: () => Scaffold.of(ctx).openDrawer(),
         )),
-        title: const Text('Impostazioni', style: TextStyle(color: AppColors.textPrimary)),
+        title: const Text('Impostazioni', style: TextStyle(color: AppColors.gold)),
         actions: [
-          IconButton(icon: const Icon(Icons.search, color: AppColors.textSecondary), onPressed: () {}),
-          IconButton(icon: const Icon(Icons.notifications_outlined, color: AppColors.textSecondary), onPressed: () {}),
+          IconButton(icon: const Icon(Icons.search, color: Colors.white70), onPressed: () {}),
+          IconButton(icon: const Icon(Icons.notifications_outlined, color: Colors.white70), onPressed: () {}),
         ],
       ),
-      body: ListView(
+      body: LayoutBuilder(builder: (context, vincoli) {
+        final colonne = colonnePerLarghezza(vincoli.maxWidth);
+        return ContenutoCentrato(
+          child: ListView(
         padding: const EdgeInsets.all(16),
         children: [
           const _SectionTitle('Generale'),
           const SizedBox(height: 12),
           GridView.count(
-            crossAxisCount: 2,
+            crossAxisCount: colonne,
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             crossAxisSpacing: 12,
@@ -70,7 +74,7 @@ class SettingsScreen extends StatelessWidget {
           const _SectionTitle('Account'),
           const SizedBox(height: 12),
           GridView.count(
-            crossAxisCount: 2,
+            crossAxisCount: colonne,
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             crossAxisSpacing: 12,
@@ -106,6 +110,8 @@ class SettingsScreen extends StatelessWidget {
           const SizedBox(height: 32),
         ],
       ),
+        );
+      }),
     );
   }
 }

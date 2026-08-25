@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:restaurant_booking/shared/theme/app_theme.dart';
+import 'package:restaurant_booking/shared/widgets/contenuto_centrato.dart';
 
 class OpeningHoursScreen extends StatefulWidget {
   const OpeningHoursScreen({super.key});
@@ -102,18 +103,19 @@ class _OpeningHoursScreenState extends State<OpeningHoursScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        backgroundColor: AppColors.surface,
+        backgroundColor: AppColors.nero,
         leading: IconButton(
-          icon: const Icon(Icons.chevron_left, color: AppColors.textPrimary, size: 28),
+          icon: const Icon(Icons.chevron_left, color: Colors.white, size: 28),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text('Orari di apertura', style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.bold)),
+        title: const Text('Orari di apertura', style: TextStyle(color: AppColors.gold, fontWeight: FontWeight.bold)),
         actions: [
-          IconButton(icon: const Icon(Icons.search, color: AppColors.textSecondary), onPressed: () {}),
-          IconButton(icon: const Icon(Icons.notifications_outlined, color: AppColors.textSecondary), onPressed: () {}),
+          IconButton(icon: const Icon(Icons.search, color: Colors.white70), onPressed: () {}),
+          IconButton(icon: const Icon(Icons.notifications_outlined, color: Colors.white70), onPressed: () {}),
         ],
       ),
-      body: _loading
+      body: ContenutoCentrato(larghezzaMassima: 900,
+      child: _loading
           ? const Center(child: CircularProgressIndicator(color: AppColors.accent))
           : ListView(
               padding: const EdgeInsets.all(16),
@@ -289,7 +291,7 @@ class _OpeningHoursScreenState extends State<OpeningHoursScreen> {
                 ),
                 const SizedBox(height: 32),
               ],
-            ),
+            )),
     );
   }
 

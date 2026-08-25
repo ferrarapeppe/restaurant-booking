@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:restaurant_booking/shared/theme/app_theme.dart';
+import 'package:restaurant_booking/shared/widgets/contenuto_centrato.dart';
 
 class RestaurantProfileScreen extends StatefulWidget {
   const RestaurantProfileScreen({super.key});
@@ -114,23 +115,24 @@ class _RestaurantProfileScreenState extends State<RestaurantProfileScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        backgroundColor: AppColors.surface,
+        backgroundColor: AppColors.nero,
         leading: IconButton(
-          icon: const Icon(Icons.chevron_left, color: AppColors.textPrimary, size: 28),
+          icon: const Icon(Icons.chevron_left, color: Colors.white, size: 28),
           onPressed: () => Navigator.pop(context),
         ),
         title: const Text('Profilo ristorante',
-            style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.bold)),
+            style: TextStyle(color: AppColors.gold, fontWeight: FontWeight.bold)),
         actions: [
           TextButton(
             onPressed: _saving ? null : _save,
             child: _saving
-                ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: AppColors.accent, strokeWidth: 2))
-                : const Text('Salva', style: TextStyle(color: AppColors.accent, fontSize: 16, fontWeight: FontWeight.bold)),
+                ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: AppColors.gold, strokeWidth: 2))
+                : const Text('Salva', style: TextStyle(color: AppColors.gold, fontSize: 16, fontWeight: FontWeight.bold)),
           ),
         ],
       ),
-      body: _loading
+      body: ContenutoCentrato(larghezzaMassima: 820,
+      child: _loading
           ? const Center(child: CircularProgressIndicator(color: AppColors.accent))
           : ListView(
               padding: const EdgeInsets.all(16),
@@ -259,7 +261,7 @@ class _RestaurantProfileScreenState extends State<RestaurantProfileScreen> {
                 ),
                 const SizedBox(height: 32),
               ],
-            ),
+            )),
     );
   }
 }

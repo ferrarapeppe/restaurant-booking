@@ -19,23 +19,24 @@ class AppDrawer extends StatelessWidget {
         child: SingleChildScrollView(
           child: Column(
             children: [
-              // Header logo
+              // Intestazione nera col logo, come la barra in alto e il modulo.
               Container(
-                color: Colors.white,
-                padding: const EdgeInsets.fromLTRB(12, 16, 12, 12),
+                color: AppColors.nero,
+                padding: const EdgeInsets.fromLTRB(12, 16, 12, 16),
                 child: Column(
                   children: [
                     Row(children: [
                       IconButton(
-                        icon: const Icon(Icons.menu_open, color: AppColors.textPrimary, size: 26),
+                        icon: const Icon(Icons.menu_open, color: Colors.white, size: 26),
                         onPressed: () => Navigator.of(context).pop(),
                         padding: EdgeInsets.zero,
                         constraints: const BoxConstraints(),
                       ),
                     ]),
                     const SizedBox(height: 8),
-                    Image.asset('assets/images/logo_drawer.png', height: 60, fit: BoxFit.contain, filterQuality: FilterQuality.high),
-                    const SizedBox(height: 8),
+                    Image.asset('assets/images/logo_splash.png',
+                        height: 52, fit: BoxFit.contain, filterQuality: FilterQuality.high),
+                    const SizedBox(height: 4),
                   ],
                 ),
               ),

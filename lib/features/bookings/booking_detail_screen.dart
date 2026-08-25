@@ -39,16 +39,16 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        backgroundColor: AppColors.surface,
+        backgroundColor: AppColors.nero,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary),
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () => Navigator.pop(context),
         ),
         title: const Text('Dettaglio prenotazione',
-            style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.bold)),
+            style: TextStyle(color: AppColors.gold, fontWeight: FontWeight.bold)),
         actions: [
-          IconButton(icon: const Icon(Icons.edit_outlined, color: AppColors.accent), onPressed: () {}),
-          IconButton(icon: const Icon(Icons.more_vert, color: AppColors.textSecondary), onPressed: () => _showMoreMenu(context)),
+          IconButton(icon: const Icon(Icons.edit_outlined, color: AppColors.gold), onPressed: () {}),
+          IconButton(icon: const Icon(Icons.more_vert, color: Colors.white70), onPressed: () => _showMoreMenu(context)),
         ],
       ),
       body: SingleChildScrollView(

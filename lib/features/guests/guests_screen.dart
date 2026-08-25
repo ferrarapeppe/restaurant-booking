@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:restaurant_booking/shared/widgets/app_drawer.dart';
 import 'package:restaurant_booking/shared/theme/app_theme.dart';
+import 'package:restaurant_booking/shared/widgets/contenuto_centrato.dart';
 import 'package:restaurant_booking/data/models/booking_model.dart';
 import 'package:restaurant_booking/core/providers/guest_providers.dart';
 import 'package:restaurant_booking/features/bookings/booking_detail_screen.dart';
@@ -20,22 +21,22 @@ class GuestsScreen extends ConsumerWidget {
       backgroundColor: AppColors.background,
       drawer: const AppDrawer(),
       appBar: AppBar(
-        backgroundColor: AppColors.surface,
+        backgroundColor: AppColors.nero,
         leading: Builder(
           builder: (context) => IconButton(
-            icon: const Icon(Icons.menu, color: AppColors.textPrimary),
+            icon: const Icon(Icons.menu, color: Colors.white),
             onPressed: () => Scaffold.of(context).openDrawer(),
           ),
         ),
-        title: const Text('Clienti', style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.bold)),
+        title: const Text('Clienti', style: TextStyle(color: AppColors.gold, fontWeight: FontWeight.bold)),
         actions: [
           IconButton(
             tooltip: 'Esporta in rubrica',
-            icon: const Icon(Icons.contact_phone_outlined, color: AppColors.textSecondary),
+            icon: const Icon(Icons.contact_phone_outlined, color: Colors.white70),
             onPressed: () => showModalBottomSheet(
               context: context,
               isScrollControlled: true,
-              backgroundColor: AppColors.surface,
+              backgroundColor: AppColors.nero,
               shape: const RoundedRectangleBorder(
                 borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
               ),
@@ -44,12 +45,13 @@ class GuestsScreen extends ConsumerWidget {
           ),
           IconButton(
             tooltip: 'Nuovo cliente',
-            icon: const Icon(Icons.person_add_outlined, color: AppColors.accent),
+            icon: const Icon(Icons.person_add_outlined, color: AppColors.gold),
             onPressed: () => _showAddGuestSheet(context, ref),
           ),
         ],
       ),
-      body: Column(
+      body: ContenutoCentrato(larghezzaMassima: 1040,
+      child: Column(
         children: [
           // Barra ricerca
           Container(
@@ -158,7 +160,7 @@ class GuestsScreen extends ConsumerWidget {
             ),
           ),
         ],
-      ),
+      )),
       floatingActionButton: FloatingActionButton(
         onPressed: () => _showAddGuestSheet(context, ref),
         backgroundColor: AppColors.accent,
@@ -488,17 +490,18 @@ class _GuestDetailScreenState extends ConsumerState<GuestDetailScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        backgroundColor: AppColors.surface,
-        leading: IconButton(icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary), onPressed: () => Navigator.pop(context)),
-        title: Text(widget.guest.name, style: const TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.bold, fontSize: 20)),
+        backgroundColor: AppColors.nero,
+        leading: IconButton(icon: const Icon(Icons.arrow_back, color: Colors.white), onPressed: () => Navigator.pop(context)),
+        title: Text(widget.guest.name, style: const TextStyle(color: AppColors.gold, fontWeight: FontWeight.bold, fontSize: 20)),
         actions: [
-          IconButton(icon: const Icon(Icons.flag_outlined, color: AppColors.textSecondary), onPressed: () {}),
-          IconButton(icon: const Icon(Icons.edit_outlined, color: AppColors.textSecondary), onPressed: () => _showEditGuestSheet(context)),
-          IconButton(icon: const Icon(Icons.delete_outline, color: AppColors.textSecondary), onPressed: () {}),
-          IconButton(icon: const Icon(Icons.close, color: AppColors.textSecondary), onPressed: () => Navigator.pop(context)),
+          IconButton(icon: const Icon(Icons.flag_outlined, color: Colors.white70), onPressed: () {}),
+          IconButton(icon: const Icon(Icons.edit_outlined, color: Colors.white70), onPressed: () => _showEditGuestSheet(context)),
+          IconButton(icon: const Icon(Icons.delete_outline, color: Colors.white70), onPressed: () {}),
+          IconButton(icon: const Icon(Icons.close, color: Colors.white70), onPressed: () => Navigator.pop(context)),
         ],
       ),
-      body: SingleChildScrollView(
+      body: ContenutoCentrato(larghezzaMassima: 900,
+      child: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -660,7 +663,7 @@ class _GuestDetailScreenState extends ConsumerState<GuestDetailScreen> {
             ),
           ],
         ),
-      ),
+      )),
     );
   }
 

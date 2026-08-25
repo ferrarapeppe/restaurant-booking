@@ -172,17 +172,17 @@ class _FloorPlanScreenState extends State<FloorPlanScreen> {
       backgroundColor: AppColors.background,
       drawer: const AppDrawer(),
       appBar: AppBar(
-        backgroundColor: AppColors.surface,
+        backgroundColor: AppColors.nero,
         elevation: 0,
         leading: Builder(builder: (ctx) => IconButton(
-          icon: const Icon(Icons.menu, color: AppColors.textPrimary),
+          icon: const Icon(Icons.menu, color: Colors.white),
           onPressed: () => Scaffold.of(ctx).openDrawer(),
         )),
         title: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             IconButton(
-              icon: const Icon(Icons.chevron_left, color: AppColors.textPrimary),
+              icon: const Icon(Icons.chevron_left, color: Colors.white),
               onPressed: () => _changeDate(-1),
               padding: EdgeInsets.zero,
               constraints: const BoxConstraints(),
@@ -207,12 +207,12 @@ class _FloorPlanScreenState extends State<FloorPlanScreen> {
               },
               child: Text(
                 _capitalize(dayLabel),
-                style: const TextStyle(color: AppColors.textPrimary, fontSize: 16, fontWeight: FontWeight.w600),
+                style: const TextStyle(color: AppColors.gold, fontSize: 16, fontWeight: FontWeight.w600),
               ),
             ),
             const SizedBox(width: 4),
             IconButton(
-              icon: const Icon(Icons.chevron_right, color: AppColors.textPrimary),
+              icon: const Icon(Icons.chevron_right, color: Colors.white),
               onPressed: () => _changeDate(1),
               padding: EdgeInsets.zero,
               constraints: const BoxConstraints(),
@@ -221,12 +221,24 @@ class _FloorPlanScreenState extends State<FloorPlanScreen> {
         ),
         centerTitle: true,
         actions: [
-          IconButton(icon: const Icon(Icons.calendar_today_outlined, color: AppColors.textPrimary), onPressed: () {}),
-          IconButton(icon: const Icon(Icons.search, color: AppColors.textPrimary), onPressed: () {}),
-          IconButton(icon: const Icon(Icons.notifications_outlined, color: AppColors.textPrimary), onPressed: () {}),
+          IconButton(icon: const Icon(Icons.calendar_today_outlined, color: Colors.white), onPressed: () {}),
+          IconButton(icon: const Icon(Icons.search, color: Colors.white), onPressed: () {}),
+          IconButton(icon: const Icon(Icons.notifications_outlined, color: Colors.white), onPressed: () {}),
         ],
       ),
-      body: _loading
+      // Pannello bianco su fondo tortora, come le altre schermate. Resta
+      // largo quanto la pagina: la tela dei tavoli e' 800 punti e stringerla
+      // toglierebbe spazio ai tavoli.
+      body: Padding(
+        padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
+        child: Container(
+          clipBehavior: Clip.antiAlias,
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: AppColors.divider),
+          ),
+          child: _loading
           ? const Center(child: CircularProgressIndicator(color: AppColors.accent))
           : Column(
               children: [
@@ -386,7 +398,9 @@ class _FloorPlanScreenState extends State<FloorPlanScreen> {
                   ),
                 ),
               ],
-            ),
+            )
+        ),
+      ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => context.push('/bookings/new'),
         backgroundColor: AppColors.accent,

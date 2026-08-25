@@ -22,10 +22,10 @@ class _ReservationsScreenState extends ConsumerState<ReservationsScreen> {
       backgroundColor: AppColors.background,
       drawer: const AppDrawer(),
       appBar: AppBar(
-        backgroundColor: AppColors.surface,
+        backgroundColor: AppColors.nero,
         leading: Builder(
           builder: (ctx) => IconButton(
-            icon: const Icon(Icons.menu, color: AppColors.textPrimary),
+            icon: const Icon(Icons.menu, color: Colors.white),
             onPressed: () => Scaffold.of(ctx).openDrawer(),
           ),
         ),
@@ -33,7 +33,7 @@ class _ReservationsScreenState extends ConsumerState<ReservationsScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             IconButton(
-              icon: const Icon(Icons.chevron_left, color: AppColors.textSecondary),
+              icon: const Icon(Icons.chevron_left, color: Colors.white70),
               onPressed: () => ref.read(selectedDateProvider.notifier).state =
                   selectedDate.subtract(const Duration(days: 1)),
               constraints: const BoxConstraints(),
@@ -55,14 +55,14 @@ class _ReservationsScreenState extends ConsumerState<ReservationsScreen> {
               child: Text(
                 DateFormat('EEE dd MMM', 'it_IT').format(selectedDate),
                 style: const TextStyle(
-                    color: AppColors.textPrimary,
+                    color: Colors.white,
                     fontWeight: FontWeight.bold,
                     fontSize: 15),
               ),
             ),
             const SizedBox(width: 4),
             IconButton(
-              icon: const Icon(Icons.chevron_right, color: AppColors.textSecondary),
+              icon: const Icon(Icons.chevron_right, color: Colors.white70),
               onPressed: () => ref.read(selectedDateProvider.notifier).state =
                   selectedDate.add(const Duration(days: 1)),
               constraints: const BoxConstraints(),
@@ -73,7 +73,7 @@ class _ReservationsScreenState extends ConsumerState<ReservationsScreen> {
         centerTitle: true,
         actions: [
           IconButton(
-            icon: const Icon(Icons.calendar_today_outlined, color: AppColors.textSecondary),
+            icon: const Icon(Icons.calendar_today_outlined, color: Colors.white70),
             onPressed: () async {
               final picked = await showDatePicker(
                 context: context,
@@ -87,13 +87,13 @@ class _ReservationsScreenState extends ConsumerState<ReservationsScreen> {
             },
           ),
           IconButton(
-            icon: const Icon(Icons.search, color: AppColors.textSecondary),
+            icon: const Icon(Icons.search, color: Colors.white70),
             onPressed: () {},
           ),
           Stack(
             children: [
               IconButton(
-                icon: const Icon(Icons.notifications_none, color: AppColors.textSecondary),
+                icon: const Icon(Icons.notifications_none, color: Colors.white70),
                 onPressed: () {},
               ),
             ],

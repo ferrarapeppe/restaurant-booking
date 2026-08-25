@@ -235,16 +235,16 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
       backgroundColor: AppColors.background,
       drawer: const AppDrawer(),
       appBar: AppBar(
-        backgroundColor: AppColors.surface,
+        backgroundColor: AppColors.nero,
         leading: Builder(builder: (ctx) => IconButton(
-          icon: const Icon(Icons.menu, color: AppColors.textPrimary),
+          icon: const Icon(Icons.menu, color: Colors.white),
           onPressed: () => Scaffold.of(ctx).openDrawer(),
         )),
         title: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             IconButton(
-              icon: const Icon(Icons.chevron_left, color: AppColors.textPrimary),
+              icon: const Icon(Icons.chevron_left, color: Colors.white),
               onPressed: () => _changeDate(-1),
               padding: EdgeInsets.zero, constraints: const BoxConstraints(),
             ),
@@ -265,12 +265,12 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
               },
               child: Text(
                 DateFormat('EEE d MMM', 'it_IT').format(selectedDate),
-                style: const TextStyle(color: AppColors.textPrimary, fontSize: 16, fontWeight: FontWeight.w600),
+                style: const TextStyle(color: AppColors.gold, fontSize: 16, fontWeight: FontWeight.w600),
               ),
             ),
             const SizedBox(width: 4),
             IconButton(
-              icon: const Icon(Icons.chevron_right, color: AppColors.textPrimary),
+              icon: const Icon(Icons.chevron_right, color: Colors.white),
               onPressed: () => _changeDate(1),
               padding: EdgeInsets.zero, constraints: const BoxConstraints(),
             ),
@@ -278,12 +278,24 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
         ),
         centerTitle: true,
         actions: [
-          IconButton(icon: const Icon(Icons.calendar_today_outlined, color: AppColors.textPrimary), onPressed: () {}),
-          IconButton(icon: const Icon(Icons.search, color: AppColors.textPrimary), onPressed: () {}),
-          IconButton(icon: const Icon(Icons.notifications_outlined, color: AppColors.textPrimary), onPressed: () {}),
+          IconButton(icon: const Icon(Icons.calendar_today_outlined, color: Colors.white), onPressed: () {}),
+          IconButton(icon: const Icon(Icons.search, color: Colors.white), onPressed: () {}),
+          IconButton(icon: const Icon(Icons.notifications_outlined, color: Colors.white), onPressed: () {}),
         ],
       ),
-      body: Column(children: [
+      // Un pannello bianco su fondo tortora, come le schede delle altre
+      // schermate. Occupa quasi tutta la pagina invece di stringersi: la
+      // tabella ha sette colonne e la larghezza le serve davvero.
+      body: Padding(
+        padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
+        child: Container(
+          clipBehavior: Clip.antiAlias,
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: AppColors.divider),
+          ),
+          child: Column(children: [
         Container(
           color: AppColors.surface,
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
@@ -395,9 +407,8 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
                     padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 10),
                     child: const Row(children: [
                       _Intestazione(larghezza: 72, testo: 'Ora', sinistra: 8),
-                      _Intestazione(larghezza: 36, testo: 'P', centrata: true),
+                      _Intestazione(larghezza: 78, testo: 'Persone', centrata: true),
                       _Intestazione(testo: 'Nome e Cognome', sinistra: 12),
-                      _Intestazione(larghezza: 96, testo: 'Tag', sinistra: 4),
                       _Intestazione(larghezza: 160, testo: 'Turno', sinistra: 4),
                       _Intestazione(larghezza: 86, testo: 'Tavolo', sinistra: 4),
                       _Intestazione(larghezza: 70, testo: 'Stato', centrata: true),
@@ -410,7 +421,9 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
             );
           }),
         ),
-      ]),
+          ]),
+        ),
+      ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => context.push('/bookings/new'),
         backgroundColor: AppColors.accent,
@@ -692,7 +705,7 @@ class _BookingRow extends StatelessWidget {
               ),
               // Persone (P)
               SizedBox(
-                width: 36,
+                width: 78,
                 child: Center(
                   child: Container(
                     width: 28, height: 28,
@@ -718,59 +731,46 @@ class _BookingRow extends StatelessWidget {
                   ),
                 ),
               ),
-              // Nome e Cognome
+              // Nome e Cognome, coi tag del cliente accanto
               Expanded(
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                  child: Text(guestName,
-                      style: const TextStyle(
-                          color: AppColors.textPrimary,
-                          fontSize: 14,
-                          letterSpacing: 0.2,
-                          fontWeight: FontWeight.w700),
-                      overflow: TextOverflow.ellipsis),
-                ),
-              ),
-              // Tag del cliente
-              SizedBox(
-                width: 96,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
-                  child: etichette.isEmpty
-                      ? const Center(
-                          child: Text('—',
-                              style: TextStyle(
-                                  color: AppColors.textMuted, fontSize: 14)))
-                      : Wrap(
-                          spacing: 4, runSpacing: 4,
-                          alignment: WrapAlignment.start,
-                          crossAxisAlignment: WrapCrossAlignment.center,
-                          children: [
-                            for (final t in etichette.take(2))
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                decoration: BoxDecoration(
-                                  color: AppColors.goldLight,
-                                  borderRadius: BorderRadius.circular(4),
-                                  border: Border.all(
-                                      color: AppColors.gold.withValues(alpha: 0.45)),
-                                ),
-                                child: Text(t,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: const TextStyle(
-                                        color: AppColors.goldDark,
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.w700)),
-                              ),
-                            // Gli altri si contano invece di traboccare fuori
-                            if (etichette.length > 2)
-                              Text('+${etichette.length - 2}',
-                                  style: const TextStyle(
-                                      color: AppColors.textSecondary,
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.w700)),
-                          ],
+                  child: Row(children: [
+                    Flexible(
+                      child: Text(guestName,
+                          style: const TextStyle(
+                              color: AppColors.textPrimary,
+                              fontSize: 14,
+                              letterSpacing: 0.2,
+                              fontWeight: FontWeight.w700),
+                          overflow: TextOverflow.ellipsis),
+                    ),
+                    for (final e in etichette.take(3)) ...[
+                      const SizedBox(width: 6),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: AppColors.goldLight,
+                          borderRadius: BorderRadius.circular(4),
+                          border: Border.all(color: AppColors.gold.withValues(alpha: 0.45)),
                         ),
+                        child: Text(e,
+                            style: const TextStyle(
+                                color: AppColors.goldDark,
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700)),
+                      ),
+                    ],
+                    // Gli altri si contano, per non spingere via il nome
+                    if (etichette.length > 3) ...[
+                      const SizedBox(width: 6),
+                      Text('+${etichette.length - 3}',
+                          style: const TextStyle(
+                              color: AppColors.textSecondary,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700)),
+                    ],
+                  ]),
                 ),
               ),
               // Turno scelto nel modulo, per esteso

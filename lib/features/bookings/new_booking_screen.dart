@@ -136,19 +136,19 @@ class _NewBookingScreenState extends ConsumerState<NewBookingScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        backgroundColor: AppColors.surface,
+        backgroundColor: AppColors.nero,
         leading: IconButton(
-          icon: const Icon(Icons.close, color: AppColors.textPrimary),
+          icon: const Icon(Icons.close, color: Colors.white),
           onPressed: () => Navigator.pop(context),
         ),
         title: const Text('Nuova prenotazione',
             style: TextStyle(color: AppColors.gold, fontWeight: FontWeight.bold)),
         actions: [
           _saving
-              ? const Padding(padding: EdgeInsets.all(16), child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: AppColors.accent, strokeWidth: 2)))
+              ? const Padding(padding: EdgeInsets.all(16), child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: AppColors.gold, strokeWidth: 2)))
               : TextButton(
                   onPressed: _submitForm,
-                  child: const Text('Salva', style: TextStyle(color: AppColors.accent, fontWeight: FontWeight.bold, fontSize: 16)),
+                  child: const Text('Salva', style: TextStyle(color: AppColors.gold, fontWeight: FontWeight.bold, fontSize: 16)),
                 ),
         ],
       ),

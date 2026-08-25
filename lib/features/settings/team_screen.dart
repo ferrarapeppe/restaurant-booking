@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:restaurant_booking/shared/theme/app_theme.dart';
+import 'package:restaurant_booking/shared/widgets/contenuto_centrato.dart';
 import 'package:restaurant_booking/core/auth/accesso.dart';
 
 /// Gestione dei membri dello staff e dei loro permessi.
@@ -122,8 +123,8 @@ class _TeamScreenState extends State<TeamScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        backgroundColor: AppColors.surface,
-        title: const Text('Team', style: TextStyle(color: AppColors.textPrimary)),
+        backgroundColor: AppColors.nero,
+        title: const Text('Team', style: TextStyle(color: AppColors.gold)),
       ),
       floatingActionButton: amministratore
           ? FloatingActionButton.extended(
@@ -133,7 +134,8 @@ class _TeamScreenState extends State<TeamScreen> {
               label: const Text('Nuovo membro', style: TextStyle(color: Colors.white)),
             )
           : null,
-      body: !amministratore
+      body: ContenutoCentrato(larghezzaMassima: 900,
+      child: !amministratore
           ? const _Messaggio(
               icona: Icons.lock_outline,
               titolo: 'Riservato agli amministratori',
@@ -175,7 +177,7 @@ class _TeamScreenState extends State<TeamScreen> {
                                 style: TextStyle(color: AppColors.textMuted)),
                           ),
                       ],
-                    ),
+                    )),
     );
   }
 }
