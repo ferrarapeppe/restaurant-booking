@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:restaurant_booking/shared/theme/app_theme.dart';
@@ -16,10 +17,30 @@ class _BookingNotifierState extends State<BookingNotifier> {
   static const _restaurantId = '2b126a92-24d5-4e83-b38c-dfc82035a0cf';
   RealtimeChannel? _channel;
 
+  StreamSubscription<AuthState>? _cambioAccesso;
+
   @override
   void initState() {
     super.initState();
     _requestPermission();
+    // La sottoscrizione vale solo da autenticati: gli anonimi non leggono piu'
+    // le prenotazioni, quindi agganciarla prima dell'accesso non porterebbe
+    // nulla e resterebbe muta anche dopo.
+    if (Supabase.instance.client.auth.currentSession != null) _subscribe();
+    _cambioAccesso = Supabase.instance.client.auth.onAuthStateChange.listen((evento) {
+      if (evento.session != null) {
+        _riaggancia();
+      } else {
+        _channel?.unsubscribe();
+        _channel = null;
+      }
+    });
+  }
+
+  /// Rifa' la sottoscrizione con il token appena ottenuto.
+  void _riaggancia() {
+    _channel?.unsubscribe();
+    _channel = null;
     _subscribe();
   }
 
@@ -118,6 +139,7 @@ class _BookingNotifierState extends State<BookingNotifier> {
 
   @override
   void dispose() {
+    _cambioAccesso?.cancel();
     _channel?.unsubscribe();
     super.dispose();
   }
