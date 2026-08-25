@@ -561,7 +561,7 @@ class _SchedaNotificheState extends State<_SchedaNotifiche> {
                               onTap: () {
                                 final iso = (b['date'] ?? '').toString().substring(0, 10);
                                 Navigator.pop(context);
-                                context.go('/floor-plan/$iso');
+                                context.go('/bookings?date=$iso');
                               },
                             ),
                           const SizedBox(height: 12),
