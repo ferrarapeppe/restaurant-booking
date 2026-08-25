@@ -116,7 +116,7 @@ class _NewBookingScreenState extends ConsumerState<NewBookingScreen> {
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Prenotazione creata!'), backgroundColor: AppColors.accent),
+          const SnackBar(content: Text('Prenotazione creata!'), backgroundColor: AppColors.badgeGreen),
         );
         Navigator.pop(context);
       }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:restaurant_booking/shared/widgets/app_drawer.dart';
 import 'package:restaurant_booking/shared/theme/app_theme.dart';
@@ -9,6 +10,9 @@ import 'package:restaurant_booking/features/bookings/booking_detail_screen.dart'
 import 'package:url_launcher/url_launcher.dart';
 import 'package:restaurant_booking/features/guests/esporta_rubrica.dart';
 
+/// Tag su cui filtrare l'elenco clienti. Vuoto = tutti.
+final guestTagProvider = StateProvider<String>((ref) => '');
+
 class GuestsScreen extends ConsumerWidget {
   const GuestsScreen({super.key});
 
@@ -16,6 +20,13 @@ class GuestsScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final guestsAsync = ref.watch(guestsProvider);
     final search = ref.watch(guestSearchProvider);
+    final tagScelto = ref.watch(guestTagProvider);
+    // I tag disponibili si ricavano dai clienti stessi: se domani ne aggiungi
+    // uno nuovo compare nel filtro senza toccare il codice.
+    final tagDisponibili = <String>{
+      for (final g in guestsAsync.value ?? const []) ...g.tags,
+    }.where((t) => t.trim().isNotEmpty).toList()
+      ..sort();
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -36,7 +47,7 @@ class GuestsScreen extends ConsumerWidget {
             onPressed: () => showModalBottomSheet(
               context: context,
               isScrollControlled: true,
-              backgroundColor: AppColors.nero,
+              backgroundColor: AppColors.surface,
               shape: const RoundedRectangleBorder(
                 borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
               ),
@@ -100,22 +111,24 @@ class GuestsScreen extends ConsumerWidget {
             child: Row(children: [
               const Icon(Icons.filter_list, color: AppColors.textSecondary, size: 18),
               const SizedBox(width: 8),
+              // Le voci sono i tag che esistono davvero in archivio: prima erano
+              // quattro categorie inventate ("Regular", "No-show") che non
+              // corrispondevano a nulla, e la scelta non filtrava niente.
               DropdownButton<String>(
-                value: 'Tutto',
+                value: tagScelto,
                 dropdownColor: AppColors.surface,
                 underline: Container(height: 1, color: AppColors.divider),
                 style: const TextStyle(color: AppColors.textPrimary),
-                items: const [
-                  DropdownMenuItem(value: 'Tutto', child: Text('Tutto')),
-                  DropdownMenuItem(value: 'VIP', child: Text('VIP')),
-                  DropdownMenuItem(value: 'Regular', child: Text('Regular')),
-                  DropdownMenuItem(value: 'No-show', child: Text('No-show')),
+                items: [
+                  const DropdownMenuItem(value: '', child: Text('Tutti')),
+                  for (final tag in tagDisponibili)
+                    DropdownMenuItem(value: tag, child: Text(tag)),
                 ],
-                onChanged: (_) {},
+                onChanged: (v) => ref.read(guestTagProvider.notifier).state = v ?? '',
               ),
               const Spacer(),
               TextButton.icon(
-                onPressed: () {},
+                onPressed: () => _showAddGuestSheet(context, ref),
                 icon: const Icon(Icons.add, size: 16),
                 label: const Text('Aggiungi cliente'),
                 style: TextButton.styleFrom(foregroundColor: AppColors.textPrimary),
@@ -128,7 +141,14 @@ class GuestsScreen extends ConsumerWidget {
             child: guestsAsync.when(
               loading: () => const Center(child: CircularProgressIndicator(color: AppColors.accent)),
               error: (e, _) => Center(child: Text('Errore: $e')),
-              data: (guests) => guests.isEmpty
+              data: (tutti) {
+                // Il filtro si applica qui e non nella richiesta: i clienti
+                // sono gia' tutti in memoria, e una seconda interrogazione a
+                // ogni cambio di tag sarebbe sprecata.
+                final guests = tagScelto.isEmpty
+                    ? tutti
+                    : tutti.where((g) => g.tags.contains(tagScelto)).toList();
+                return guests.isEmpty
                   ? Center(
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -156,7 +176,8 @@ class GuestsScreen extends ConsumerWidget {
                           ),
                         );
                       },
-                    ),
+                      );
+              },
             ),
           ),
         ],
@@ -482,6 +503,98 @@ class _GuestDetailScreenState extends ConsumerState<GuestDetailScreen> {
     }
   }
 
+  /// Aggiunge o toglie etichette al cliente.
+  Future<void> _gestisciTag() async {
+    final correnti = <String>{...widget.guest.tags};
+    final cambiato = await showModalBottomSheet<Set<String>>(
+      context: context,
+      backgroundColor: AppColors.surface,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (_) => _SchedaTag(iniziali: correnti),
+    );
+    if (cambiato == null) return;
+    try {
+      final righe = await Supabase.instance.client
+          .from('guests')
+          .update({'tags': cambiato.toList()})
+          .eq('id', widget.guest.id)
+          .select();
+      if (!mounted) return;
+      _avviso(righe.isEmpty
+          ? 'Non riuscito: il database ha rifiutato la modifica.'
+          : 'Etichette aggiornate.');
+      if (righe.isNotEmpty) {
+        ref.invalidate(guestsProvider);
+        setState(() => widget.guest.tags
+          ..clear()
+          ..addAll(cambiato));
+      }
+    } catch (e) {
+      if (mounted) _avviso('Errore: $e');
+    }
+  }
+
+  /// Elimina il cliente, ma non se ha prenotazioni.
+  ///
+  /// Cancellarlo lascerebbe quelle prenotazioni senza intestatario, e non c'e'
+  /// modo di ricostruire chi fossero: meglio rifiutare e spiegare.
+  Future<void> _elimina() async {
+    final quante = _bookings.length;
+    if (quante > 0) {
+      _avviso('Non si può eliminare: ha $quante '
+          '${quante == 1 ? 'prenotazione' : 'prenotazioni'} collegate.');
+      return;
+    }
+    final conferma = await showDialog<bool>(
+      context: context,
+      builder: (c) => AlertDialog(
+        backgroundColor: AppColors.surface,
+        title: const Text('Eliminare il cliente?'),
+        content: Text(
+          '${widget.guest.name} sparisce dall\'archivio. L\'operazione non si annulla.',
+          style: const TextStyle(color: AppColors.textSecondary, fontSize: 13),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(c, false), child: const Text('Annulla')),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: AppColors.accent),
+            onPressed: () => Navigator.pop(c, true),
+            child: const Text('Elimina'),
+          ),
+        ],
+      ),
+    );
+    if (conferma != true) return;
+    try {
+      final righe = await Supabase.instance.client
+          .from('guests')
+          .delete()
+          .eq('id', widget.guest.id)
+          .select();
+      if (!mounted) return;
+      if (righe.isEmpty) {
+        _avviso('Non riuscito: il database ha rifiutato la cancellazione.');
+        return;
+      }
+      ref.invalidate(guestsProvider);
+      Navigator.pop(context);
+    } catch (e) {
+      if (mounted) _avviso('Errore: $e');
+    }
+  }
+
+  void _avviso(String testo) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text(testo),
+      backgroundColor: AppColors.accent,
+      duration: const Duration(seconds: 4),
+    ));
+  }
+
   @override
   Widget build(BuildContext context) {
     final guest = widget.guest;
@@ -494,10 +607,29 @@ class _GuestDetailScreenState extends ConsumerState<GuestDetailScreen> {
         leading: IconButton(icon: const Icon(Icons.arrow_back, color: Colors.white), onPressed: () => Navigator.pop(context)),
         title: Text(widget.guest.name, style: const TextStyle(color: AppColors.gold, fontWeight: FontWeight.bold, fontSize: 20)),
         actions: [
-          IconButton(icon: const Icon(Icons.flag_outlined, color: Colors.white70), onPressed: () {}),
-          IconButton(icon: const Icon(Icons.edit_outlined, color: Colors.white70), onPressed: () => _showEditGuestSheet(context)),
-          IconButton(icon: const Icon(Icons.delete_outline, color: Colors.white70), onPressed: () {}),
-          IconButton(icon: const Icon(Icons.close, color: Colors.white70), onPressed: () => Navigator.pop(context)),
+          // La bandierina non diceva niente e non faceva niente: qui diventa
+          // la gestione dei tag, che e' l'unico modo che avete di annotare
+          // qualcosa su un cliente.
+          IconButton(
+            tooltip: 'Etichette',
+            icon: const Icon(Icons.label_outline, color: Colors.white70),
+            onPressed: _gestisciTag,
+          ),
+          IconButton(
+            tooltip: 'Modifica',
+            icon: const Icon(Icons.edit_outlined, color: Colors.white70),
+            onPressed: () => _showEditGuestSheet(context),
+          ),
+          IconButton(
+            tooltip: 'Elimina',
+            icon: const Icon(Icons.delete_outline, color: Colors.white70),
+            onPressed: _elimina,
+          ),
+          IconButton(
+            tooltip: 'Chiudi',
+            icon: const Icon(Icons.close, color: Colors.white70),
+            onPressed: () => Navigator.pop(context),
+          ),
         ],
       ),
       body: ContenutoCentrato(larghezzaMassima: 900,
@@ -963,6 +1095,122 @@ class _GuestAvatar extends StatelessWidget {
           color: Colors.white,
           fontSize: size * 0.4,
           fontWeight: FontWeight.bold,
+        ),
+      ),
+    );
+  }
+}
+
+/// Scelta delle etichette da attaccare a un cliente.
+class _SchedaTag extends StatefulWidget {
+  final Set<String> iniziali;
+  const _SchedaTag({required this.iniziali});
+
+  @override
+  State<_SchedaTag> createState() => _SchedaTagState();
+}
+
+class _SchedaTagState extends State<_SchedaTag> {
+  /// Le etichette che si usano di solito. Restano modificabili: chi serve una
+  /// parola diversa la scrive, e da quel momento compare nei filtri.
+  static const _suggerite = ['vip', 'abituale', 'allergie', 'compleanno',
+                             'attenzione', 'non presentato'];
+
+  late Set<String> _scelte;
+  final _nuova = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    _scelte = {...widget.iniziali};
+  }
+
+  @override
+  void dispose() {
+    _nuova.dispose();
+    super.dispose();
+  }
+
+  void _aggiungi(String v) {
+    final t = v.trim().toLowerCase();
+    if (t.isEmpty) return;
+    setState(() {
+      _scelte.add(t);
+      _nuova.clear();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final tutte = {..._suggerite, ..._scelte}.toList()..sort();
+    return Padding(
+      padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+      child: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 10, 20, 20),
+          child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Center(child: Container(
+              width: 40, height: 4,
+              decoration: BoxDecoration(
+                  color: AppColors.divider, borderRadius: BorderRadius.circular(2)),
+            )),
+            const SizedBox(height: 16),
+            const Text('Etichette',
+                style: TextStyle(
+                    color: AppColors.textPrimary, fontSize: 18, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 6),
+            const Text(
+              'Servono a ritrovare i clienti nell\'elenco e compaiono accanto al nome '
+              'nelle prenotazioni.',
+              style: TextStyle(color: AppColors.textSecondary, fontSize: 13, height: 1.4),
+            ),
+            const SizedBox(height: 16),
+            Wrap(spacing: 8, runSpacing: 8, children: [
+              for (final t in tutte)
+                FilterChip(
+                  label: Text(t),
+                  selected: _scelte.contains(t),
+                  onSelected: (v) => setState(() => v ? _scelte.add(t) : _scelte.remove(t)),
+                  selectedColor: AppColors.goldLight,
+                  checkmarkColor: AppColors.goldDark,
+                  labelStyle: TextStyle(
+                    color: _scelte.contains(t) ? AppColors.goldDark : AppColors.textSecondary,
+                    fontWeight: _scelte.contains(t) ? FontWeight.bold : FontWeight.normal,
+                  ),
+                ),
+            ]),
+            const SizedBox(height: 16),
+            Row(children: [
+              Expanded(
+                child: TextField(
+                  controller: _nuova,
+                  onSubmitted: _aggiungi,
+                  style: const TextStyle(color: AppColors.textPrimary),
+                  decoration: const InputDecoration(
+                    labelText: 'Nuova etichetta',
+                    isDense: true,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              IconButton(
+                icon: const Icon(Icons.add_circle_outline, color: AppColors.accent),
+                onPressed: () => _aggiungi(_nuova.text),
+              ),
+            ]),
+            const SizedBox(height: 20),
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton(
+                style: FilledButton.styleFrom(
+                  backgroundColor: AppColors.badgeGreen,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                ),
+                onPressed: () => Navigator.pop(context, _scelte),
+                child: const Text('Salva le etichette'),
+              ),
+            ),
+          ]),
         ),
       ),
     );

@@ -200,7 +200,20 @@ class _SchedaRicercaState extends State<_SchedaRicerca> {
     setState(() => _inCorso = true);
     try {
       final db = Supabase.instance.client;
-      final like = '%$chiave%';
+      // Virgole e parentesi sono la punteggiatura del filtro `or`: lasciarle
+      // passare romperebbe la ricerca appena qualcuno scrive "Rossi, Mario".
+      // Restano fuori anche i caratteri jolly, che altrimenti farebbero
+      // combaciare tutto.
+      final pulita = chiave.replaceAll(RegExp(r'[,()%_*."\\]'), ' ').trim();
+      if (pulita.isEmpty) {
+        setState(() {
+          _clienti = [];
+          _prenotazioni = [];
+          _inCorso = false;
+        });
+        return;
+      }
+      final like = '%$pulita%';
       final clienti = await db
           .from('guests')
           .select('id, name, first_name, surname, phone, email, visits_count')

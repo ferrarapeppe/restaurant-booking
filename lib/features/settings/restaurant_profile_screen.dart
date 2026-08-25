@@ -99,7 +99,7 @@ class _RestaurantProfileScreenState extends State<RestaurantProfileScreen> {
         },
       }).eq('id', _restaurantId);
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Profilo salvato'), backgroundColor: AppColors.accent),
+        const SnackBar(content: Text('Profilo salvato'), backgroundColor: AppColors.badgeGreen),
       );
     } catch (e) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(

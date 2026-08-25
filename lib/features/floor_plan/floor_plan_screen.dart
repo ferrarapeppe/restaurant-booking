@@ -41,6 +41,24 @@ class _FloorPlanScreenState extends State<FloorPlanScreen> {
     _loadData();
   }
 
+  /// Comanda l'ingrandimento della piantina. Serve perche' i pulsanti + e -
+  /// possano agire sulla stessa vista che si muove col trascinamento: prima
+  /// erano due bottoni senza alcun effetto.
+  final _zoom = TransformationController();
+
+  @override
+  void dispose() {
+    _zoom.dispose();
+    super.dispose();
+  }
+
+  void _ingrandisci(double fattore) {
+    final attuale = _zoom.value.getMaxScaleOnAxis();
+    final nuovo = (attuale * fattore).clamp(0.5, 3.0);
+    if ((nuovo - attuale).abs() < 0.001) return;
+    setState(() => _zoom.value = Matrix4.identity()..scale(nuovo));
+  }
+
   void _generateTimeSlots() {
     final slots = <String>[];
     for (int h = 12; h <= 23; h++) {
@@ -48,23 +66,42 @@ class _FloorPlanScreenState extends State<FloorPlanScreen> {
         slots.add('${h.toString().padLeft(2, '0')}:${m.toString().padLeft(2, '0')}');
       }
     }
-    // Slot predefinito = 20:30 o il più vicino all'ora attuale
-    final now = TimeOfDay.now();
-    final nowMinutes = now.hour * 60 + now.minute;
-    String best = '20:00';
-    // Default fisso 20:00 per ristorante serale
     _timeSlots = slots;
-    _selectedTime = '20:00';
-    return;
-    int bestDiff = 9999;
+    _selectedTime = _orarioIniziale(slots);
+  }
+
+  /// Su quale orario aprire la piantina.
+  ///
+  /// Guardando oggi si vuole vedere la sala com'e' adesso: alle 22:30, in
+  /// piena seconda seduta, l'orario piu' vicino e' quello utile. Guardando
+  /// un altro giorno l'ora corrente non significa nulla, e si parte dalle
+  /// 20:00, quando la sala e' al massimo.
+  ///
+  /// Prima c'era un `return` piantato in mezzo alla funzione: l'orario era
+  /// sempre le 20:00 e le quindici righe che sceglievano il piu' vicino non
+  /// venivano mai eseguite.
+  String _orarioIniziale(List<String> slots) {
+    const predefinito = '20:00';
+    final ora = DateTime.now();
+    final giorno = DateTime(_selectedDate.year, _selectedDate.month, _selectedDate.day);
+    final oggi = DateTime(ora.year, ora.month, ora.day);
+    if (giorno != oggi) return predefinito;
+
+    final minutiOra = ora.hour * 60 + ora.minute;
+    String migliore = predefinito;
+    var scarto = 1 << 30;
     for (final s in slots) {
-      final parts = s.split(':');
-      final sm = int.parse(parts[0]) * 60 + int.parse(parts[1]);
-      final diff = (sm - nowMinutes).abs();
-      if (diff < bestDiff) { bestDiff = diff; best = s; }
+      final p = s.split(':');
+      final m = int.parse(p[0]) * 60 + int.parse(p[1]);
+      final d = (m - minutiOra).abs();
+      if (d < scarto) {
+        scarto = d;
+        migliore = s;
+      }
     }
-    _timeSlots = slots;
-    _selectedTime = best;
+    // Fuori dagli orari di servizio il piu' vicino sarebbe mezzogiorno o
+    // mezzanotte: meglio le 20:00, dove la sala e' piena.
+    return scarto > 90 ? predefinito : migliore;
   }
 
   Future<void> _loadData() async {
@@ -361,6 +398,7 @@ class _FloorPlanScreenState extends State<FloorPlanScreen> {
                   child: Stack(
                     children: [
                       InteractiveViewer(
+                        transformationController: _zoom,
                         minScale: 0.5,
                         maxScale: 3.0,
                         child: _tables.isEmpty
@@ -387,9 +425,9 @@ class _FloorPlanScreenState extends State<FloorPlanScreen> {
                         top: 16,
                         child: Column(
                           children: [
-                            _ZoomButton(icon: Icons.add, onTap: () {}),
+                            _ZoomButton(icon: Icons.add, onTap: () => _ingrandisci(1.25)),
                             const SizedBox(height: 4),
-                            _ZoomButton(icon: Icons.remove, onTap: () {}),
+                            _ZoomButton(icon: Icons.remove, onTap: () => _ingrandisci(0.8)),
                           ],
                         ),
                       ),
@@ -974,7 +1012,7 @@ class _TableDetailSheetState extends State<_TableDetailSheet>
       if (mounted) {
         Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Prenotazione salvata'), backgroundColor: AppColors.accent),
+          const SnackBar(content: Text('Prenotazione salvata'), backgroundColor: AppColors.badgeGreen),
         );
       }
     } catch (e) {
@@ -1023,7 +1061,7 @@ class _TableDetailSheetState extends State<_TableDetailSheet>
       if (mounted) {
         Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Prenotazione creata'), backgroundColor: AppColors.accent),
+          const SnackBar(content: Text('Prenotazione creata'), backgroundColor: AppColors.badgeGreen),
         );
       }
     } catch (e) {
@@ -1339,7 +1377,7 @@ class _TableDetailSheetState extends State<_TableDetailSheet>
                   const SizedBox(width: 12),
                   _saving
                       ? const CircularProgressIndicator(color: AppColors.accent)
-                      : _ActionButton(icon: Icons.check, color: AppColors.accent, onTap: _save),
+                      : _ActionButton(icon: Icons.check, color: AppColors.badgeGreen, onTap: _save),
                 ] else ...[
                   _ActionButton(icon: Icons.more_horiz, onTap: () {}),
                   const SizedBox(width: 12),
@@ -1347,7 +1385,7 @@ class _TableDetailSheetState extends State<_TableDetailSheet>
                   const SizedBox(width: 12),
                   _saving
                       ? const CircularProgressIndicator(color: AppColors.accent)
-                      : _ActionButton(icon: Icons.check, color: AppColors.accent, onTap: _saveNew),
+                      : _ActionButton(icon: Icons.check, color: AppColors.badgeGreen, onTap: _saveNew),
                 ],
               ],
             ),
@@ -1745,7 +1783,7 @@ extension FloorPlanPending on _FloorPlanScreenState {
     _sendBookingAcceptedEmail(booking);
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Prenotazione accettata!'), backgroundColor: AppColors.accent),
+      const SnackBar(content: Text('Prenotazione accettata!'), backgroundColor: AppColors.badgeGreen),
     );
     _loadData();
   }

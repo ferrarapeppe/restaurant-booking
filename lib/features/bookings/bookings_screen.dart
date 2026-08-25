@@ -594,12 +594,14 @@ class _BookingRow extends StatelessWidget {
       child: isPending
           ? Row(mainAxisAlignment: MainAxisAlignment.center, children: [
               GestureDetector(
+                // Verde accetta, rosso rifiuta: erano tutti e due rossi, e nel
+                // gesto veloce di fine servizio si sbaglia bottone.
                 behavior: HitTestBehavior.opaque,
                 onTap: () => onStatusChange?.call('approved'),
                 child: Container(
                   width: 30, height: 30,
                   decoration: const BoxDecoration(
-                      color: AppColors.accent, shape: BoxShape.circle),
+                      color: AppColors.badgeGreen, shape: BoxShape.circle),
                   child: const Icon(Icons.check, color: Colors.white, size: 17),
                 ),
               ),
@@ -948,7 +950,7 @@ class _BookingDetailSheetState extends State<BookingDetailSheet>
       }
       widget.onSaved();
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Prenotazione salvata'), backgroundColor: AppColors.accent),
+        const SnackBar(content: Text('Prenotazione salvata'), backgroundColor: AppColors.badgeGreen),
       );
     } catch (e) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(
