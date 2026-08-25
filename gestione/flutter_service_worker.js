@@ -34,10 +34,10 @@ const RESOURCES = {"version.json": "dca05162d8cc58448747c8e00c237df8",
 "assets/assets/images/logo_drawer.png": "fb81200e3012ec96704b432fb3bcf355",
 "assets/assets/images/logo_splash.png": "2383e2b745fdb683e09edf82c99b32a0",
 "assets/shaders/ink_sparkle.frag": "ecc85a2e95f5e9f53123dcaf8cb9b6ce",
-"main.dart.js": "72e396a71181c15d562b1da00e458fa8",
+"main.dart.js": "b0f26ffb053e6f13ce4df53cbde1529b",
 "logo.png": "f58f36a5482f86e1e8555ccc72e9746a",
 "booking.html": "541c75fd70c0d45c57726d2aa29721d9",
-"flutter_bootstrap.js": "71389a3365023508f45d706e7fd2bb3d",
+"flutter_bootstrap.js": "4632ff8188b2e1803569ee41d8dd0443",
 "manifest.json": "2d43a3998fb27d5b655493dd358f6863"};
 // The application shell files that are downloaded before a service worker can
 // start.
