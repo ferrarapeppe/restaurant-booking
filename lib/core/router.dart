@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show ValueKey;
 import 'package:go_router/go_router.dart';
 import 'package:restaurant_booking/features/splash/splash_screen.dart';
 import 'package:restaurant_booking/features/dashboard/dashboard_screen.dart';
@@ -50,7 +51,16 @@ final router = GoRouter(
         final dateStr = state.uri.queryParameters['date'];
         final date = dateStr != null ? DateTime.tryParse(dateStr) : null;
         final filter = state.uri.queryParameters['filter'];
-        return BookingsScreen(initialDate: date, initialFilter: filter);
+        final periodo = state.uri.queryParameters['periodo'];
+        return BookingsScreen(
+          // La chiave lega la schermata al periodo: senza, tornando dal
+          // pannello con un periodo diverso go_router riuserebbe la stessa
+          // schermata e i dati resterebbero quelli di prima.
+          key: ValueKey('bookings-${periodo ?? dateStr ?? filter ?? ''}'),
+          initialDate: date,
+          initialFilter: filter,
+          initialPeriodo: periodo,
+        );
       },
     ),
     GoRoute(path: '/reservations', builder: (context, state) => const ReservationsScreen()),

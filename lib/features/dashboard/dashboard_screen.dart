@@ -22,7 +22,13 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   int _oggiOspiti = 0;
   int _settimanaPrenotazioni = 0;
   int _settimanaOspiti = 0;
+  int _mesePrenotazioni = 0;
+  int _meseOspiti = 0;
+  int _annoPrenotazioni = 0;
+  int _annoOspiti = 0;
   int _daAssegnare = 0;
+  String _nomeLocale = '';
+  String _indirizzoLocale = '';
 
   RealtimeChannel? _channel;
 
@@ -77,6 +83,37 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           .lte('date', tra7Str)
           .inFilter('status', ['approved', 'pending']);
 
+      // Mese e anno contano tutto il periodo, non solo da oggi in avanti:
+      // servono a vedere l'andamento, quindi comprendono anche il passato.
+      final primoDelMese = DateFormat('yyyy-MM-dd').format(DateTime(oggi.year, oggi.month, 1));
+      final ultimoDelMese = DateFormat('yyyy-MM-dd').format(DateTime(oggi.year, oggi.month + 1, 0));
+      final primoDellAnno = '${oggi.year}-01-01';
+      final ultimoDellAnno = '${oggi.year}-12-31';
+
+      final meseRes = await supabase
+          .from('bookings')
+          .select('party_size')
+          .eq('restaurant_id', _restaurantId)
+          .gte('date', primoDelMese)
+          .lte('date', ultimoDelMese)
+          .inFilter('status', ['approved', 'pending']);
+
+      final annoRes = await supabase
+          .from('bookings')
+          .select('party_size')
+          .eq('restaurant_id', _restaurantId)
+          .gte('date', primoDellAnno)
+          .lte('date', ultimoDellAnno)
+          .inFilter('status', ['approved', 'pending']);
+
+      // Nome e indirizzo per la fascia in fondo: presi dal profilo, non
+      // scritti nel codice, cosi' cambiando l'insegna cambiano dappertutto.
+      final profilo = await supabase
+          .from('restaurants')
+          .select('name, address, city')
+          .eq('id', _restaurantId)
+          .maybeSingle();
+
       // Query da assegnare (web, senza tavolo)
       final daAssegnareRes = await supabase
           .from('bookings')
@@ -85,22 +122,28 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           .eq('source', 'web')
           .eq('status', 'pending');
 
-      int oggiOspiti = 0;
-      for (final r in oggiRes) {
-        oggiOspiti += (r['party_size'] as int? ?? 0);
-      }
-
-      int settimanaOspiti = 0;
-      for (final r in settimanaRes) {
-        settimanaOspiti += (r['party_size'] as int? ?? 0);
+      int sommaOspiti(List<dynamic> righe) {
+        var totale = 0;
+        for (final r in righe) {
+          totale += ((r as Map)['party_size'] as int? ?? 0);
+        }
+        return totale;
       }
 
       setState(() {
         _oggiPrenotazioni = oggiRes.length;
-        _oggiOspiti = oggiOspiti;
+        _oggiOspiti = sommaOspiti(oggiRes);
         _settimanaPrenotazioni = settimanaRes.length;
-        _settimanaOspiti = settimanaOspiti;
+        _settimanaOspiti = sommaOspiti(settimanaRes);
+        _mesePrenotazioni = meseRes.length;
+        _meseOspiti = sommaOspiti(meseRes);
+        _annoPrenotazioni = annoRes.length;
+        _annoOspiti = sommaOspiti(annoRes);
         _daAssegnare = daAssegnareRes.length;
+        _nomeLocale = (profilo?['name'] ?? '').toString();
+        _indirizzoLocale = [profilo?['address'], profilo?['city']]
+            .where((v) => (v ?? '').toString().trim().isNotEmpty)
+            .join(', ');
         _loading = false;
       });
     } catch (e) {
@@ -109,26 +152,77 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     }
   }
 
+  /// Dispone le schede una sotto l'altra sul telefono, due per riga quando
+  /// c'e' spazio. Su un monitor largo quattro lenzuoli impilati costringono a
+  /// scorrere per vedere numeri che starebbero benissimo affiancati.
+  Widget _griglia(bool schermoLargo, List<Widget> schede) {
+    if (!schermoLargo) {
+      return Column(children: [
+        for (final s in schede) ...[s, const SizedBox(height: 12)],
+      ]);
+    }
+    final righe = <Widget>[];
+    for (var i = 0; i < schede.length; i += 2) {
+      righe.add(IntrinsicHeight(
+        child: Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+          Expanded(child: schede[i]),
+          const SizedBox(width: 12),
+          if (i + 1 < schede.length)
+            Expanded(child: schede[i + 1])
+          else
+            const Expanded(child: SizedBox()),
+        ]),
+      ));
+      righe.add(const SizedBox(height: 12));
+    }
+    return Column(children: righe);
+  }
+
   @override
   Widget build(BuildContext context) {
     final oggi = DateFormat('d. MMM', 'it_IT').format(DateTime.now());
     final tra7 = DateFormat('d. MMM', 'it_IT').format(DateTime.now().add(const Duration(days: 7)));
+    final nomeMese = DateFormat('MMMM', 'it_IT').format(DateTime.now());
+    final mese = nomeMese[0].toUpperCase() + nomeMese.substring(1);
+    final stretto = MediaQuery.of(context).size.width < 480;
 
     return Scaffold(
       backgroundColor: AppColors.background,
       drawer: const AppDrawer(),
+      // Fascia nera col logo, come l'intestazione del modulo che vede il
+      // cliente: aprendo l'app si riconosce lo stesso locale.
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.nero,
+        elevation: 0,
+        // Il logo intero non entra nei 56 punti standard di una barra.
+        toolbarHeight: stretto ? 68 : 84,
+        // Su schermo stretto il logo centrato finirebbe a contendersi lo
+        // spazio con le tre icone: li' si appoggia a sinistra e rimpicciolisce.
+        centerTitle: !stretto,
+        titleSpacing: stretto ? 0 : null,
         leading: Builder(
           builder: (context) => IconButton(
-            icon: const Icon(Icons.menu, color: AppColors.textPrimary, size: 28),
+            icon: const Icon(Icons.menu, color: Colors.white, size: 28),
             onPressed: () => Scaffold.of(context).openDrawer(),
           ),
         ),
-        title: Image.asset('assets/images/logo_appbar.png', height: 34, fit: BoxFit.contain),
+        // Lo stesso logo dell'avvio e della schermata di accesso, dove su nero
+        // si legge bene. Il marchio ha tratti sottili: sotto una certa
+        // dimensione svanisce, quindi la barra si alza per contenerlo intero
+        // invece di rimpicciolirlo.
+        title: Image.asset(
+          'assets/images/logo_splash.png',
+          height: stretto ? 46 : 56,
+          fit: BoxFit.contain,
+          filterQuality: FilterQuality.high,
+        ),
         actions: [
-          IconButton(icon: const Icon(Icons.search, color: AppColors.textSecondary), onPressed: () {}),
-          IconButton(icon: const Icon(Icons.notifications_outlined, color: AppColors.textSecondary), onPressed: () {}),
+          IconButton(
+              icon: const Icon(Icons.search, color: Colors.white70),
+              onPressed: () {}),
+          IconButton(
+              icon: const Icon(Icons.notifications_outlined, color: Colors.white70),
+              onPressed: () {}),
           const SizedBox(width: 8),
         ],
       ),
@@ -136,13 +230,29 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         color: AppColors.accent,
         backgroundColor: AppColors.card,
         onRefresh: _loadStats,
-        child: SingleChildScrollView(
+        // Il pannello nasce per il telefono. Su un monitor largo, stirato a
+        // tutta pagina, le schede diventano lenzuoli e i numeri si perdono nel
+        // vuoto: qui si tiene una larghezza leggibile e si sta al centro, come
+        // fa il modulo di prenotazione.
+        child: LayoutBuilder(builder: (context, vincoli) {
+          final schermoLargo = vincoli.maxWidth >= 760;
+          return SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
           padding: const EdgeInsets.all(16),
+          child: Center(
+          child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 1040),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const SizedBox(height: 8),
+              // In cima perche' e' l'unica voce che chiede di fare qualcosa:
+              // le altre raccontano, questa aspetta.
+              GestureDetector(
+                onTap: () => context.go('/bookings?filter=da_assegnare'),
+                child: _DaAssegnareCard(count: _daAssegnare, loading: _loading),
+              ),
+              const SizedBox(height: 24),
               const Text('Scorciatoie', style: TextStyle(color: AppColors.textPrimary, fontSize: 20, fontWeight: FontWeight.bold)),
               const SizedBox(height: 12),
               _ShortcutButton(icon: Icons.calendar_today_outlined, label: 'Prenotazioni oggi', onTap: () {
@@ -168,30 +278,84 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                 ],
               ),
               const SizedBox(height: 12),
-              _StatsCard(
-                label: 'Oggi',
-                date: oggi,
-                prenotazioni: _oggiPrenotazioni,
-                ospiti: _oggiOspiti,
-                loading: _loading,
-              ),
-              const SizedBox(height: 12),
-              _StatsCard(
-                label: 'Prossimi 7 giorni',
-                date: '$oggi - $tra7',
-                prenotazioni: _settimanaPrenotazioni,
-                ospiti: _settimanaOspiti,
-                loading: _loading,
-              ),
-              const SizedBox(height: 12),
-              GestureDetector(
-                onTap: () => context.go('/bookings?filter=da_assegnare'),
-                child: _DaAssegnareCard(count: _daAssegnare, loading: _loading),
-              ),
+              // Su schermo largo due per riga: riempiono lo spazio invece di
+              // allungarsi, e si confrontano a colpo d'occhio.
+              _griglia(schermoLargo, [
+                _StatsCard(
+                  label: 'Oggi',
+                  date: oggi,
+                  prenotazioni: _oggiPrenotazioni,
+                  ospiti: _oggiOspiti,
+                  loading: _loading,
+                  onTap: () {
+                    final today = DateTime.now();
+                    ref.read(selectedDateProvider.notifier).state = today;
+                    context.go('/bookings?date=${DateFormat('yyyy-MM-dd').format(today)}');
+                  },
+                ),
+                _StatsCard(
+                  label: 'Prossimi 7 giorni',
+                  date: '$oggi - $tra7',
+                  prenotazioni: _settimanaPrenotazioni,
+                  ospiti: _settimanaOspiti,
+                  loading: _loading,
+                  onTap: () => context.go('/bookings?periodo=settimana'),
+                ),
+                _StatsCard(
+                  label: 'Questo mese',
+                  date: mese,
+                  prenotazioni: _mesePrenotazioni,
+                  ospiti: _meseOspiti,
+                  loading: _loading,
+                  onTap: () => context.go('/bookings?periodo=mese'),
+                ),
+                _StatsCard(
+                  label: 'Totale ${DateTime.now().year}',
+                  date: 'Tutto l\'anno',
+                  prenotazioni: _annoPrenotazioni,
+                  ospiti: _annoOspiti,
+                  loading: _loading,
+                  onTap: () => context.go('/bookings?periodo=anno'),
+                ),
+              ]),
+              const SizedBox(height: 28),
+              // Fascia nera di chiusura, come il piede del modulo.
+              if (_nomeLocale.isNotEmpty)
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 22),
+                  decoration: BoxDecoration(
+                    color: AppColors.nero,
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Column(children: [
+                    Text(
+                      _nomeLocale.toUpperCase(),
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        color: AppColors.gold,
+                        fontSize: 14,
+                        letterSpacing: 1.6,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    if (_indirizzoLocale.isNotEmpty) ...[
+                      const SizedBox(height: 6),
+                      Text(
+                        _indirizzoLocale,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(color: Color(0xFFB9B4AC), fontSize: 12),
+                      ),
+                    ],
+                  ]),
+                ),
               const SizedBox(height: 80),
             ],
           ),
-        ),
+          ),
+          ),
+        );
+        }),
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => context.push('/bookings/new'),
@@ -241,11 +405,19 @@ class _StatsCard extends StatelessWidget {
   final int prenotazioni;
   final int ospiti;
   final bool loading;
-  const _StatsCard({required this.label, required this.date, required this.prenotazioni, required this.ospiti, this.loading = false});
+  final VoidCallback? onTap;
+  const _StatsCard({
+    required this.label,
+    required this.date,
+    required this.prenotazioni,
+    required this.ospiti,
+    this.loading = false,
+    this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    final scheda = Container(
       width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -260,7 +432,15 @@ class _StatsCard extends StatelessWidget {
             children: [
               Text(label, style: const TextStyle(color: AppColors.textPrimary, fontSize: 16, fontWeight: FontWeight.bold)),
               const SizedBox(width: 8),
-              Text(date, style: const TextStyle(color: AppColors.textSecondary, fontSize: 14)),
+              Expanded(
+                child: Text(date,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(color: AppColors.textSecondary, fontSize: 14)),
+              ),
+              // Una freccia dice che si puo' aprire: senza, il riquadro sembra
+              // solo un cartello.
+              if (onTap != null)
+                const Icon(Icons.chevron_right, color: AppColors.textMuted, size: 20),
             ],
           ),
           const SizedBox(height: 16),
@@ -287,6 +467,13 @@ class _StatsCard extends StatelessWidget {
           ),
         ],
       ),
+    );
+
+    if (onTap == null) return scheda;
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(16),
+      child: scheda,
     );
   }
 }

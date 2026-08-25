@@ -13,7 +13,17 @@ import 'package:restaurant_booking/features/bookings/scelte_modulo.dart';
 class BookingsScreen extends ConsumerStatefulWidget {
   final DateTime? initialDate;
   final String? initialFilter;
-  const BookingsScreen({super.key, this.initialDate, this.initialFilter});
+
+  /// 'settimana', 'mese' o 'anno': mostra tutte le prenotazioni del periodo
+  /// invece di una giornata sola. Arriva dai riquadri del pannello.
+  final String? initialPeriodo;
+
+  const BookingsScreen({
+    super.key,
+    this.initialDate,
+    this.initialFilter,
+    this.initialPeriodo,
+  });
   @override
   ConsumerState<BookingsScreen> createState() => _BookingsScreenState();
 }
@@ -47,23 +57,55 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
         _statusFilter = 'pending';
         _sourceFilter = 'web';
       }
+      _periodo = widget.initialPeriodo;
       _loadBookings();
       _caricaStatoGiornata();
     });
   }
+
+  /// Periodo mostrato al posto della singola giornata, se impostato.
+  String? _periodo;
+
+  /// Estremi del periodo scelto dal pannello di controllo.
+  (DateTime, DateTime)? get _estremiPeriodo {
+    final ora = DateTime.now();
+    return switch (_periodo) {
+      'settimana' => (ora, ora.add(const Duration(days: 7))),
+      'mese' => (DateTime(ora.year, ora.month, 1), DateTime(ora.year, ora.month + 1, 0)),
+      'anno' => (DateTime(ora.year, 1, 1), DateTime(ora.year, 12, 31)),
+      _ => null,
+    };
+  }
+
+  String get _etichettaPeriodo => switch (_periodo) {
+        'settimana' => 'Prossimi 7 giorni',
+        'mese' => 'Questo mese',
+        'anno' => 'Tutto il ${DateTime.now().year}',
+        _ => '',
+      };
 
   Future<void> _loadBookings() async {
     setState(() => _loading = true);
     try {
       final date = ref.read(selectedDateProvider);
       final dateStr = DateFormat('yyyy-MM-dd').format(date);
-      debugPrint('BOOKINGS LOAD date=$dateStr status=$_statusFilter');
+      debugPrint('BOOKINGS LOAD date=$dateStr status=$_statusFilter periodo=$_periodo');
       var query = _supabase
           .from('bookings')
           .select('*, guests(first_name, surname, name, phone, email, tags), tables(name, capacity, area_id, areas(name))')
           .eq('restaurant_id', _restaurantId);
+      final estremi = _estremiPeriodo;
       if (_sourceFilter == 'web') {
         query = query.eq('source', 'web').eq('status', 'pending');
+      } else if (estremi != null) {
+        query = query
+            .gte('date', DateFormat('yyyy-MM-dd').format(estremi.$1))
+            .lte('date', DateFormat('yyyy-MM-dd').format(estremi.$2));
+        if (_statusFilter != 'tutti' && _statusFilter != 'attivo') {
+          query = query.eq('status', _statusFilter);
+        } else if (_statusFilter == 'attivo') {
+          query = query.inFilter('status', ['approved', 'pending', 'seated']);
+        }
       } else {
         query = query.eq('date', dateStr);
         if (_statusFilter != 'tutti' && _statusFilter != 'attivo') {
@@ -73,7 +115,10 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
         }
       }
 
-      final res = await query.order('time_start');
+      // Su piu' giorni l'ora da sola non basta a ordinare.
+      final res = estremi != null
+          ? await query.order('date').order('time_start')
+          : await query.order('time_start');
       debugPrint('BOOKINGS RESULT count=${res.length}');
       setState(() {
         _bookingsWithDetails = List<Map<String, dynamic>>.from(res);
@@ -159,8 +204,16 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
 
 
   void _changeDate(int delta) {
+    // Spostarsi di un giorno significa voler tornare alla vista giornaliera.
+    _periodo = null;
     final current = ref.read(selectedDateProvider);
     ref.read(selectedDateProvider.notifier).state = current.add(Duration(days: delta));
+    _loadBookings();
+    _caricaStatoGiornata();
+  }
+
+  void _tornaAllaGiornata() {
+    setState(() => _periodo = null);
     _loadBookings();
     _caricaStatoGiornata();
   }
@@ -236,17 +289,48 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Row(children: [
-              Text(capitalDay, style: const TextStyle(color: AppColors.textPrimary, fontSize: 20, fontWeight: FontWeight.bold)),
-              const Spacer(),
-              _MenuGiornata(
-                stato: _statoGiornata,
-                inCorso: _cambioStatoInCorso,
-                motivo: _statoGiornata == StatoGiornata.nonAncoraAperte
-                    ? _regole?.motivoNonAperta(ref.read(selectedDateProvider))
-                    : null,
-                onCambia: _cambiaPrenotazioniOnline,
+              Expanded(
+                child: Text(_periodo != null ? _etichettaPeriodo : capitalDay,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                        color: AppColors.textPrimary, fontSize: 20, fontWeight: FontWeight.bold)),
               ),
+              // Su un periodo il comando della giornata non ha senso: aprire o
+              // chiudere "il mese" non vuol dire niente.
+              if (_periodo == null)
+                _MenuGiornata(
+                  stato: _statoGiornata,
+                  inCorso: _cambioStatoInCorso,
+                  motivo: _statoGiornata == StatoGiornata.nonAncoraAperte
+                      ? _regole?.motivoNonAperta(ref.read(selectedDateProvider))
+                      : null,
+                  onCambia: _cambiaPrenotazioniOnline,
+                ),
             ]),
+            if (_periodo != null) ...[
+              const SizedBox(height: 6),
+              InkWell(
+                onTap: _tornaAllaGiornata,
+                borderRadius: BorderRadius.circular(12),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  decoration: BoxDecoration(
+                    color: AppColors.accentLight,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: AppColors.accent.withValues(alpha: 0.35)),
+                  ),
+                  child: const Row(mainAxisSize: MainAxisSize.min, children: [
+                    Icon(Icons.date_range_outlined, size: 13, color: AppColors.accent),
+                    SizedBox(width: 6),
+                    Text('Più giorni insieme — tocca per tornare alla giornata',
+                        style: TextStyle(
+                            color: AppColors.accent, fontSize: 12, fontWeight: FontWeight.bold)),
+                    SizedBox(width: 4),
+                    Icon(Icons.close, size: 13, color: AppColors.accent),
+                  ]),
+                ),
+              ),
+            ],
             const SizedBox(height: 8),
             Row(children: [
               GestureDetector(
@@ -356,6 +440,8 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
                           // riusare la riga sbagliata per una prenotazione
                           // diversa.
                           key: ValueKey(b['id']),
+                          // Su piu' giorni la sola ora non basta a capire quando.
+                          mostraData: _periodo != null,
                           booking: b,
                           guestName: _guestName(b),
                           onTap: () => _showBookingDetail(context, b),
@@ -455,6 +541,8 @@ class _BookingRow extends StatelessWidget {
   final Future<void> Function(String)? onStatusChange;
   final VoidCallback? onReject;
 
+  final bool mostraData;
+
   const _BookingRow({
     super.key,
     required this.booking,
@@ -462,6 +550,7 @@ class _BookingRow extends StatelessWidget {
     required this.onTap,
     this.onStatusChange,
     this.onReject,
+    this.mostraData = false,
   });
 
   @override
@@ -579,12 +668,23 @@ class _BookingRow extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
+                    // Su piu' giorni l'ora da sola non dice quando: serve la
+                    // data, e l'orario di fine diventa il dettaglio meno utile.
+                    if (mostraData)
+                      Text(
+                        DateFormat('EEE d MMM', 'it_IT')
+                            .format(DateTime.tryParse(booking['date']?.toString() ?? '') ??
+                                DateTime.now())
+                            .toUpperCase(),
+                        style: const TextStyle(
+                            color: AppColors.gold, fontSize: 10, fontWeight: FontWeight.bold),
+                      ),
                     Text(timeStart,
                         style: const TextStyle(
                             color: Colors.white,
                             fontSize: 13,
                             fontWeight: FontWeight.bold)),
-                    if (timeEnd.isNotEmpty)
+                    if (timeEnd.isNotEmpty && !mostraData)
                       Text(timeEnd,
                           style: const TextStyle(color: Colors.white70, fontSize: 11)),
                   ],

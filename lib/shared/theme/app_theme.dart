@@ -2,11 +2,19 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class AppColors {
-  // Colori principali HIO
-  static const background = Color(0xFFFFFFFF);      // Bianco
-  static const surface = Color(0xFFF8F8F8);         // Grigio chiarissimo
+  // Colori principali HIO — gli stessi del modulo di prenotazione, cosi'
+  // l'app e la pagina che vede il cliente sembrano la stessa cosa.
+  //
+  // Prima lo sfondo della pagina era bianco quanto le schede, quindi non
+  // staccava niente. Ora la pagina e' una tortora calda e le schede bianche
+  // ci galleggiano sopra.
+  static const background = Color(0xFFF4F2EF);      // Tortora, fondo pagina
+  static const surface = Color(0xFFFFFFFF);         // Bianco, schede e barre
   static const card = Color(0xFFFFFFFF);
-  static const cardLight = Color(0xFFF2F2F2);
+  static const cardLight = Color(0xFFF4F2EF);
+
+  // Nero delle fasce in alto e in basso, come nel modulo.
+  static const nero = Color(0xFF0E0E0E);
 
   // Accent
   static const accent = Color(0xFFB7182A);          // Rosso HIO
