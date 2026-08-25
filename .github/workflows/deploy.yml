@@ -28,16 +28,27 @@ jobs:
       - name: Installa dipendenze
         run: flutter pub get
 
+      # L'app dello staff vive sotto /gestione/: la radice del sito e' del
+      # modulo clienti, perche' e' quello l'indirizzo che diamo ai clienti.
       - name: Build Web
-        run: flutter build web --release --base-href "/restaurant-booking/"
+        run: flutter build web --release --base-href "/gestione/"
 
-      - name: Copy booking pages
+      - name: Componi il sito
         run: |
-          cp web/booking.html build/web/booking.html
-          cp web/booking-status.html build/web/booking-status.html
+          mkdir -p site/gestione
+          cp -r build/web/. site/gestione/
+          cp web/booking.html site/index.html
+          cp web/booking.html site/booking.html
+          cp web/booking-status.html site/booking-status.html
+          cp web/logo.png site/logo.png
+          cp web/favicon.png site/favicon.png
 
       - name: Deploy su GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./build/web
+          publish_dir: ./site
+          # Scritto qui e non solo nelle impostazioni: ogni pubblicazione
+          # riscrive il ramo gh-pages e cancellerebbe il dominio impostato
+          # a mano, lasciando il sito irraggiungibile senza motivo apparente.
+          cname: prenota.hiooriental.com

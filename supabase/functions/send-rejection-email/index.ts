@@ -84,7 +84,7 @@ const C = {
 };
 const FONT_TITOLO = `Georgia,'Times New Roman',serif`;
 const FONT_TESTO = `Helvetica,Arial,sans-serif`;
-const LOGO_URL = 'https://ferrarapeppe.github.io/restaurant-booking/logo.png';
+const LOGO_URL = 'https://prenota.hiooriental.com/logo.png';
 
 const DAYS = ['Domenica','Lunedì','Martedì','Mercoledì','Giovedì','Venerdì','Sabato'];
 const MONTHS = ['gennaio','febbraio','marzo','aprile','maggio','giugno','luglio','agosto','settembre','ottobre','novembre','dicembre'];
@@ -137,7 +137,7 @@ Deno.serve(async (req) => {
     }
 
     const mapsUrl = `https://maps.google.com/?q=${encodeURIComponent(restAddress + ', ' + restCity)}`;
-    const siteUrl = 'https://ferrarapeppe.github.io/restaurant-booking/booking.html';
+    const siteUrl = 'https://prenota.hiooriental.com/booking.html';
   const indirizzoPiede = [restAddress, restCity].filter(Boolean).join('<br>');
   const contattiPiede = [
     restPhone ? `<a href="tel:${restPhone.replace(/\s/g, '')}" style="color:${C.oro};text-decoration:none;">${restPhone}</a>` : '',

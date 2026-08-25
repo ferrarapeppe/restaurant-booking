@@ -108,7 +108,7 @@ Deno.serve(async (req) => {
     }
 
     const statusUrl = bookingId
-      ? `https://ferrarapeppe.github.io/restaurant-booking/booking-status.html?id=${bookingId}`
+      ? `https://prenota.hiooriental.com/booking-status.html?id=${bookingId}`
       : '';
 
     const riga = (etichetta: string, valore: string) => valore

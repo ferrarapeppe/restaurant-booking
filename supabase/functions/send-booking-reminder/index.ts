@@ -6,7 +6,7 @@ const corsHeaders = {
 };
 
 const RESTAURANT_ID = '2b126a92-24d5-4e83-b38c-dfc82035a0cf';
-const STATUS_BASE_URL = 'https://ferrarapeppe.github.io/restaurant-booking/booking-status.html';
+const STATUS_BASE_URL = 'https://prenota.hiooriental.com/booking-status.html';
 
 const DAYS   = ['Domenica','Lunedì','Martedì','Mercoledì','Giovedì','Venerdì','Sabato'];
 const MONTHS = ['gennaio','febbraio','marzo','aprile','maggio','giugno','luglio','agosto','settembre','ottobre','novembre','dicembre'];

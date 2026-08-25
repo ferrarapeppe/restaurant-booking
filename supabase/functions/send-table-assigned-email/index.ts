@@ -86,7 +86,7 @@ const C = {
 };
 const FONT_TITOLO = `Georgia,'Times New Roman',serif`;
 const FONT_TESTO = `Helvetica,Arial,sans-serif`;
-const LOGO_URL = 'https://ferrarapeppe.github.io/restaurant-booking/logo.png';
+const LOGO_URL = 'https://prenota.hiooriental.com/logo.png';
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -129,8 +129,8 @@ Deno.serve(async (req) => {
     const restContactEmail = restaurantEmail || '';
 
     const statusUrl = bookingId
-      ? `https://ferrarapeppe.github.io/restaurant-booking/booking-status.html?id=${bookingId}`
-      : `https://ferrarapeppe.github.io/restaurant-booking/booking.html`;
+      ? `https://prenota.hiooriental.com/booking-status.html?id=${bookingId}`
+      : `https://prenota.hiooriental.com/booking.html`;
 
     const smtpUser = Deno.env.get('SMTP_USER') ?? '';
 
@@ -192,7 +192,7 @@ const GAP = `<tr><td colspan="2" style="height:10px;"></td></tr>`;
 
 function buildHtml(d: D): string {
   const mapsUrl = `https://maps.google.com/?q=${encodeURIComponent(d.restAddress + ', ' + d.restCity)}`;
-  const siteUrl = `https://ferrarapeppe.github.io/restaurant-booking/booking.html`;
+  const siteUrl = `https://prenota.hiooriental.com/booking.html`;
   const indirizzoPiede = [d.restAddress, d.restCity].filter(Boolean).join('<br>');
   const contattiPiede = [
     d.restPhone ? `<a href="tel:${d.restPhone.replace(/\s/g, '')}" style="color:${C.oro};text-decoration:none;">${d.restPhone}</a>` : '',

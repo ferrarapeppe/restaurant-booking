@@ -13,7 +13,7 @@ flutter test                                                # run tests
 dart run build_runner build                                 # regenerate Riverpod code-gen providers
 ```
 
-Deployment is automatic via GitHub Actions (`.github/workflows/deploy.yml`) on every push to `main` → GitHub Pages at `ferrarapeppe.github.io/restaurant-booking`.
+Deployment is automatic via GitHub Actions (`.github/workflows/deploy.yml`) on every push to `main` → GitHub Pages at `prenota.hiooriental.com`. The customer booking form is served at the root; the staff app lives under `/gestione/`.
 
 ## Architecture
 
