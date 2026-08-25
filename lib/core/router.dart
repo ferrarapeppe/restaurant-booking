@@ -12,11 +12,36 @@ import 'package:restaurant_booking/features/settings/restaurant_profile_screen.d
 import 'package:restaurant_booking/features/settings/tables_screen.dart';
 import 'package:restaurant_booking/features/floor_plan/floor_plan_screen.dart';
 import 'package:restaurant_booking/features/bookings/reservations_screen.dart';
+import 'package:restaurant_booking/features/auth/login_screen.dart';
+import 'package:restaurant_booking/features/settings/team_screen.dart';
+import 'package:restaurant_booking/core/auth/accesso.dart';
 
 final router = GoRouter(
   initialLocation: '/splash',
+  refreshListenable: statoAccesso,
+  // Il controllo passa da qui e non dalle singole schermate: scrivere a mano
+  // l'indirizzo di una sezione non deve bastare per entrarci.
+  redirect: (context, state) {
+    final percorso = state.matchedLocation;
+    final pubblica = percorso == '/login' || percorso == '/splash';
+
+    // Finche' non sappiamo chi e', non mandiamo nessuno da nessuna parte.
+    if (statoAccesso.inCaricamento) return pubblica ? null : '/splash';
+
+    if (!statoAccesso.autenticato) return pubblica ? null : '/login';
+    if (percorso == '/login') return statoAccesso.percorsoIniziale;
+    if (percorso == '/senza-permessi') return null;
+
+    final sezione = sezioneDelPercorso(percorso);
+    if (sezione != null && !statoAccesso.profilo!.puoVedere(sezione)) {
+      return statoAccesso.percorsoIniziale;
+    }
+    return null;
+  },
   routes: [
     GoRoute(path: '/splash', builder: (context, state) => const SplashScreen()),
+    GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
+    GoRoute(path: '/senza-permessi', builder: (context, state) => const SenzaPermessiScreen()),
     GoRoute(path: '/', builder: (context, state) => const DashboardScreen()),
     GoRoute(path: '/calendar', builder: (context, state) => const CalendarScreen()),
     GoRoute(
@@ -47,6 +72,7 @@ final router = GoRouter(
         GoRoute(path: 'tables', builder: (context, state) => const TablesScreen()),
         GoRoute(path: 'opening-hours', builder: (context, state) => const OpeningHoursScreen()),
         GoRoute(path: 'profile', builder: (context, state) => const RestaurantProfileScreen()),
+        GoRoute(path: 'team', builder: (context, state) => const TeamScreen()),
       ],
     ),
   ],

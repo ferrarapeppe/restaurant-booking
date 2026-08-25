@@ -87,7 +87,7 @@ class SettingsScreen extends StatelessWidget {
                 icon: Icons.people_outline,
                 title: 'Team',
                 description: 'Gestisci i membri del team e i loro permessi.',
-                onTap: () {},
+                onTap: () => context.push('/settings/team'),
               ),
               _SettingsCard(
                 icon: Icons.notifications_outlined,
