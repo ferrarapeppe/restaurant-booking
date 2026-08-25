@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#0E0E0E">
+  <title>La tua prenotazione — Hio Oriental Bar</title>
+  <link rel="icon" href="favicon.png" type="image/png">
+  <link rel="apple-touch-icon" href="logo.png">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Karla:wght@400;500;600;700&family=Playfair+Display+SC:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    /* ─── Token (stessi del modulo di prenotazione) ──────────────────────── */
+    :root {
+      --nero:        #0E0E0E;
+      --nero-soft:   #1A1A1A;
+      --rosso:       #B7182A;
+      --rosso-scuro: #8F1220;
+      --rosso-chiaro:#FDECED;
+      --oro:         #C9B06E;
+      --oro-scuro:   #8A6D1F;
+      --oro-chiaro:  #FBF7EE;
+      --testo:       #1A1A1A;
+      --testo-soft:  #5A5A5A;
+      --bordo:       #E4E1DC;
+      --superficie:  #FFFFFF;
+      --sfondo:      #F4F2EF;
+
+      --raggio:    16px;
+      --raggio-sm: 10px;
+      --tap:       48px;
+      --ombra:     0 1px 2px rgba(14,14,14,.04), 0 10px 30px rgba(14,14,14,.07);
+      --t:         200ms cubic-bezier(.2,.7,.3,1);
+
+      --font-display: 'Playfair Display SC', Georgia, 'Times New Roman', serif;
+      --font-body:    'Karla', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { -webkit-text-size-adjust: 100%; }
+
+    body {
+      font-family: var(--font-body);
+      font-size: 16px;
+      line-height: 1.55;
+      color: var(--testo);
+      background: var(--sfondo);
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    button, input, textarea { font-family: inherit; font-size: 16px; }
+    button { touch-action: manipulation; }
+
+    .sr-only {
+      position: absolute; width: 1px; height: 1px;
+      padding: 0; margin: -1px; overflow: hidden;
+      clip: rect(0,0,0,0); white-space: nowrap; border: 0;
+    }
+    :focus-visible { outline: 3px solid var(--oro); outline-offset: 2px; border-radius: 4px; }
+
+    /* ─── Header con logo ────────────────────────────────────────────────── */
+    .header {
+      background: var(--nero);
+      padding: calc(24px + env(safe-area-inset-top)) 20px 22px;
+      text-align: center;
+      border-bottom: 1px solid rgba(201,176,110,.35);
+    }
+    .brand-logo { display: block; width: 100%; max-width: 268px; height: auto; margin: 0 auto; }
+    .header-address {
+      margin-top: 12px;
+      font-size: 13px;
+      letter-spacing: .04em;
+      color: #B9B4AC;
+    }
+    .header nav { margin-top: 16px; }
+    .header nav a {
+      display: inline-flex; align-items: center; justify-content: center;
+      min-height: 40px; padding: 8px 18px;
+      border: 1px solid rgba(201,176,110,.55);
+      border-radius: 999px;
+      color: var(--oro);
+      text-decoration: none;
+      font-size: 12px; font-weight: 700;
+      letter-spacing: .12em; text-transform: uppercase;
+      transition: background var(--t), color var(--t);
+    }
+    .header nav a:hover { background: var(--oro); color: var(--nero); }
+
+    /* ─── Layout ─────────────────────────────────────────────────────────── */
+    .container { width: 100%; max-width: 900px; margin: 20px auto 32px; padding: 0 14px; flex: 1; }
+    .grid { display: grid; grid-template-columns: 1fr; gap: 16px; }
+    @media (min-width: 860px) { .grid { grid-template-columns: 1.15fr .85fr; gap: 20px; align-items: start; } }
+
+    .card {
+      background: var(--superficie);
+      border: 1px solid var(--bordo);
+      border-radius: var(--raggio);
+      padding: 20px 16px;
+      box-shadow: var(--ombra);
+    }
+    .card h2 {
+      font-family: var(--font-display);
+      font-size: 18px; font-weight: 700;
+      color: var(--nero-soft);
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 2px solid var(--oro);
+    }
+
+    /* ─── Intestazione di pagina ─────────────────────────────────────────── */
+    .page-header { margin: 4px 0 20px; text-align: center; }
+    .page-header h2 {
+      font-family: var(--font-display);
+      font-size: 21px; line-height: 1.35; font-weight: 700;
+      color: var(--nero-soft);
+      margin-bottom: 12px;
+    }
+    .page-header h2::after {
+      content: '';
+      display: block;
+      width: 46px; height: 2px;
+      background: var(--oro);
+      margin: 14px auto 0;
+    }
+    .page-header p { color: var(--testo-soft); font-size: 15px; line-height: 1.65; }
+    @media (min-width: 560px) { .page-header h2 { font-size: 25px; } }
+
+    /* ─── Righe di dettaglio ─────────────────────────────────────────────── */
+    .detail-row {
+      display: flex;
+      gap: 14px;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--bordo);
+    }
+    .detail-row:last-child { border-bottom: none; }
+    .detail-label {
+      flex-shrink: 0;
+      min-width: 116px;
+      font-size: 12px; font-weight: 700;
+      letter-spacing: .07em; text-transform: uppercase;
+      color: var(--testo-soft);
+      padding-top: 2px;
+    }
+    .detail-value { font-size: 15px; font-weight: 600; color: var(--testo); overflow-wrap: anywhere; }
+    .detail-value small { display: block; margin-top: 4px; font-weight: 400; }
+    .separator { height: 1px; background: var(--bordo); margin: 6px 0; }
+
+    /* ─── Stato ──────────────────────────────────────────────────────────── */
+    .status-badge {
+      display: inline-flex; align-items: center; gap: 9px;
+      padding: 6px 14px 6px 6px;
+      border-radius: 999px;
+      font-size: 14px; font-weight: 700;
+      line-height: 1.3;
+    }
+    .status-icon {
+      width: 26px; height: 26px; border-radius: 50%;
+      display: inline-flex; align-items: center; justify-content: center;
+      color: #fff;
+      flex-shrink: 0;
+    }
+    .status-icon svg { width: 15px; height: 15px; display: block; }
+
+    /* ─── Bottoni ────────────────────────────────────────────────────────── */
+    .btn-new {
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      width: 100%;
+      min-height: var(--tap);
+      margin-top: 20px;
+      padding: 13px 18px;
+      background: var(--superficie);
+      color: var(--rosso);
+      border: 1.5px solid var(--rosso);
+      border-radius: var(--raggio-sm);
+      text-decoration: none;
+      font-size: 15px; font-weight: 700;
+      transition: background var(--t), color var(--t);
+    }
+    .btn-new:hover { background: var(--rosso); color: #fff; }
+
+    .btn-msg {
+      width: 100%;
+      min-height: var(--tap);
+      margin-top: 10px;
+      padding: 13px 18px;
+      background: var(--rosso);
+      color: #fff;
+      border: none;
+      border-radius: var(--raggio-sm);
+      font-size: 15px; font-weight: 700;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      transition: background var(--t);
+    }
+    .btn-msg:hover:not(:disabled) { background: var(--rosso-scuro); }
+    .btn-msg:disabled { background: #D8D5D0; color: #8A857E; cursor: not-allowed; }
+
+    /* ─── Messaggi ───────────────────────────────────────────────────────── */
+    .messages { display: flex; flex-direction: column; gap: 10px; }
+    .msg-time {
+      display: flex; align-items: center; justify-content: center; gap: 6px;
+      font-size: 11px; color: var(--testo-soft);
+      text-align: center; margin: 4px 0;
+    }
+    .msg-bubble {
+      padding: 11px 14px;
+      border-radius: 12px;
+      font-size: 14px; font-weight: 500;
+      line-height: 1.5;
+      max-width: 100%;
+      overflow-wrap: anywhere;
+    }
+    .msg-bubble.client { background: var(--rosso); color: #fff; border-bottom-right-radius: 4px; }
+    .msg-bubble.restaurant { background: var(--oro-chiaro); color: var(--testo); border: 1px solid var(--oro); border-bottom-left-radius: 4px; }
+    .msg-status {
+      font-size: 12px; color: var(--testo-soft);
+      text-align: center; padding: 4px 0;
+    }
+    .msg-avatar { display: flex; align-items: center; gap: 8px; margin-bottom: 2px; }
+    .avatar {
+      width: 26px; height: 26px; border-radius: 50%;
+      background: var(--nero); color: var(--oro);
+      font-size: 9px; font-weight: 700; letter-spacing: .04em;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .msg-input {
+      width: 100%;
+      min-height: 88px;
+      padding: 12px 14px;
+      border: 1.5px solid var(--bordo);
+      border-radius: var(--raggio-sm);
+      resize: vertical;
+      line-height: 1.5;
+      outline: none;
+      transition: border-color var(--t), box-shadow var(--t);
+    }
+    .msg-input:focus { border-color: var(--rosso); box-shadow: 0 0 0 3px var(--rosso-chiaro); }
+
+    /* ─── Stati di pagina ────────────────────────────────────────────────── */
+    .loading { text-align: center; padding: 54px 20px; color: var(--testo-soft); font-size: 15px; }
+    .loading::before {
+      content: '';
+      display: block;
+      width: 26px; height: 26px;
+      margin: 0 auto 14px;
+      border: 2.5px solid var(--bordo);
+      border-top-color: var(--rosso);
+      border-radius: 50%;
+      animation: spin 800ms linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .error { text-align: center; padding: 54px 20px; color: var(--rosso); font-weight: 600; line-height: 1.7; }
+    .error a { color: var(--rosso); }
+
+    /* ─── Footer ─────────────────────────────────────────────────────────── */
+    footer {
+      background: var(--nero);
+      color: #B9B4AC;
+      text-align: center;
+      padding: 26px 20px calc(26px + env(safe-area-inset-bottom));
+      border-top: 1px solid rgba(201,176,110,.35);
+      font-size: 14px;
+      line-height: 1.7;
+    }
+    footer p:first-child {
+      font-family: var(--font-display);
+      font-size: 15px; font-weight: 700;
+      letter-spacing: .14em;
+      color: var(--oro);
+      margin-bottom: 4px;
+    }
+
+    @media (min-width: 560px) {
+      .header { padding-top: calc(34px + env(safe-area-inset-top)); padding-bottom: 28px; }
+      .brand-logo { max-width: 320px; }
+      .container { margin: 28px auto 40px; padding: 0 20px; }
+      .card { padding: 26px 24px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: .01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: .01ms !important;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<header class="header">
+  <img class="brand-logo" src="logo.png" width="2797" height="708" alt="Hio Oriental Bar" fetchpriority="high">
+  <h1 id="rest-name" class="sr-only">Hio Oriental Bar</h1>
+  <p id="rest-address" class="header-address">Via Giuseppe Mazzini 5, Palermo</p>
+  <nav><a href="booking.html">Prenota un tavolo</a></nav>
+</header>
+
+<div class="container" id="main">
+  <div class="loading">Caricamento prenotazione...</div>
+</div>
+
+<footer id="footer">
+  <p>Hio Oriental Bar</p>
+  <p>Via Giuseppe Mazzini 5</p>
+  <p>90139 Palermo</p>
+</footer>
+
+<script>
+const SUPABASE_URL = 'https://jxdnldyabhzmfnterzil.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp4ZG5sZHlhYmh6bWZudGVyemlsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4NDY2ODYsImV4cCI6MjA4NzQyMjY4Nn0.1oBMQj7EDpRfYrf3_lb4dOVQy29I2JOC8Hjr2IV_q1s';
+
+const { createClient } = supabase;
+const db = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+const DAYS = ['Domenica','Lunedì','Martedì','Mercoledì','Giovedì','Venerdì','Sabato'];
+const MONTHS = ['gennaio','febbraio','marzo','aprile','maggio','giugno','luglio','agosto','settembre','ottobre','novembre','dicembre'];
+
+function formatDate(dateStr) {
+  const d = new Date(dateStr + 'T12:00:00');
+  return `${DAYS[d.getDay()]} ${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()}`;
+}
+
+// Icone vettoriali: le emoji cambiano forma da un dispositivo all'altro
+const ICONE = {
+  attesa:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>',
+  spunta:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12.5l5 5L20 6.5"/></svg>',
+  croce:   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>',
+  freccia: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h13M13 6l6 6-6 6"/></svg>',
+};
+
+function statusInfo(status) {
+  const map = {
+    pending:  { label: 'In attesa di conferma', color: '#8A6D1F', bg: '#FBF7EE', letter: ICONE.attesa  },
+    approved: { label: 'Confermata',            color: '#2E7D52', bg: '#EAF5EF', letter: ICONE.spunta  },
+    seated:   { label: 'Al tavolo',             color: '#2E7D52', bg: '#EAF5EF', letter: ICONE.spunta  },
+    left:     { label: 'Conclusa',              color: '#5A5A5A', bg: '#F0EEEA', letter: ICONE.freccia },
+    canceled: { label: 'Annullata',             color: '#B7182A', bg: '#FDECED', letter: ICONE.croce   },
+    no_show:  { label: 'Non presentato',        color: '#B7182A', bg: '#FDECED', letter: ICONE.croce   },
+    walkin:   { label: 'Walk-in',               color: '#8A6D1F', bg: '#FBF7EE', letter: ICONE.freccia },
+  };
+  return map[status] || { label: status, color: '#5A5A5A', bg: '#F0EEEA', letter: ICONE.attesa };
+}
+
+// I messaggi sono testo scritto dagli utenti: vanno neutralizzati prima di
+// inserirli nella pagina, altrimenti del markup finirebbe interpretato.
+function escapeHtml(t) {
+  return String(t ?? '').replace(/[&<>"']/g, (c) => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+  })[c]);
+}
+
+function bollaMessaggio(m) {
+  const delCliente = m.sender === 'guest';
+  const quando = m.created_at
+    ? new Date(m.created_at).toLocaleString('it-IT', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
+    : '';
+  const intestazione = delCliente
+    ? `<div class="msg-time">${quando}</div>`
+    : `<div class="msg-avatar"><div class="avatar">HIO</div><span class="msg-time">${quando}</span></div>`;
+  return `${intestazione}
+    <div class="msg-bubble ${delCliente ? 'client' : 'restaurant'}">${escapeHtml(m.message)}</div>`;
+}
+
+function row(label, value) {
+  if (!value) return '';
+  return `<div class="detail-row">
+    <span class="detail-label">${label}</span>
+    <span class="detail-value">${value}</span>
+  </div>`;
+}
+
+async function load() {
+  const params = new URLSearchParams(window.location.search);
+  const id = params.get('id');
+
+  if (!id) {
+    document.getElementById('main').innerHTML = '<div class="error">Prenotazione non trovata.<br><a href="booking.html">Effettua una nuova prenotazione</a></div>';
+    return;
+  }
+
+  const { data: b, error } = await db
+    .from('bookings')
+    .select('*, guests(first_name, surname, phone, email)')
+    .eq('id', id)
+    .single();
+
+  if (error || !b) {
+    document.getElementById('main').innerHTML = '<div class="error">Prenotazione non trovata.<br><a href="booking.html">Effettua una nuova prenotazione</a></div>';
+    return;
+  }
+
+  // Carica nome ristorante
+  const { data: rest } = await db.from('restaurants').select('name, address, city').eq('id', b.restaurant_id).single();
+  if (rest) {
+    document.getElementById('rest-name').textContent = rest.name;
+    const indirizzo = [rest.address, rest.city].filter(Boolean).join(', ');
+    if (indirizzo) document.getElementById('rest-address').textContent = indirizzo;
+    document.getElementById('footer').innerHTML = [rest.name, rest.address, rest.city].filter(Boolean).map(l => `<p>${l}</p>`).join('');
+  }
+
+  // Parsing internal_notes per turno e area
+  let turno = '', area = '';
+  try {
+    const meta = JSON.parse(b.internal_notes || '{}');
+    turno = meta.turno || '';
+    area = meta.area || '';
+  } catch(e) {
+    turno = b.internal_notes || '';
+  }
+
+  const guest = b.guests || {};
+  const nome = guest.first_name || '';
+  const cognome = guest.surname || '';
+  const phone = guest.phone || '';
+  const email = guest.email || '';
+
+  const timeStart = (b.time_start || '').substring(0, 5);
+  const timeEnd = (b.time_end || '').substring(0, 5);
+
+  const si = statusInfo(b.status);
+
+  // Conversazione vera, dalla tabella booking_messages.
+  // Prima qui si mostrava il campo `notes` marcato come messaggio del cliente,
+  // più una frase fissa del ristorante: nessuno dei due era una conversazione.
+  const msgs = [];
+  if (b.notes) {
+    msgs.push(`<div class="msg-time">${new Date(b.created_at).toLocaleDateString('it-IT')}</div>
+    <div class="msg-bubble client">${escapeHtml(b.notes)}</div>`);
+  }
+  const { data: conversazione } = await db
+    .from('booking_messages')
+    .select('sender, message, created_at')
+    .eq('booking_id', id)
+    .order('created_at', { ascending: true });
+  for (const m of conversazione || []) {
+    msgs.push(bollaMessaggio(m));
+  }
+  msgs.push(`<div class="msg-status">Stato: <strong>${si.label}</strong></div>`);
+
+  const pageHeaders = {
+    pending:  { title: 'Abbiamo ricevuto correttamente la tua richiesta di prenotazione.', sub: 'Ti ricordiamo che questa comunicazione non costituisce una conferma di prenotazione. La disponibilità verrà verificata dal nostro staff e riceverai una conferma definitiva il prima possibile.<br><br>Grazie per averci contattato.' },
+    approved: { title: 'Prenotazione confermata',         sub: 'La tua prenotazione è stata accettata. Non vediamo l\'ora di accoglierti!' },
+    seated:   { title: 'Benvenuto!',                      sub: 'Buon appetito e buona serata da tutto il nostro staff.' },
+    canceled: { title: 'Prenotazione annullata',          sub: 'La tua prenotazione non è stata confermata. Contattaci per maggiori informazioni.' },
+    no_show:  { title: 'Prenotazione annullata',          sub: 'La tua prenotazione è stata annullata per mancata presentazione.' },
+    left:     { title: 'Grazie per la visita',            sub: 'Speriamo di rivederti presto!' },
+  };
+  const ph = pageHeaders[b.status] || { title: 'La tua prenotazione', sub: '' };
+
+  document.getElementById('main').innerHTML = `
+    <div class="page-header">
+      <h2>${ph.title}</h2>
+      ${ph.sub ? `<p>${ph.sub}</p>` : ''}
+    </div>
+    <div class="grid">
+      <!-- Dettagli prenotazione -->
+      <div class="card">
+        <div class="detail-row">
+          <span class="detail-label">Stato</span>
+          <span class="detail-value">
+            <span class="status-badge" style="background:${si.bg};color:${si.color};">
+              <span class="status-icon" style="background:${si.color};">${si.letter}</span>
+              ${si.label}
+            </span>
+          </span>
+        </div>
+
+        ${row('Data', formatDate(b.date))}
+        <div class="detail-row">
+          <span class="detail-label">Ora</span>
+          <span class="detail-value">
+            ${timeStart}${timeEnd ? ' - ' + timeEnd : ''}
+            <br><small style="color:var(--rosso);font-size:12px;font-weight:600;">Il tavolo sarà mantenuto a disposizione per un massimo di 20 minuti oltre l’orario della prenotazione. Trascorso questo termine, la prenotazione sarà considerata annullata.</small>
+          </span>
+        </div>
+        ${row('Area Ristorante', area)}
+        ${row('Persone', String(b.party_size))}
+
+        <div class="separator"></div>
+
+        ${row('Cognome', cognome)}
+        ${row('Nome', nome)}
+        ${row('Telefono', phone)}
+        ${row('E-Mail', email)}
+
+        <div class="separator"></div>
+
+        ${row('Turno', turno)}
+
+        <a href="booking.html" class="btn-new">← Effettua una nuova prenotazione</a>
+      </div>
+
+      <!-- Messaggi -->
+      <div class="card">
+        <h2>Messaggi</h2>
+        <div class="messages" id="msg-list">
+          ${msgs.length ? msgs.join('') : ''}
+        </div>
+        <div style="margin-top:16px;">
+          <label for="msg-input" class="sr-only">Messaggio al ristorante</label>
+          <textarea id="msg-input" class="msg-input" placeholder="Messaggio al Ristorante"></textarea>
+          <button id="msg-send" class="btn-msg">Invia messaggio</button>
+        </div>
+      </div>
+    </div>
+  `;
+
+  document.getElementById('msg-send')?.addEventListener('click', () => sendMessage(b, rest));
+}
+
+load();
+
+async function sendMessage(b, rest) {
+  const input = document.getElementById('msg-input');
+  const btn = document.getElementById('msg-send');
+  const text = input?.value?.trim();
+  if (!text) return;
+  btn.disabled = true;
+  btn.textContent = 'Invio...';
+  try {
+    // supabase-js NON solleva eccezioni su errore del database: lo restituisce
+    // nel risultato. Prima non veniva letto, quindi un salvataggio fallito
+    // mostrava comunque il messaggio a schermo e il cliente lo credeva inviato.
+    const { error } = await db.from('booking_messages').insert({
+      booking_id: b.id,
+      sender: 'guest',
+      message: text,
+    });
+    if (error) throw new Error(error.message);
+
+    const list = document.getElementById('msg-list');
+    if (list) {
+      list.innerHTML += bollaMessaggio({ sender: 'guest', message: text, created_at: new Date().toISOString() });
+    }
+    input.value = '';
+
+    // Avvisa il ristorante: senza, il messaggio resterebbe da scoprire a mano
+    const g = b.guests || {};
+    try {
+      await fetch(SUPABASE_URL + '/functions/v1/send-guest-message-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + SUPABASE_ANON_KEY },
+        body: JSON.stringify({
+          messaggio: text,
+          nome: g.first_name || '', cognome: g.surname || '',
+          telefono: g.phone || '', emailCliente: g.email || '',
+          date: b.date || '', time: b.time_start || '', persons: b.party_size || 0,
+          bookingId: b.id,
+          restaurantName: rest?.name || '', restaurantAddress: rest?.address || '',
+          restaurantCity: rest?.city || '', restaurantEmail: rest?.email || '',
+        }),
+      });
+    } catch (errAvviso) {
+      console.warn('avviso al ristorante non inviato:', errAvviso);
+    }
+  } catch(e) {
+    alert('Messaggio non inviato: ' + e.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Invia messaggio';
+  }
+}
+</script>
+</body>
+</html>
