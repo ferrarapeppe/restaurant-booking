@@ -120976,7 +120976,7 @@ q=A.b4f(n,!1,new A.dv(4,A.au(12),B.bE),n,n,n,n,new A.dv(4,A.au(12),B.bE),n,n,n,B
 p=A.iI(n,n,B.p,n,n,n,n,n,n,B.h,n,n,n,n,new A.cz(A.au(12),B.z),n,n,n,n)
 o=A.td().$3$color$fontSize$fontWeight(B.p,18,B.I)
 m=A.oP(s,B.Xe,B.bb,new A.S3(B.h,0,B.U,new A.cz(r,B.bE),B.d_,n),B.ZK,A.b90(B.h,n,A.bxD().$1$color(B.P),n,o),B.a0u,new A.ys(p),B.a2N,q,B.a6x,B.a5,B.amZ,m,!0)
-return new A.zb($.bjs(),new A.auR(),"Fenix Restaurant",m,B.j9,B.a8u,B.a9V,!1,n)}}
+return new A.zb($.bjs(),new A.auR(),"HIO ORIENTAL Gestionale",m,B.j9,B.a8u,B.a9V,!1,n)}}
 A.auR.prototype={
 $2(a,b){return new A.tw(b==null?B.d_:b,null)},
 $S:776}
