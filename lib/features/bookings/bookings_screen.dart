@@ -1373,12 +1373,18 @@ class _BookingDetailSheetState extends State<BookingDetailSheet>
                 value: _editStatus,
                 dropdownColor: AppColors.surface,
                 underline: const SizedBox(), isExpanded: true,
-                items: const [
-                  DropdownMenuItem(value: 'approved', child: Text('👍 Accettato', style: TextStyle(color: AppColors.textPrimary))),
-                  DropdownMenuItem(value: 'seated', child: Text('🍽️ Al tavolo', style: TextStyle(color: AppColors.textPrimary))),
-                  DropdownMenuItem(value: 'pending', child: Text('❓ In attesa', style: TextStyle(color: AppColors.textPrimary))),
-                  DropdownMenuItem(value: 'canceled', child: Text('✕ Annullato', style: TextStyle(color: AppColors.textPrimary))),
-                  DropdownMenuItem(value: 'no_show', child: Text('🚫 No-show', style: TextStyle(color: AppColors.textPrimary))),
+                // Stessa fonte del menu sul pulsante tondo, per non ritrovarsi
+                // due elenchi di stati che dicono cose diverse.
+                items: [
+                  for (final s in _statiPrenotazione)
+                    DropdownMenuItem(
+                      value: s.$1,
+                      child: Row(children: [
+                        Icon(s.$3, size: 18, color: AppColors.textSecondary),
+                        const SizedBox(width: 8),
+                        Text(s.$2, style: const TextStyle(color: AppColors.textPrimary)),
+                      ]),
+                    ),
                 ],
                 onChanged: (v) => setState(() => _editStatus = v!),
               )),
@@ -1462,10 +1468,32 @@ class _BookingDetailSheetState extends State<BookingDetailSheet>
               ]),
               const SizedBox(height: 8),
             ],
+            // Lo stato scelto qui non è ancora salvato: dirlo, perché il
+            // pulsante da solo non distingue "cambiato" da "fatto".
+            if (_editStatus != (widget.booking['status'] ?? '')) ...[
+              Row(children: [
+                const Icon(Icons.edit_outlined, size: 14, color: AppColors.goldDark),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    'Stato: ${_etichettaStato(_editStatus)} — tocca ✓ per salvare.'
+                    '${_editStatus == 'canceled' || _editStatus == 'no_show' ? ' Al cliente non parte nessun avviso.' : ''}',
+                    style: const TextStyle(
+                        color: AppColors.goldDark, fontSize: 12, height: 1.35),
+                  ),
+                ),
+              ]),
+              const SizedBox(height: 8),
+            ],
             Row(mainAxisAlignment: MainAxisAlignment.end, children: [
-              _ActionBtn(icon: Icons.more_horiz, onTap: () {}),
-              const SizedBox(width: 12),
-              _ActionBtn(icon: Icons.close, onTap: () => Navigator.pop(context)),
+              _BottoneStato(
+                stato: _editStatus,
+                cambiato: _editStatus != (widget.booking['status'] ?? ''),
+                onScelto: (v) => setState(() => _editStatus = v),
+              ),
+              // Niente pulsante di chiusura: si esce trascinando giu' la
+              // scheda o toccando fuori. Un tondo identico a quello del
+              // salvataggio, a tre centimetri di distanza, si sbaglia.
               const SizedBox(width: 12),
               _saving
                   ? const CircularProgressIndicator(color: AppColors.accent)
@@ -1514,6 +1542,85 @@ class _EditableField extends StatelessWidget {
       ]),
     ]),
   );
+}
+
+/// Gli stati della prenotazione, in un posto solo.
+///
+/// Erano ripetuti in tre elenchi diversi nel file; tenerli qui evita che
+/// aggiungendone uno resti fuori da qualche menu.
+const _statiPrenotazione = <(String, String, IconData)>[
+  ('approved', 'Accettato', Icons.thumb_up_outlined),
+  ('seated', 'Al tavolo', Icons.restaurant_outlined),
+  ('pending', 'In attesa', Icons.help_outline),
+  ('canceled', 'Annullato', Icons.close),
+  ('no_show', 'No-show', Icons.block_outlined),
+];
+
+String _etichettaStato(String v) => _statiPrenotazione
+    .firstWhere((s) => s.$1 == v, orElse: () => (v, v, Icons.help_outline))
+    .$2;
+
+IconData _iconaStato(String v) => _statiPrenotazione
+    .firstWhere((s) => s.$1 == v, orElse: () => (v, v, Icons.help_outline))
+    .$3;
+
+/// Il tondo che prima era un "..." senza funzione: ora cambia lo stato.
+///
+/// Mostra l'icona dello stato scelto invece dei tre puntini, cosi' dice
+/// qualcosa anche da chiuso, e si colora d'oro quando c'e' una modifica
+/// non ancora salvata.
+class _BottoneStato extends StatelessWidget {
+  final String stato;
+  final bool cambiato;
+  final ValueChanged<String> onScelto;
+
+  const _BottoneStato({
+    required this.stato,
+    required this.cambiato,
+    required this.onScelto,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return PopupMenuButton<String>(
+      tooltip: 'Stato della prenotazione',
+      color: AppColors.surface,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      onSelected: onScelto,
+      itemBuilder: (_) => [
+        for (final s in _statiPrenotazione)
+          PopupMenuItem<String>(
+            value: s.$1,
+            child: Row(children: [
+              Icon(s.$3,
+                  size: 18,
+                  color: s.$1 == stato ? AppColors.accent : AppColors.textSecondary),
+              const SizedBox(width: 10),
+              Text(s.$2,
+                  style: TextStyle(
+                    color: AppColors.textPrimary,
+                    fontWeight: s.$1 == stato ? FontWeight.bold : FontWeight.normal,
+                  )),
+              if (s.$1 == stato) ...[
+                const Spacer(),
+                const Icon(Icons.check, size: 16, color: AppColors.accent),
+              ],
+            ]),
+          ),
+      ],
+      child: Container(
+        width: 48,
+        height: 48,
+        decoration: BoxDecoration(
+          color: cambiato ? AppColors.goldLight : AppColors.divider,
+          shape: BoxShape.circle,
+          border: cambiato ? Border.all(color: AppColors.goldDark, width: 1.5) : null,
+        ),
+        child: Icon(_iconaStato(stato),
+            color: cambiato ? AppColors.goldDark : AppColors.textPrimary, size: 22),
+      ),
+    );
+  }
 }
 
 class _ActionBtn extends StatelessWidget {
