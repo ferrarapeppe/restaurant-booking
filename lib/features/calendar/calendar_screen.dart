@@ -64,7 +64,7 @@ class CalendarBodyState extends ConsumerState<CalendarBody> {
   bool _isSameDay(DateTime a, DateTime b) => a.year == b.year && a.month == b.month && a.day == b.day;
 
   /// Scheda della giornata: stato delle prenotazioni online, comando per
-  /// chiuderla o riaprirla, e accesso al piano sala.
+  /// chiuderla o riaprirla, e accesso all'elenco del giorno.
   Future<void> _apriSchedaGiorno(DateTime giorno, RegoleGiornate regole) async {
     final esito = await showModalBottomSheet<bool>(
       context: context,
@@ -75,10 +75,12 @@ class CalendarBodyState extends ConsumerState<CalendarBody> {
       builder: (_) => _SchedaGiorno(
         giorno: giorno,
         regole: regole,
-        onPianoSala: () {
+        onElenco: () {
           Navigator.of(context).pop();
           final iso = DateFormat('yyyy-MM-dd').format(giorno);
-          context.push('/floor-plan/$iso');
+          // Dal calendario si va all'elenco, non al piano sala: chi apre un
+          // giorno vuole vedere chi viene, non dove sono seduti.
+          context.push('/bookings?date=$iso');
         },
       ),
     );
@@ -249,8 +251,8 @@ class _DayCell extends StatelessWidget {
 class _SchedaGiorno extends StatefulWidget {
   final DateTime giorno;
   final RegoleGiornate regole;
-  final VoidCallback onPianoSala;
-  const _SchedaGiorno({required this.giorno, required this.regole, required this.onPianoSala});
+  final VoidCallback onElenco;
+  const _SchedaGiorno({required this.giorno, required this.regole, required this.onElenco});
 
   @override
   State<_SchedaGiorno> createState() => _SchedaGiornoState();
@@ -357,9 +359,9 @@ class _SchedaGiornoState extends State<_SchedaGiorno> {
                 side: const BorderSide(color: AppColors.divider),
                 padding: const EdgeInsets.symmetric(vertical: 14),
               ),
-              onPressed: widget.onPianoSala,
-              icon: const Icon(Icons.grid_view_outlined, size: 18),
-              label: const Text('Apri il piano sala'),
+              onPressed: widget.onElenco,
+              icon: const Icon(Icons.list_alt_outlined, size: 18),
+              label: const Text('Apri l\'elenco del giorno'),
             ),
           ),
         ]),
