@@ -27,6 +27,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   int _meseOspiti = 0;
   int _annoPrenotazioni = 0;
   int _annoOspiti = 0;
+  int _arrivateOggi = 0;
+  int _arrivateOggiOspiti = 0;
   int _daAssegnare = 0;
   String _nomeLocale = '';
   String _indirizzoLocale = '';
@@ -115,6 +117,16 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           .eq('id', _restaurantId)
           .maybeSingle();
 
+      // Entrate oggi, in qualunque stato e per qualunque data futura: e' la
+      // domanda "cosa mi e' passato per le mani oggi", che l'app organizzata
+      // per data di servizio non sapeva rispondere.
+      final inizioOggi = DateTime(oggi.year, oggi.month, oggi.day);
+      final arrivateRes = await supabase
+          .from('bookings')
+          .select('party_size')
+          .eq('restaurant_id', _restaurantId)
+          .gte('created_at', inizioOggi.toIso8601String());
+
       // Query da assegnare (web, senza tavolo)
       final daAssegnareRes = await supabase
           .from('bookings')
@@ -140,6 +152,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         _meseOspiti = sommaOspiti(meseRes);
         _annoPrenotazioni = annoRes.length;
         _annoOspiti = sommaOspiti(annoRes);
+        _arrivateOggi = arrivateRes.length;
+        _arrivateOggiOspiti = sommaOspiti(arrivateRes);
         _daAssegnare = daAssegnareRes.length;
         _nomeLocale = (profilo?['name'] ?? '').toString();
         _indirizzoLocale = [profilo?['address'], profilo?['city']]
@@ -304,6 +318,14 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                   ospiti: _meseOspiti,
                   loading: _loading,
                   onTap: () => context.go('/bookings?periodo=mese'),
+                ),
+                _StatsCard(
+                  label: 'Arrivate oggi',
+                  date: 'Richieste entrate',
+                  prenotazioni: _arrivateOggi,
+                  ospiti: _arrivateOggiOspiti,
+                  loading: _loading,
+                  onTap: () => context.go('/bookings?periodo=arrivate'),
                 ),
                 _StatsCard(
                   label: 'Totale ${DateTime.now().year}',

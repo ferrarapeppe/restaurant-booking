@@ -64,6 +64,76 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
     });
   }
 
+  /// Turno mostrato: 'tutti', 'aperitivo', 'primo', 'secondo'.
+  ///
+  /// Il riquadro "Tutto il giorno" era un rettangolo con disegnata una
+  /// freccina e nessuna reazione al tocco: sembrava un comando e non lo era.
+  String _turnoFiltro = 'tutti';
+
+  static const _turniDisponibili = [
+    ('tutti', 'Tutto il giorno', Icons.schedule_outlined),
+    ('aperitivo', 'Aperitivo', Icons.wine_bar_outlined),
+    ('primo', '1° turno', Icons.restaurant_outlined),
+    ('secondo', '2° turno', Icons.nightlife_outlined),
+  ];
+
+  String get _etichettaTurnoFiltro =>
+      _turniDisponibili.firstWhere((t) => t.$1 == _turnoFiltro).$2;
+
+  /// A quale turno appartiene una prenotazione.
+  ///
+  /// Quelle prese al telefono non hanno un turno scelto — lo sceglie il cliente
+  /// nel modulo — quindi si collocano sull'orario, altrimenti sparirebbero da
+  /// ogni filtro diverso da "tutto il giorno".
+  String _turnoDi(Map<String, dynamic> b) {
+    final t = ScelteModulo.da(b['internal_notes']).turno.toUpperCase();
+    if (t.contains('APERITIF') || t.contains('APERITIVO')) return 'aperitivo';
+    if (t.contains('1°') || t.contains('1 TURNO')) return 'primo';
+    if (t.contains('2°') || t.contains('2 TURNO')) return 'secondo';
+    final ora = (b['time_start'] ?? '').toString();
+    if (ora.startsWith('18') || ora.startsWith('19')) return 'aperitivo';
+    if (ora.startsWith('20') || ora.startsWith('21')) return 'primo';
+    if (ora.startsWith('22') || ora.startsWith('23')) return 'secondo';
+    return 'altro';
+  }
+
+  /// Le prenotazioni effettivamente mostrate, dopo il filtro sul turno.
+  List<Map<String, dynamic>> get _visibili => _turnoFiltro == 'tutti'
+      ? _bookingsWithDetails
+      : _bookingsWithDetails.where((b) => _turnoDi(b) == _turnoFiltro).toList();
+
+  void _mostraFiltroTurno(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: AppColors.surface,
+      shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
+      builder: (_) => SafeArea(
+        child: ListView(shrinkWrap: true, padding: const EdgeInsets.symmetric(vertical: 8),
+          children: [
+            for (final t in _turniDisponibili)
+              ListTile(
+                leading: Icon(t.$3,
+                    color: _turnoFiltro == t.$1 ? AppColors.accent : AppColors.textSecondary),
+                title: Text(t.$2,
+                    style: TextStyle(
+                      color: _turnoFiltro == t.$1 ? AppColors.accent : AppColors.textPrimary,
+                      fontWeight: _turnoFiltro == t.$1 ? FontWeight.bold : FontWeight.normal,
+                    )),
+                trailing: Text(
+                  '${t.$1 == 'tutti' ? _bookingsWithDetails.length : _bookingsWithDetails.where((b) => _turnoDi(b) == t.$1).length}',
+                  style: const TextStyle(color: AppColors.textMuted, fontSize: 13),
+                ),
+                onTap: () {
+                  setState(() => _turnoFiltro = t.$1);
+                  Navigator.pop(context);
+                },
+              ),
+          ]),
+      ),
+    );
+  }
+
   /// Periodo mostrato al posto della singola giornata, se impostato.
   String? _periodo;
 
@@ -82,8 +152,24 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
         'settimana' => 'Prossimi 7 giorni',
         'mese' => 'Questo mese',
         'anno' => 'Tutto il ${DateTime.now().year}',
+        'arrivate' => 'Arrivate oggi',
+        'arrivate7' => 'Arrivate negli ultimi 7 giorni',
         _ => '',
       };
+
+  /// L'elenco guarda l'ordine di arrivo invece della data di servizio.
+  ///
+  /// Sono due assi diversi: l'app e' organizzata su quando il cliente viene,
+  /// ma il lavoro di approvazione segue quando la richiesta e' entrata. Senza
+  /// questo, una prenotazione approvata sprofonda nella giornata a cui
+  /// appartiene e per ritrovarla bisogna ricordarsi per quando era.
+  bool get _perArrivo => _periodo == 'arrivate' || _periodo == 'arrivate7';
+
+  DateTime get _daQuandoArrivate {
+    final ora = DateTime.now();
+    final oggi = DateTime(ora.year, ora.month, ora.day);
+    return _periodo == 'arrivate7' ? oggi.subtract(const Duration(days: 6)) : oggi;
+  }
 
   Future<void> _loadBookings() async {
     setState(() => _loading = true);
@@ -98,6 +184,13 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
       final estremi = _estremiPeriodo;
       if (_sourceFilter == 'web') {
         query = query.eq('source', 'web').eq('status', 'pending');
+      } else if (_perArrivo) {
+        query = query.gte('created_at', _daQuandoArrivate.toIso8601String());
+        if (_statusFilter != 'tutti' && _statusFilter != 'attivo') {
+          query = query.eq('status', _statusFilter);
+        } else if (_statusFilter == 'attivo') {
+          query = query.inFilter('status', ['approved', 'pending', 'seated']);
+        }
       } else if (estremi != null) {
         query = query
             .gte('date', DateFormat('yyyy-MM-dd').format(estremi.$1))
@@ -116,10 +209,13 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
         }
       }
 
-      // Su piu' giorni l'ora da sola non basta a ordinare.
-      final res = estremi != null
-          ? await query.order('date').order('time_start')
-          : await query.order('time_start');
+      // Guardando gli arrivi conta l'ordine in cui sono entrate, dalla piu'
+      // recente. Su piu' giorni di servizio, l'ora da sola non basta.
+      final res = _perArrivo
+          ? await query.order('created_at', ascending: false)
+          : estremi != null
+              ? await query.order('date').order('time_start')
+              : await query.order('time_start');
       debugPrint('BOOKINGS RESULT count=${res.length}');
       setState(() {
         _bookingsWithDetails = List<Map<String, dynamic>>.from(res);
@@ -228,8 +324,8 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
     final selectedDate = ref.watch(selectedDateProvider);
     final dayLabel = DateFormat('EEEE d MMM yyyy', 'it_IT').format(selectedDate);
     final capitalDay = dayLabel[0].toUpperCase() + dayLabel.substring(1);
-    final total = _bookingsWithDetails.length;
-    final totalGuests = _bookingsWithDetails.fold<int>(0, (s, b) => s + ((b['party_size'] as int?) ?? 0));
+    final total = _visibili.length;
+    final totalGuests = _visibili.fold<int>(0, (s, b) => s + ((b['party_size'] as int?) ?? 0));
     final currentFilter = _statusOptions.firstWhere((s) => s['value'] == _statusFilter, orElse: () => _statusOptions[0]);
 
     return Scaffold(
@@ -330,17 +426,49 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(color: AppColors.accent.withValues(alpha: 0.35)),
                   ),
-                  child: const Row(mainAxisSize: MainAxisSize.min, children: [
-                    Icon(Icons.date_range_outlined, size: 13, color: AppColors.accent),
-                    SizedBox(width: 6),
-                    Text('Più giorni insieme — tocca per tornare alla giornata',
-                        style: TextStyle(
+                  child: Row(mainAxisSize: MainAxisSize.min, children: [
+                    Icon(_perArrivo ? Icons.inbox_outlined : Icons.date_range_outlined,
+                        size: 13, color: AppColors.accent),
+                    const SizedBox(width: 6),
+                    Text(
+                        _perArrivo
+                            ? 'Per ordine di arrivo — tocca per tornare alla giornata'
+                            : 'Più giorni insieme — tocca per tornare alla giornata',
+                        style: const TextStyle(
                             color: AppColors.accent, fontSize: 12, fontWeight: FontWeight.bold)),
-                    SizedBox(width: 4),
-                    Icon(Icons.close, size: 13, color: AppColors.accent),
+                    const SizedBox(width: 4),
+                    const Icon(Icons.close, size: 13, color: AppColors.accent),
                   ]),
                 ),
               ),
+              // Guardando gli arrivi si passa da oggi alla settimana senza
+              // tornare al pannello: il lunedi' mattina si rivede il weekend.
+              if (_perArrivo) ...[
+                const SizedBox(height: 6),
+                Row(children: [
+                  for (final v in const [('arrivate', 'Oggi'), ('arrivate7', 'Ultimi 7 giorni')])
+                    Padding(
+                      padding: const EdgeInsets.only(right: 8),
+                      child: ChoiceChip(
+                        label: Text(v.$2, style: const TextStyle(fontSize: 12)),
+                        selected: _periodo == v.$1,
+                        onSelected: (_) {
+                          setState(() => _periodo = v.$1);
+                          _loadBookings();
+                        },
+                        selectedColor: AppColors.accentLight,
+                        backgroundColor: AppColors.background,
+                        side: BorderSide(
+                            color: _periodo == v.$1 ? AppColors.accent : AppColors.divider),
+                        labelStyle: TextStyle(
+                          color: _periodo == v.$1 ? AppColors.accent : AppColors.textSecondary,
+                          fontWeight:
+                              _periodo == v.$1 ? FontWeight.bold : FontWeight.normal,
+                        ),
+                      ),
+                    ),
+                ]),
+              ],
             ],
             const SizedBox(height: 8),
             Row(children: [
@@ -364,20 +492,32 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
                 ),
               ),
               const SizedBox(width: 8),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                decoration: BoxDecoration(
-                  color: AppColors.background,
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: AppColors.divider),
+              GestureDetector(
+                onTap: () => _mostraFiltroTurno(context),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: AppColors.background,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                        color: _turnoFiltro == 'tutti' ? AppColors.divider : AppColors.accent),
+                  ),
+                  child: Row(mainAxisSize: MainAxisSize.min, children: [
+                    const Icon(Icons.schedule_outlined, color: AppColors.textPrimary, size: 14),
+                    const SizedBox(width: 6),
+                    Text(_etichettaTurnoFiltro,
+                        style: TextStyle(
+                            color: _turnoFiltro == 'tutti'
+                                ? AppColors.textPrimary
+                                : AppColors.accent,
+                            fontSize: 13,
+                            fontWeight: _turnoFiltro == 'tutti'
+                                ? FontWeight.normal
+                                : FontWeight.bold)),
+                    const SizedBox(width: 4),
+                    const Icon(Icons.arrow_drop_down, color: AppColors.textSecondary, size: 18),
+                  ]),
                 ),
-                child: const Row(mainAxisSize: MainAxisSize.min, children: [
-                  Icon(Icons.calendar_today_outlined, color: AppColors.textPrimary, size: 14),
-                  SizedBox(width: 6),
-                  Text('Tutto il giorno', style: TextStyle(color: AppColors.textPrimary, fontSize: 13)),
-                  SizedBox(width: 4),
-                  Icon(Icons.arrow_drop_down, color: AppColors.textSecondary, size: 18),
-                ]),
               ),
             ]),
             const SizedBox(height: 8),
@@ -434,7 +574,7 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
   Widget _corpoTabella(BuildContext context) {
     return _loading
               ? const Center(child: CircularProgressIndicator(color: AppColors.accent))
-              : _bookingsWithDetails.isEmpty
+              : _visibili.isEmpty
                   ? Center(
                       child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
                         Icon(Icons.event_busy, size: 64, color: AppColors.textMuted.withOpacity(0.3)),
@@ -443,10 +583,10 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
                       ]),
                     )
                   : ListView.separated(
-                      itemCount: _bookingsWithDetails.length,
+                      itemCount: _visibili.length,
                       separatorBuilder: (_, __) => const Divider(height: 1, color: AppColors.divider),
                       itemBuilder: (context, index) {
-                        final b = _bookingsWithDetails[index];
+                        final b = _visibili[index];
                         return _BookingRow(
                           // Senza chiave, aggiornando l'elenco Flutter puo'
                           // riusare la riga sbagliata per una prenotazione
@@ -454,6 +594,7 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
                           key: ValueKey(b['id']),
                           // Su piu' giorni la sola ora non basta a capire quando.
                           mostraData: _periodo != null,
+                          mostraArrivo: _perArrivo,
                           booking: b,
                           guestName: _guestName(b),
                           onTap: () => _showBookingDetail(context, b),
@@ -555,6 +696,10 @@ class _BookingRow extends StatelessWidget {
 
   final bool mostraData;
 
+  /// Quando guardiamo gli arrivi serve sapere quando la richiesta e' entrata,
+  /// non solo per quando e'.
+  final bool mostraArrivo;
+
   const _BookingRow({
     super.key,
     required this.booking,
@@ -563,6 +708,7 @@ class _BookingRow extends StatelessWidget {
     this.onStatusChange,
     this.onReject,
     this.mostraData = false,
+    this.mostraArrivo = false,
   });
 
   @override
@@ -586,6 +732,9 @@ class _BookingRow extends StatelessWidget {
     // l'area del tavolo non esiste: senza questa, la colonna diceva solo "—"
     // e la scelta del cliente non si vedeva da nessuna parte.
     final scelte = ScelteModulo.da(booking['internal_notes']);
+    // L'ora di arrivo arriva dal database in UTC: senza toLocal() sarebbe
+    // indietro di due ore e sembrerebbe sbagliata.
+    final arrivata = DateTime.tryParse((booking['created_at'] ?? '').toString())?.toLocal();
     final areaMostrata = areaName.isNotEmpty ? areaName : scelte.area;
 
     // Colonna Stato — estratta fuori dal GestureDetector del dettaglio
@@ -736,42 +885,57 @@ class _BookingRow extends StatelessWidget {
               Expanded(
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                  child: Row(children: [
-                    Flexible(
-                      child: Text(guestName,
-                          style: const TextStyle(
-                              color: AppColors.textPrimary,
-                              fontSize: 14,
-                              letterSpacing: 0.2,
-                              fontWeight: FontWeight.w700),
-                          overflow: TextOverflow.ellipsis),
-                    ),
-                    for (final e in etichette.take(3)) ...[
-                      const SizedBox(width: 6),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: AppColors.goldLight,
-                          borderRadius: BorderRadius.circular(4),
-                          border: Border.all(color: AppColors.gold.withValues(alpha: 0.45)),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Row(children: [
+                        Flexible(
+                          child: Text(guestName,
+                              style: const TextStyle(
+                                  color: AppColors.textPrimary,
+                                  fontSize: 14,
+                                  letterSpacing: 0.2,
+                                  fontWeight: FontWeight.w700),
+                              overflow: TextOverflow.ellipsis),
                         ),
-                        child: Text(e,
-                            style: const TextStyle(
-                                color: AppColors.goldDark,
-                                fontSize: 11,
-                                fontWeight: FontWeight.w700)),
-                      ),
+                        for (final e in etichette.take(3)) ...[
+                          const SizedBox(width: 6),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: AppColors.goldLight,
+                              borderRadius: BorderRadius.circular(4),
+                              border: Border.all(color: AppColors.gold.withValues(alpha: 0.45)),
+                            ),
+                            child: Text(e,
+                                style: const TextStyle(
+                                    color: AppColors.goldDark,
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w700)),
+                          ),
+                        ],
+                        // Gli altri si contano, per non spingere via il nome
+                        if (etichette.length > 3) ...[
+                          const SizedBox(width: 6),
+                          Text('+${etichette.length - 3}',
+                              style: const TextStyle(
+                                  color: AppColors.textSecondary,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w700)),
+                        ],
+                      ]),
+                      // Quando e' entrata la richiesta: guardando l'elenco per
+                      // ordine di arrivo e' il dato che conta.
+                      if (mostraArrivo && arrivata != null) ...[
+                        const SizedBox(height: 2),
+                        Text(
+                          'Arrivata ${DateFormat("d MMM 'alle' HH:mm", 'it_IT').format(arrivata)}',
+                          style: const TextStyle(color: AppColors.textMuted, fontSize: 11),
+                        ),
+                      ],
                     ],
-                    // Gli altri si contano, per non spingere via il nome
-                    if (etichette.length > 3) ...[
-                      const SizedBox(width: 6),
-                      Text('+${etichette.length - 3}',
-                          style: const TextStyle(
-                              color: AppColors.textSecondary,
-                              fontSize: 11,
-                              fontWeight: FontWeight.w700)),
-                    ],
-                  ]),
+                  ),
                 ),
               ),
               // Turno scelto nel modulo, per esteso

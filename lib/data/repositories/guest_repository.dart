@@ -25,6 +25,71 @@ class GuestRepository {
     return guests;
   }
 
+  /// Numero in formato internazionale, quando si capisce come.
+  ///
+  /// Senza questo, "3295631620" e "+393295631620" sono due clienti diversi per
+  /// il database, e ogni prenotazione presa dall'app creava un doppione.
+  static String? normalizzaTelefono(String? grezzo) {
+    final testo = (grezzo ?? '').trim();
+    if (testo.isEmpty) return null;
+    final cifre = testo.replaceAll(RegExp(r'\D'), '');
+    if (cifre.isEmpty) return null;
+    if (testo.startsWith('+')) return '+' + cifre;
+    if (cifre.startsWith('00')) return '+' + cifre.substring(2);
+    if (cifre.length == 10 && cifre.startsWith('3')) return '+39' + cifre;  // cellulare
+    if (cifre.startsWith('0') && cifre.length >= 9 && cifre.length <= 11) {
+      return '+39' + cifre;                                                 // fisso
+    }
+    return '+' + cifre;
+  }
+
+  /// Cerca il cliente prima di crearne uno nuovo.
+  ///
+  /// Confronta l'email e le ultime nove cifre del telefono: bastano a
+  /// riconoscere la stessa persona anche se il prefisso e' scritto in un altro
+  /// modo, e non sono cosi' poche da confondere due numeri diversi.
+  Future<(GuestModel, bool)> trovaOCrea({
+    required String name,
+    String? firstName,
+    String? surname,
+    String? email,
+    String? phone,
+  }) async {
+    final mail = email?.trim().toLowerCase();
+    final tel = normalizzaTelefono(phone);
+
+    if (mail != null && mail.isNotEmpty) {
+      final r = await _client
+          .from('guests')
+          .select()
+          .eq('restaurant_id', _restaurantId)
+          .eq('email', mail)
+          .limit(1);
+      if (r.isNotEmpty) return (GuestModel.fromJson(r.first), true);
+    }
+
+    if (tel != null) {
+      final cifre = tel.replaceAll(RegExp(r'\D'), '');
+      final ultime = cifre.length >= 9 ? cifre.substring(cifre.length - 9) : cifre;
+      final r = await _client
+          .from('guests')
+          .select()
+          .eq('restaurant_id', _restaurantId)
+          .ilike('phone', '%' + ultime)
+          .limit(1);
+      if (r.isNotEmpty) return (GuestModel.fromJson(r.first), true);
+    }
+
+    final creato = await createGuest(
+      name: name,
+      firstName: firstName,
+      surname: surname,
+      email: mail,
+      phone: tel,
+    );
+    return (creato, false);
+  }
+
   Future<GuestModel> createGuest({
     required String name,
     String? firstName,

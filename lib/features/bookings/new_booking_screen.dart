@@ -78,12 +78,24 @@ class _NewBookingScreenState extends ConsumerState<NewBookingScreen> {
       // Crea o recupera guest
       String guestId;
       if (_newGuest) {
-        final guest = await ref.read(guestRepositoryProvider).createGuest(
+        // Anche scegliendo "nuovo cliente" si guarda prima se esiste gia':
+        // creare una seconda scheda della stessa persona non e' mai quello
+        // che si vuole, e prima succedeva a ogni prenotazione presa qui.
+        final trovato = await ref.read(guestRepositoryProvider).trovaOCrea(
           name: '${_nameCtrl.text} ${_surnameCtrl.text}'.trim(),
+          firstName: _nameCtrl.text.trim().isEmpty ? null : _nameCtrl.text.trim(),
+          surname: _surnameCtrl.text.trim().isEmpty ? null : _surnameCtrl.text.trim(),
           phone: _phoneCtrl.text.isEmpty ? null : _phoneCtrl.text,
           email: _emailCtrl.text.isEmpty ? null : _emailCtrl.text,
         );
-        guestId = guest.id;
+        guestId = trovato.$1.id;
+        if (trovato.$2 && mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            backgroundColor: AppColors.gold,
+            content: Text('${trovato.$1.name} era gia in archivio: '
+                'la prenotazione e stata collegata alla sua scheda.'),
+          ));
+        }
       } else {
         guestId = _selectedGuestId!;
       }
