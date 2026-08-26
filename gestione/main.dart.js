@@ -70816,7 +70816,7 @@ n=(m==null?n.$ti.i("az.T").a(m):m)===B.dV}else n=!0
 if(n){n=A.uD(g,g,g,g,g,g,s,g,g,g,g,g,g,g)
 m=h.ghT()
 l=m.y
-k=A.cX((l==null?m.$ti.i("az.T").a(l):l)===B.c1?B.a3H:B.ko,g,g,g)
+k=A.cX((l==null?m.$ti.i("az.T").a(l):l)===B.c1?B.a3I:B.ko,g,g,g)
 m=h.ghT()
 l=m.y
 if((l==null?m.$ti.i("az.T").a(l):l)===B.c1){r=A.c0(a,B.a1,r)
@@ -114375,9 +114375,9 @@ XS(){$.ai.R8$.push(new A.aHb(this))},
 C(a){var s=this,r=null,q=t.p,p=A.a([],q),o=s.f
 if(o.length!==0)p.push(A.bb(r,r,r,B.a4Y,r,r,new A.aHg(s),r,r,r,"Ricomincia"))
 B.b.H(p,A.pt(a,r))
-p=A.hv(p,B.bV,r,r,r,new A.dr(new A.aHh(),r),B.auX,r,r)
+p=A.hv(p,B.bV,r,r,r,new A.dr(new A.aHh(),r),B.auY,r,r)
 return A.fh(p,B.a5,new A.hZ(A.at(A.a([A.aW(o.length===0?s.ahr():s.ajx(),1),s.ahp()],q),B.k,B.f,B.i),820,r),B.ew,r)},
-ahr(){var s,r,q=null,p=A.a([B.a4n,B.as,B.aup,B.ab,B.auV,B.dv],t.p)
+ahr(){var s,r,q=null,p=A.a([B.a4n,B.as,B.auq,B.ab,B.auW,B.dv],t.p)
 for(s=0;s<6;++s){r=B.a9s[s]
 p.push(new A.ap(B.Al,new A.vm(new A.aGU(this,r),q,q,q,A.qC(B.ev,q,q,q,q,q,q,q,q,B.P,q,q,B.Ar,q,q,B.bE,q,q,q,q),q,q,!1,q,!0,q,A.B(r,q,q,q,q,B.Va,q,q,q),q),q))}return A.hH(p,q,B.a26,q,!1)},
 ajx(){var s=this,r=s.f.length,q=s.r?1:0
@@ -114690,7 +114690,7 @@ B.b.H(k,A.a([B.lq,A.ae(p,A.aq(A.a([B.a5w,B.aX,A.aW(A.B(l,p,p,p,p,B.hZ,p,p,p),1)]
 l=A.nU(B.p,p,B.a1v)
 s=q.r
 r=s?p:q.galr()
-k.push(A.Fm(!1,s?B.tq:B.av2,B.j,p,B.a_,p,p,p,p,r,p,l))
+k.push(A.Fm(!1,s?B.tq:B.av3,B.j,p,B.a_,p,p,p,p,r,p,l))
 return A.fh(p,B.P,A.iX(!0,A.cj(A.fA(new A.dP(B.Xt,A.at(A.a([o,B.ab,n,B.jw,A.ae(p,A.VJ(p,A.at(k,B.cN,B.f,B.i),q.f),B.j,p,p,new A.av(B.h,p,p,m,p,p,B.v),p,p,p,B.a27,p,p,p),B.lr,A.B("Se non riesci a entrare, chiedi a un amministratore.",p,p,p,p,A.cg(p,p,B.h.kg(0.5),p,p,p,p,p,p,p,p,12,p,p,p,p,p,!0,p,p,p,p,p,p,p,p),B.bD,p,p)],j),B.k,B.f,B.am),p),p,B.x,B.kk,p,p,B.aj),p,p),B.U,!0),p,p)}}
 A.aQ2.prototype={
 $0(){var s=this.a
@@ -114730,7 +114730,7 @@ $1(a){return a.length===0?"Inserisci la password":null},
 $S:53}
 A.Ai.prototype={
 C(a){var s=null
-return A.fh(s,B.a5,A.cj(new A.ap(B.mw,A.at(A.a([B.a45,B.as,B.auR,B.ab,B.atS,B.dv,A.qB(B.a57,B.auZ,new A.aCq(),s)],t.p),B.k,B.f,B.am),s),s,s),s,s)}}
+return A.fh(s,B.a5,A.cj(new A.ap(B.mw,A.at(A.a([B.a45,B.as,B.auS,B.ab,B.atS,B.dv,A.qB(B.a57,B.av_,new A.aCq(),s)],t.p),B.k,B.f,B.am),s),s,s),s,s)}}
 A.aCq.prototype={
 $0(){return $.tg().vO()},
 $S:0}
@@ -114753,7 +114753,7 @@ s=j.an7(h)
 r=t.G.a(s.h(0,"color"))
 h=A.bb(i,i,i,B.BE,i,i,new A.aHM(a),i,i,i,i)
 q=t.p
-h=A.hv(A.a([A.bb(i,i,i,B.a5v,i,i,new A.aHN(),i,i,i,i),A.bb(i,i,i,B.a4S,i,i,new A.aHO(j,a),i,i,i,i)],q),B.bV,i,i,i,h,B.av5,i,i)
+h=A.hv(A.a([A.bb(i,i,i,B.a5v,i,i,new A.aHN(),i,i,i,i),A.bb(i,i,i,B.a4S,i,i,new A.aHO(j,a),i,i,i,i)],q),B.bV,i,i,i,h,B.av6,i,i)
 p=A.au(16)
 o=A.a([new A.bZ(0,B.ar,A.ar(13,B.y.gl(0)>>>16&255,B.y.gl(0)>>>8&255,B.y.gl(0)&255),B.eJ,8)],t.V)
 n=A.ar(38,r.gl(0)>>>16&255,r.gl(0)>>>8&255,r.gl(0)&255)
@@ -114840,7 +114840,7 @@ $0(){return this.a.axO(this.b)},
 $S:0}
 A.aHH.prototype={
 $1(a){var s=null
-return A.at(A.a([B.a8,A.iT(!1,s,s,s,!0,s,s,!0,!1,B.a4e,s,s,new A.aHD(a),!1,s,s,s,s,s,B.aud,s,s),A.iT(!1,s,s,s,!0,s,s,!0,!1,B.a4b,s,s,new A.aHE(a),!1,s,s,s,s,s,B.auj,s,s),A.iT(!1,s,s,s,!0,s,s,!0,!1,B.a5n,s,s,new A.aHF(a),!1,s,s,s,s,s,B.auE,s,s),A.iT(!1,s,s,s,!0,s,s,!0,!1,B.BC,s,s,new A.aHG(a),!1,s,s,s,s,s,B.Vm,s,s),B.as],t.p),B.k,B.f,B.am)},
+return A.at(A.a([B.a8,A.iT(!1,s,s,s,!0,s,s,!0,!1,B.a4e,s,s,new A.aHD(a),!1,s,s,s,s,s,B.aud,s,s),A.iT(!1,s,s,s,!0,s,s,!0,!1,B.a4b,s,s,new A.aHE(a),!1,s,s,s,s,s,B.auk,s,s),A.iT(!1,s,s,s,!0,s,s,!0,!1,B.a5n,s,s,new A.aHF(a),!1,s,s,s,s,s,B.auF,s,s),A.iT(!1,s,s,s,!0,s,s,!0,!1,B.BC,s,s,new A.aHG(a),!1,s,s,s,s,s,B.Vm,s,s),B.as],t.p),B.k,B.f,B.am)},
 $S:689}
 A.aHD.prototype={
 $0(){A.b1(this.a,!1).bt(null)
@@ -115113,8 +115113,8 @@ i=A.au(12)
 h=A.cx(B.p.kg(0.35),1)
 g=a0.ax
 f=g!=="arrivate"
-e=A.cX(!f||g==="arrivate7"?B.a3F:B.a3B,B.p,a1,13)
-a3=A.a([B.dS,A.fr(!1,a3,!0,A.ae(a1,A.aq(A.a([e,B.dR,A.B(!f||g==="arrivate7"?"Per ordine di arrivo \u2014 tocca per tornare alla giornata":"Pi\xf9 giorni insieme \u2014 tocca per tornare alla giornata",a1,a1,a1,a1,B.apV,a1,a1,a1),B.cd,B.a4C],m),B.k,B.f,B.am,a1),B.j,a1,a1,new A.av(B.b1,a1,h,i,a1,a1,B.v),a1,a1,a1,B.Am,a1,a1,a1),a1,!0,a1,a1,a1,a1,a1,a1,a1,a1,a1,a1,a1,a0.gaz1(),a1,a1,a1,a1,a1,a1,a1)],m)
+e=A.cX(!f||g==="arrivate7"?B.a3G:B.a3B,B.p,a1,13)
+a3=A.a([B.dS,A.fr(!1,a3,!0,A.ae(a1,A.aq(A.a([e,B.dR,A.B(!f||g==="arrivate7"?"Per ordine di arrivo \u2014 tocca per tornare alla giornata":"Pi\xf9 giorni insieme \u2014 tocca per tornare alla giornata",a1,a1,a1,a1,B.apV,a1,a1,a1),B.cd,B.a4D],m),B.k,B.f,B.am,a1),B.j,a1,a1,new A.av(B.b1,a1,h,i,a1,a1,B.v),a1,a1,a1,B.Am,a1,a1,a1),a1,!0,a1,a1,a1,a1,a1,a1,a1,a1,a1,a1,a1,a0.gaz1(),a1,a1,a1,a1,a1,a1,a1)],m)
 i=a0.ax
 if(i==="arrivate"||i==="arrivate7"){i=A.a([],m)
 for(d=0;d<2;++d){c=B.a9l[d]
@@ -115623,7 +115623,7 @@ A.aI3.prototype={
 $0(){return this.a.db=!1},
 $S:0}
 A.aI1.prototype={
-$1(a){var s=null,r=this.a,q=A.a([A.iT(!1,s,s,s,!0,s,s,!0,!1,B.a4t,s,s,new A.aI_(r),!1,s,s,s,s,s,B.auQ,s,s)],t.p)
+$1(a){var s=null,r=this.a,q=A.a([A.iT(!1,s,s,s,!0,s,s,!0,!1,B.a4t,s,s,new A.aI_(r),!1,s,s,s,s,s,B.auR,s,s)],t.p)
 B.b.H(q,J.en(this.b,new A.aI0(r),t.o))
 return A.hH(q,s,B.cC,s,!0)},
 $S:256}
@@ -115696,7 +115696,7 @@ p=A.au(20)
 n=A.cx(B.p,1)
 m=h.cx
 l=h.CW
-r=A.ae(j,A.B(m>0?l+"  ("+m+" posti)":l,j,j,j,j,B.apW,j,j,j),B.j,j,j,new A.av(r,j,n,p,j,j,B.v),j,j,j,B.hj,j,j,j)}else r=B.auH
+r=A.ae(j,A.B(m>0?l+"  ("+m+" posti)":l,j,j,j,j,B.apW,j,j,j),B.j,j,j,new A.av(r,j,n,p,j,j,B.v),j,j,j,B.hj,j,j,j)}else r=B.auI
 o.push(A.cn(j,new A.kA("Tavolo",A.aq(A.a([A.aW(r,1),B.a4v],q),B.k,B.f,B.i,j),j),B.x,!1,j,j,j,j,j,j,j,j,j,j,j,j,j,j,j,j,j,j,h.gavm(),j,j,j,j,j,j,!1,B.a7))
 o.push(B.as)
 r=h.f
@@ -115732,7 +115732,7 @@ o.push(B.ct)
 g=A.aW(A.aE8(A.a([A.hH(o,b,B.At,j,!1),new A.y6(A.ba(J.C(h.a.c,"id")),j)],q),g),1)
 o=A.a([],q)
 if(J.d(J.C(h.a.c,"status"),"pending")){r=k.c
-B.b.H(o,A.a([A.aq(A.a([A.aW(A.b3M(B.Bv,B.atm,new A.aIk(h,r),A.iI(j,j,B.p,j,j,j,j,j,j,B.h,j,j,B.ke,j,j,j,j,j,j)),1),B.aX,A.aW(A.b3M(B.a5p,B.av0,new A.aIl(h,r),A.iI(j,j,B.p,j,j,j,j,j,j,B.h,j,j,B.ke,j,j,j,j,j,j)),1)],q),B.k,B.f,B.i,j),B.ab],q))}h=h.db?B.lX:new A.Bd(B.ho,h.gawz(),B.p,j)
+B.b.H(o,A.a([A.aq(A.a([A.aW(A.b3M(B.Bv,B.atm,new A.aIk(h,r),A.iI(j,j,B.p,j,j,j,j,j,j,B.h,j,j,B.ke,j,j,j,j,j,j)),1),B.aX,A.aW(A.b3M(B.a5p,B.av1,new A.aIl(h,r),A.iI(j,j,B.p,j,j,j,j,j,j,B.h,j,j,B.ke,j,j,j,j,j,j)),1)],q),B.k,B.f,B.i,j),B.ab],q))}h=h.db?B.lX:new A.Bd(B.ho,h.gawz(),B.p,j)
 o.push(A.aq(A.a([new A.Bd(B.mU,new A.aIm(),j,j),B.bo,new A.Bd(B.dk,new A.aIe(k.c),j,j),B.bo,h],q),B.k,B.fI,B.i,j))
 return A.at(A.a([i,s,g,A.ae(j,A.at(o,B.k,B.f,B.am),B.j,B.h,j,j,j,j,j,B.ki,j,j,j)],q),B.k,B.f,B.i)},
 $S:74}
@@ -115948,7 +115948,7 @@ n=s.e
 n===$&&A.b()
 o=A.ae(r,A.at(A.a([B.ahM,A.fW(!0,B.be,!1,r,!0,B.A,r,A.hu(),n,r,r,r,r,r,2,B.a5Z,B.x,!0,r,!0,r,!1,r,B.bq,r,r,r,r,r,r,r,4,r,r,!1,"\u2022",r,r,r,r,r,!1,r,!1,r,!0,r,B.bm,r,r,B.bl,B.bh,r,r,r,r,r,r,B.jz,B.ai,r,B.bL,r,r,r,r)],m),B.L,B.f,B.i),B.j,r,r,new A.av(r,r,q,o,r,r,B.v),r,r,r,r,r,r,r)
 q=s.f?r:s.gajq()
-return A.fh(r,B.a5,A.iX(!0,new A.ap(B.kk,A.at(A.a([B.auD,B.a8,B.at2,B.jw,p,B.as,o,B.cJ,A.aq(A.a([A.b3M(B.a59,B.auO,q,A.iI(r,r,B.p,r,r,r,r,r,r,B.h,r,r,B.a29,r,new A.cz(A.au(8),B.z),r,r,r,r)),B.xt,A.dI(!1,B.av_,r,r,B.a_,r,r,r,r,new A.aT8(a),r,r)],m),B.k,B.f,B.i,r)],m),B.L,B.f,B.i),r),B.U,!0),r,r)}}
+return A.fh(r,B.a5,A.iX(!0,new A.ap(B.kk,A.at(A.a([B.auE,B.a8,B.at2,B.jw,p,B.as,o,B.cJ,A.aq(A.a([A.b3M(B.a59,B.auP,q,A.iI(r,r,B.p,r,r,r,r,r,r,B.h,r,r,B.a29,r,new A.cz(A.au(8),B.z),r,r,r,r)),B.xt,A.dI(!1,B.av0,r,r,B.a_,r,r,r,r,new A.aT8(a),r,r)],m),B.k,B.f,B.i,r)],m),B.L,B.f,B.i),r),B.U,!0),r,r)}}
 A.aT5.prototype={
 $1(a){return a.a===this.a},
 $S:708}
@@ -116875,7 +116875,7 @@ return A.u($async$$1,r)},
 $S:724}
 A.xM.prototype={
 vh(a,b){var s=null
-return A.fh(A.hv(A.Z(A.pt(a,s),!0,t.o),B.bV,s,s,s,new A.dr(new A.ahP(),s),B.auW,s,s),B.a5,B.a_L,B.ew,A.Vz(B.p,B.mX,!1,new A.ahQ(a)))}}
+return A.fh(A.hv(A.Z(A.pt(a,s),!0,t.o),B.bV,s,s,s,new A.dr(new A.ahP(),s),B.auX,s,s),B.a5,B.a_L,B.ew,A.Vz(B.p,B.mX,!1,new A.ahQ(a)))}}
 A.ahP.prototype={
 $1(a){var s=null
 return A.bb(s,s,s,B.fa,s,s,new A.ahO(a),s,s,s,s)},
@@ -116929,7 +116929,7 @@ A.b1(q,!1).hN()
 s=A.cF("yyyy-MM-dd",null).ct(this.b)
 r=r.c
 r.toString
-A.q7(r,"/floor-plan/"+s,t.X)},
+A.q7(r,"/bookings?date="+s,t.X)},
 $S:0}
 A.ahH.prototype={
 $0(){var s=this.a.gd2().dE(0,$.QR().gix(),t.a_),r=this.b
@@ -117092,7 +117092,7 @@ if(j.d)k=B.Ur
 else k=A.cX(r?B.Bm:B.hp,i,i,18)
 h=A.bt(A.am1(k,A.B(r?"Riapri le prenotazioni online":"Chiudi le prenotazioni online",i,i,i,i,i,i,i,i),m,h),i,1/0)
 m=A.qC(i,i,i,i,i,i,i,i,i,B.P,i,i,B.cB,i,i,B.bE,i,i,i,i)
-return A.iX(!0,new A.ap(B.mv,A.at(A.a([o,B.as,n,B.aY,l,B.a8,p,B.lr,h,B.ab,A.bt(A.qB(B.a4F,B.av8,j.a.e,m),i,1/0)],t.p),B.L,B.f,B.am),i),B.U,!0)}}
+return A.iX(!0,new A.ap(B.mv,A.at(A.a([o,B.as,n,B.aY,l,B.a8,p,B.lr,h,B.ab,A.bt(A.qB(B.a4x,B.aue,j.a.e,m),i,1/0)],t.p),B.L,B.f,B.am),i),B.U,!0)}}
 A.aUZ.prototype={
 $0(){return this.a.d=!0},
 $S:0}
@@ -117310,7 +117310,7 @@ p=A.ae(n,A.at(A.a([j,B.as,A.aq(A.a([r,q,A.aW(A.at(A.a([s?B.Up:A.B(""+o.f,n,n,n,n
 return A.fr(!1,A.au(16),!0,p,n,!0,n,n,n,n,n,n,n,n,n,n,n,o.w,n,n,n,n,n,n,n)}}
 A.a63.prototype={
 C(a){var s=null,r=A.au(16),q=this.c,p=q>0,o=A.cx(p?B.p:B.S,1),n=A.a([new A.bZ(0,B.ar,A.ar(10,B.y.gl(0)>>>16&255,B.y.gl(0)>>>8&255,B.y.gl(0)&255),B.eJ,6)],t.V),m=p?B.b1:B.a5,l=A.au(12),k=t.p
-l=A.a([A.ae(s,A.cX(B.a3v,p?B.p:B.w,s,24),B.j,s,s,new A.av(m,s,s,l,s,s,B.v),s,48,s,s,s,s,48),B.xt,A.aW(A.at(A.a([B.auI,B.bx,A.B("Prenotazioni web senza tavolo",s,s,s,s,B.b3,s,s,s)],k),B.L,B.f,B.i),1)],k)
+l=A.a([A.ae(s,A.cX(B.a3v,p?B.p:B.w,s,24),B.j,s,s,new A.av(m,s,s,l,s,s,B.v),s,48,s,s,s,s,48),B.xt,A.aW(A.at(A.a([B.auJ,B.bx,A.B("Prenotazioni web senza tavolo",s,s,s,s,B.b3,s,s,s)],k),B.L,B.f,B.i),1)],k)
 if(this.d)l.push(B.ami)
 else{m=A.B(""+q,s,s,s,s,A.cg(s,s,p?B.p:B.w,s,s,s,s,s,s,s,s,28,s,s,B.I,s,s,!0,s,s,s,s,s,s,s,s),s,s,s)
 l.push(A.at(A.a([m,A.B(q===1?"prenotazione":"prenotazioni",s,s,s,s,B.aK,s,s,s)],k),B.eA,B.f,B.i))}return A.ae(s,A.aq(l,B.k,B.f,B.i,s),B.j,s,s,new A.av(B.h,s,o,r,n,s,B.v),s,s,s,B.b7,s,s,s)}}
@@ -117427,10 +117427,10 @@ l=i.w
 if(new A.an(l,A.b6u(),A.a_(l).i("an<1>")).gu(0)>0){l=i.w
 if(new A.an(l,A.b6u(),A.a_(l).i("an<1>")).gu(0)===1)l="Un tavolo non \xe8 ancora al suo posto"
 else{l=i.w
-l=""+new A.an(l,A.b6u(),A.a_(l).i("an<1>")).gu(0)+" tavoli non sono ancora al loro posto"}m.push(A.ae(h,A.aq(A.a([B.a4B,B.aX,A.aW(A.B(l,h,h,h,h,B.apX,h,h,h),1),A.cn(h,A.ae(h,B.auq,B.j,h,h,new A.av(B.p,h,h,A.au(12),h,h,B.v),h,h,h,B.hj,h,h,h),B.x,!1,h,h,h,h,h,h,h,h,h,h,h,h,h,h,h,h,h,h,i.galW(),h,h,h,h,h,h,!1,B.a7)],g),B.k,B.f,B.i,h),B.j,B.b1,h,h,h,h,h,B.kh,h,h,h))}if(i.y.length!==0){l=A.ar(38,B.a9.gl(0)>>>16&255,B.a9.gl(0)>>>8&255,B.a9.gl(0)&255)
+l=""+new A.an(l,A.b6u(),A.a_(l).i("an<1>")).gu(0)+" tavoli non sono ancora al loro posto"}m.push(A.ae(h,A.aq(A.a([B.a4C,B.aX,A.aW(A.B(l,h,h,h,h,B.apX,h,h,h),1),A.cn(h,A.ae(h,B.aur,B.j,h,h,new A.av(B.p,h,h,A.au(12),h,h,B.v),h,h,h,B.hj,h,h,h),B.x,!1,h,h,h,h,h,h,h,h,h,h,h,h,h,h,h,h,h,h,i.galW(),h,h,h,h,h,h,!1,B.a7)],g),B.k,B.f,B.i,h),B.j,B.b1,h,h,h,h,h,B.kh,h,h,h))}if(i.y.length!==0){l=A.ar(38,B.a9.gl(0)>>>16&255,B.a9.gl(0)>>>8&255,B.a9.gl(0)&255)
 k=i.y.length
 j=k===1?"e":"i"
-m.push(A.ae(h,A.aq(A.a([B.a5o,B.aX,A.aW(A.B(""+k+" prenotazion"+j+" in attesa",h,h,h,h,B.arS,h,h,h),1),A.cn(h,A.ae(h,B.avf,B.j,h,h,new A.av(B.a9,h,h,A.au(12),h,h,B.v),h,h,h,B.hj,h,h,h),B.x,!1,h,h,h,h,h,h,h,h,h,h,h,h,h,h,h,h,h,h,new A.aNC(i),h,h,h,h,h,h,!1,B.a7)],g),B.k,B.f,B.i,h),B.j,l,h,h,h,h,h,B.kh,h,h,h))}l=i.w.length===0?A.cj(A.at(A.a([A.cX(B.a40,A.ar(B.d.aT(76.5),B.w.gl(0)>>>16&255,B.w.gl(0)>>>8&255,B.w.gl(0)&255),h,64),B.a8,B.auF,B.ab,A.dI(!1,B.atp,h,h,B.a_,h,h,h,h,new A.aND(),h,h)],g),B.k,B.cb,B.i),h,h):i.ahK()
+m.push(A.ae(h,A.aq(A.a([B.a5o,B.aX,A.aW(A.B(""+k+" prenotazion"+j+" in attesa",h,h,h,h,B.arS,h,h,h),1),A.cn(h,A.ae(h,B.avf,B.j,h,h,new A.av(B.a9,h,h,A.au(12),h,h,B.v),h,h,h,B.hj,h,h,h),B.x,!1,h,h,h,h,h,h,h,h,h,h,h,h,h,h,h,h,h,h,new A.aNC(i),h,h,h,h,h,h,!1,B.a7)],g),B.k,B.f,B.i,h),B.j,l,h,h,h,h,h,B.kh,h,h,h))}l=i.w.length===0?A.cj(A.at(A.a([A.cX(B.a40,A.ar(B.d.aT(76.5),B.w.gl(0)>>>16&255,B.w.gl(0)>>>8&255,B.w.gl(0)&255),h,64),B.a8,B.auG,B.ab,A.dI(!1,B.atp,h,h,B.a_,h,h,h,h,new A.aND(),h,h)],g),B.k,B.cb,B.i),h,h):i.ahK()
 m.push(A.aW(A.fB(B.bS,A.a([new A.G1(l,3,0.5,i.ax,h),A.or(h,A.at(A.a([new A.Pq(B.iE,new A.aNE(i),h),B.bx,new A.Pq(B.a3q,new A.aNF(i),h)],g),B.k,B.f,B.i),h,h,h,16,16,h)],g),B.A,B.bC,h),1))
 m=A.at(m,B.k,B.f,B.i)
 g=m}return A.fh(f,B.a5,new A.ap(B.e4,A.ae(h,g,B.c4,h,h,new A.av(B.h,h,n,o,h,h,B.v),h,h,h,h,h,h,h),h),B.ew,A.Vz(B.p,B.mX,!1,new A.aNx(a)))},
@@ -118098,7 +118098,7 @@ m=a.r
 m===$&&A.b()
 l=A.au(8)
 l=A.ae(d,B.at8,B.j,d,d,new A.av(B.a5,d,A.cx(B.S,1),l,d,d,B.v),d,d,d,B.f6,d,d,1/0)
-k=A.aq(A.a([A.b50(B.p,d,d,!1,B.x,d,d,d,d,d,d,new A.aXy(a),d,d,d,d,d,d,d,d,a.CW),B.aX,B.auu],q),B.k,B.f,B.i,d)
+k=A.aq(A.a([A.b50(B.p,d,d,!1,B.x,d,d,d,d,d,d,new A.aXy(a),d,d,d,d,d,d,d,d,a.CW),B.aX,B.auv],q),B.k,B.f,B.i,d)
 j=A.aq(A.a([B.a2v,B.BL],q),B.k,B.f,B.i,d)
 i=A.aq(A.a([A.aW(new A.dr(new A.aXz(a),d),1),B.BL,A.bb(d,d,d,B.ku,d,d,new A.aXA(a),d,d,d,d),A.bb(d,d,d,B.kv,d,d,new A.aXB(a),d,d,d,d)],q),B.k,B.f,B.i,d)
 h=a.ax
@@ -118107,7 +118107,7 @@ g=t.N
 h=A.nK(B.h,d,!0,B.a9C,new A.aXC(a),d,d,B.d_,h,g)
 f=a.ay
 f===$&&A.b()
-B.b.H(r,A.a([new A.wJ("Nome (o trova per nome, telefono, email)",p,d,d,d),B.ab,new A.wJ("Telefono",o,"Italy (+39)",B.jx,d),B.ab,new A.wJ("E-mail",n,d,B.fT,d),B.ab,new A.wJ("COGNOME",m,d,d,d),B.as,new A.KH(d),B.ab,l,B.as,B.atR,B.bx,k,B.ab,B.bN,new A.lW("Orari di apertura",j,d),B.bN,new A.lW("Durata",i,d),B.bN,new A.lW("Stato",h,d),B.bN,new A.lW("Sorgente",A.nK(B.h,d,!0,B.a8B,new A.aXq(a),d,d,B.d_,f,g),d),B.bN,new A.ap(B.hi,A.at(A.a([B.av4,B.ab,A.aq(A.a([B.a4H,B.aX,A.B("Mostra",d,d,d,d,A.cg(d,d,B.zw,d,d,d,d,d,d,d,d,14,d,d,d,d,d,!0,d,d,d,d,d,d,d,d),d,d,d)],q),B.k,B.f,B.i,d)],q),B.L,B.f,B.i),d),B.ct],q))
+B.b.H(r,A.a([new A.wJ("Nome (o trova per nome, telefono, email)",p,d,d,d),B.ab,new A.wJ("Telefono",o,"Italy (+39)",B.jx,d),B.ab,new A.wJ("E-mail",n,d,B.fT,d),B.ab,new A.wJ("COGNOME",m,d,d,d),B.as,new A.KH(d),B.ab,l,B.as,B.atR,B.bx,k,B.ab,B.bN,new A.lW("Orari di apertura",j,d),B.bN,new A.lW("Durata",i,d),B.bN,new A.lW("Stato",h,d),B.bN,new A.lW("Sorgente",A.nK(B.h,d,!0,B.a8B,new A.aXq(a),d,d,B.d_,f,g),d),B.bN,new A.ap(B.hi,A.at(A.a([B.av5,B.ab,A.aq(A.a([B.a4H,B.aX,A.B("Mostra",d,d,d,d,A.cg(d,d,B.zw,d,d,d,d,d,d,d,d,14,d,d,d,d,d,!0,d,d,d,d,d,d,d,d),d,d,d)],q),B.k,B.f,B.i,d)],q),B.L,B.f,B.i),d),B.ct],q))
 r=A.hH(r,a2,B.At,d,!1)
 p=a.a.e
 a0=A.aW(A.aE8(A.a([r,p==null?B.Zt:new A.y6(A.ba(J.C(p,"id")),d)],q),a0),1)
@@ -118282,7 +118282,7 @@ m=A.aq(A.a([A.aW(A.B(q.length===0?"Ospite":q,j,j,j,j,B.fU,j,j,j),1)],n),B.k,B.f,
 l=A.aq(A.a([B.a49,B.cd,A.B(p,j,j,j,j,B.b3,j,j,j),B.bo,B.a4P,B.cd,A.B(A.i(o)+" persone",j,j,j,j,B.b3,j,j,j)],n),B.k,B.f,B.i,j)
 k=f.h(g,i)
 k=(k==null?j:J.C(k,"name"))!=null?"Tavolo "+A.i(J.C(f.h(g,i),"name"))+"  ("+A.i(J.C(f.h(g,i),"capacity"))+" posti)":"Nessun tavolo assegnato"
-return A.ae(j,A.at(A.a([m,B.bx,l,B.bx,A.aq(A.a([B.a4A,B.cd,A.B(k,j,j,j,j,A.cg(j,j,f.h(g,i)!=null?B.p:B.a9,j,j,j,j,j,j,j,j,13,j,j,B.b8,j,j,!0,j,j,j,j,j,j,j,j),j,j,j)],n),B.k,B.f,B.i,j),B.aY,A.aq(A.a([A.aW(A.mq(!1,B.auo,j,j,B.a_,j,j,j,j,new A.amg(h,g),j,A.iI(j,j,B.p,j,j,j,j,j,j,j,j,j,B.cC,j,j,j,j,j,j)),1),B.aX,A.aW(A.mq(!1,B.auP,j,j,B.a_,j,j,j,j,new A.amh(h,g),j,A.iI(j,j,B.cc,j,j,j,j,j,j,j,j,j,B.cC,j,j,j,j,j,j)),1)],n),B.k,B.f,B.i,j)],n),B.L,B.f,B.i),B.j,j,j,new A.av(B.a5,j,r,s,j,j,B.v),j,j,B.Al,B.b7,j,j,j)},
+return A.ae(j,A.at(A.a([m,B.bx,l,B.bx,A.aq(A.a([B.a4B,B.cd,A.B(k,j,j,j,j,A.cg(j,j,f.h(g,i)!=null?B.p:B.a9,j,j,j,j,j,j,j,j,13,j,j,B.b8,j,j,!0,j,j,j,j,j,j,j,j),j,j,j)],n),B.k,B.f,B.i,j),B.aY,A.aq(A.a([A.aW(A.mq(!1,B.aup,j,j,B.a_,j,j,j,j,new A.amg(h,g),j,A.iI(j,j,B.p,j,j,j,j,j,j,j,j,j,B.cC,j,j,j,j,j,j)),1),B.aX,A.aW(A.mq(!1,B.auQ,j,j,B.a_,j,j,j,j,new A.amh(h,g),j,A.iI(j,j,B.cc,j,j,j,j,j,j,j,j,j,B.cC,j,j,j,j,j,j)),1)],n),B.k,B.f,B.i,j)],n),B.L,B.f,B.i),B.j,j,j,new A.av(B.a5,j,r,s,j,j,B.v),j,j,B.Al,B.b7,j,j,j)},
 $S:742}
 A.amg.prototype={
 $0(){var s=this.a,r=s.c
@@ -118428,7 +118428,7 @@ case 2:return A.r(o,r)}})
 return A.u($async$F5,r)},
 C(a){var s,r,q,p=this,o=null,n=t.p,m=A.a([A.cj(A.ae(o,o,B.j,o,o,new A.av(B.S,o,o,A.au(2),o,o,B.v),o,4,o,o,o,o,40),o,o),B.as,B.avk,B.ab],n)
 if(p.x!=null)B.b.H(m,p.auM())
-else{s=A.a([B.auk,B.as,A.b51(B.aR,B.U,new A.aUW(p),B.atk,B.asD,p.d),A.b51(B.aR,B.U,new A.aUX(p),B.au5,B.atg,p.e)],n)
+else{s=A.a([B.aul,B.as,A.b51(B.aR,B.U,new A.aUW(p),B.atk,B.asD,p.d),A.b51(B.aR,B.U,new A.aUX(p),B.au5,B.atg,p.e)],n)
 if(p.d)s.push(A.qB(B.a50,A.B("Aggiunti dal "+A.cF("d MMMM yyyy","it_IT").ct(p.f),o,o,o,o,o,o,o,o),new A.aUY(p,a),o))
 r=p.w
 if(r!=null){q=A.au(8)
@@ -118448,7 +118448,7 @@ r=A.a([A.B(""+q.y+" contatti scaricati",p,p,p,p,B.aoC,p,p,p)],s)
 if(o.length!==0)r.push(A.B("Esclusi: "+B.b.cl(o,", "),p,p,p,p,B.aK,p,p,p))
 o=A.ae(p,A.aq(A.a([B.a5c,B.fR,A.aW(A.at(r,B.L,B.f,B.i),1)],s),B.k,B.f,B.i,p),B.j,p,p,new A.av(B.m7,p,p,n,p,p,B.v),p,p,p,B.f6,p,p,p)
 n=A.au(10)
-n=A.a([o,B.as,B.av1,B.dS,B.aur,B.lq,A.ae(p,B.aun,B.j,p,p,new A.av(B.ey,p,A.cx(B.a9.kg(0.4),1),n,p,p,B.v),p,p,p,B.e4,p,p,p)],s)
+n=A.a([o,B.as,B.av2,B.dS,B.aus,B.lq,A.ae(p,B.auo,B.j,p,p,new A.av(B.ey,p,A.cx(B.a9.kg(0.4),1),n,p,p,B.v),p,p,p,B.e4,p,p,p)],s)
 o=q.w
 if(o!=null){r=A.au(8)
 B.b.H(n,A.a([B.a8,A.ae(p,A.B(o,p,p,p,p,B.hZ,p,p,p),B.j,p,p,new A.av(B.b1,p,p,r,p,p,B.v),p,p,p,B.kf,p,p,p)],s))}n.push(B.ct)
@@ -118647,7 +118647,7 @@ if(o!=null)B.b.H(p,A.a([B.a5k,B.fS,A.B(o,h,h,h,h,B.b3,h,h,h),B.dR,A.cn(h,A.ae(h,
 o=g.f
 if(o!=null)B.b.H(p,A.a([B.a48,B.fS,new A.ew(1,B.bO,A.B(o,h,B.aT,h,h,B.b3,h,h,h),h)],r))
 q=A.aW(A.at(A.a([q,B.bx,A.aq(p,B.k,B.f,B.i,h)],r),B.L,B.f,B.i),1)
-p=A.a([A.B(""+g.y,h,h,h,h,B.apU,h,h,h),B.av6],r)
+p=A.a([A.B(""+g.y,h,h,h,h,B.apU,h,h,h),B.av7],r)
 if(f.length!==0){o=A.a([],r)
 for(n=A.f0(f,0,A.jZ(3,"count",t.S),A.a_(f).c),m=n.$ti,n=new A.bD(n,n.gu(0),m.i("bD<aF.E>")),m=m.i("aF.E");n.q();){l=n.d
 if(l==null)l=m.a(l)
@@ -118675,7 +118675,7 @@ A.wz.prototype={
 Z(){var s=$.ab()
 return new A.a4n(new A.bO(B.aA,s),new A.bO(B.aA,s),new A.bO(B.aA,s),new A.bO(B.aA,s),new A.bO(B.aA,s),A.aU(t.N))}}
 A.a4n.prototype={
-C(a){var s,r,q,p,o,n,m,l=this,k=null,j=A.aE(a,k,t.l).w,i=t.p,h=A.aq(A.a([B.aus,B.cJ,A.bb(k,k,k,B.BM,k,k,new A.aGh(a),k,k,k,k)],i),B.k,B.f,B.i,k),g=l.XW(l.d,"Nome *",B.dl),f=l.XW(l.e,"Cognome",B.dl),e=l.XX(l.f,"Telefono",B.f9,B.jx),d=l.XX(l.r,"Email",B.hs,B.fT),c=l.anf(l.w,"Note",B.ks,2),b=A.a([],i)
+C(a){var s,r,q,p,o,n,m,l=this,k=null,j=A.aE(a,k,t.l).w,i=t.p,h=A.aq(A.a([B.aut,B.cJ,A.bb(k,k,k,B.BM,k,k,new A.aGh(a),k,k,k,k)],i),B.k,B.f,B.i,k),g=l.XW(l.d,"Nome *",B.dl),f=l.XW(l.e,"Cognome",B.dl),e=l.XX(l.f,"Telefono",B.f9,B.jx),d=l.XX(l.r,"Email",B.hs,B.fT),c=l.anf(l.w,"Note",B.ks,2),b=A.a([],i)
 for(s=["vip","regular","no_show","allergie","compleanno"],r=l.x,q=0;q<5;++q){p=s[q]
 o=A.B(p,k,k,k,k,k,k,k,k)
 n=r.n(0,p)
@@ -118836,10 +118836,10 @@ xY(a){var s=null,r=this.c
 if(r==null)return
 r.U(t.J).f.ej(A.eL(s,s,s,B.p,s,B.A,s,A.B(a,s,s,s,s,s,s,s,s),s,B.br,s,s,s,s,s,s,s,s,s))},
 C(a){var s,r,q=this,p=null,o=q.a.d,n=o.x,m=B.b.n(n,"vip"),l=A.bb(p,p,p,B.BE,p,p,new A.aOF(a),p,p,p,p),k=A.B(q.a.d.c,p,p,p,p,B.Vf,p,p,p),j=t.p
-k=A.hv(A.a([A.bb(p,p,p,B.a5e,p,p,q.gamj(),p,p,p,"Etichette"),A.bb(p,p,p,B.a4y,p,p,new A.aOG(q,a),p,p,p,"Modifica"),A.bb(p,p,p,B.a51,p,p,q.gali(),p,p,p,"Elimina"),A.bb(p,p,p,B.a4D,p,p,new A.aOH(a),p,p,p,"Chiudi")],j),B.bV,p,p,p,l,k,p,p)
+k=A.hv(A.a([A.bb(p,p,p,B.a5e,p,p,q.gamj(),p,p,p,"Etichette"),A.bb(p,p,p,B.a4z,p,p,new A.aOG(q,a),p,p,p,"Modifica"),A.bb(p,p,p,B.a51,p,p,q.gali(),p,p,p,"Elimina"),A.bb(p,p,p,B.a4E,p,p,new A.aOH(a),p,p,p,"Chiudi")],j),B.bV,p,p,p,l,k,p,p)
 l=o.c
 s=A.a([new A.LT(l,80,m,p),B.a8],j)
-if(m)s.push(A.ae(p,B.auv,B.j,p,p,new A.av(B.a9,p,p,A.au(8),p,p,B.v),p,p,p,B.Az,p,p,p))
+if(m)s.push(A.ae(p,B.auw,B.j,p,p,new A.av(B.a9,p,p,A.au(8),p,p,B.v),p,p,p,B.Az,p,p,p))
 s=A.cj(A.at(s,B.k,B.f,B.i),p,p)
 r=o.d
 l=A.a([new A.wQ(B.dl,"Nome",r==null?l:r,p)],j)
@@ -118942,7 +118942,7 @@ $1(a){var s,r,q,p=null,o=this.a,n=a.x,m=A.ae(p,p,B.j,p,p,new A.av(o.Nq(n),p,p,p,
 l=A.B(""+A.bJ(l)+"/"+A.aQ(l)+"/"+A.aK(l)+" alle "+B.c.O(a.f,0,5),p,p,p,p,B.tB,p,p,p)
 s=t.p
 r=A.a([B.a4K,B.fS,A.B(""+a.w+" persone",p,p,p,p,B.aK,p,p,p)],s)
-if(a.d!=null)B.b.H(r,A.a([B.aX,B.a4z,B.fS,A.B("Tavolo",p,p,p,p,B.aK,p,p,p)],s))
+if(a.d!=null)B.b.H(r,A.a([B.aX,B.a4A,B.fS,A.B("Tavolo",p,p,p,p,B.aK,p,p,p)],s))
 q=a.y
 if(q!=null)B.b.H(r,A.a([B.aX,B.a5m,B.fS,new A.ew(1,B.bO,A.B(q,p,B.aT,p,p,B.aK,p,p,p),p)],s))
 l=A.aW(A.at(A.a([l,B.cI,A.aq(r,B.k,B.f,B.i,p)],s),B.L,B.f,B.i),1)
@@ -118993,7 +118993,7 @@ return A.u($async$$0,r)},
 $S:4}
 A.aOD.prototype={
 $1(a){var s=null,r=A.B('Eliminare "'+this.a.c+'"?',s,s,s,s,s,s,s,s)
-return A.pA(A.a([A.dI(!1,B.eQ,s,s,B.a_,s,s,s,s,new A.aOA(a),s,s),A.dI(!1,B.xS,s,s,B.a_,s,s,s,s,new A.aOB(a),s,s)],t.p),s,r,B.aul)},
+return A.pA(A.a([A.dI(!1,B.eQ,s,s,B.a_,s,s,s,s,new A.aOA(a),s,s),A.dI(!1,B.xS,s,s,B.a_,s,s,s,s,new A.aOB(a),s,s)],t.p),s,r,B.aum)},
 $S:70}
 A.aOA.prototype={
 $0(){A.b1(this.a,!1).bt(!1)
@@ -119008,14 +119008,14 @@ $1(a){var s=this
 return new A.oI(new A.aOy(s.a,s.b,s.c,s.d,s.e,s.f,s.r,s.w),null)},
 $S:158}
 A.aOy.prototype={
-$2(a4,a5){var s,r,q,p,o,n,m=this,l=null,k=A.aE(a4,l,t.l).w,j=t.p,i=A.aq(A.a([B.auz,B.cJ,A.bb(l,l,l,B.BM,l,l,new A.aOr(a4),l,l,l,l)],j),B.k,B.f,B.i,l),h=m.a,g=m.b,f=h.Vb(g,"Nome *",B.dl),e=m.c,d=h.Vb(e,"Cognome",B.dl),c=m.d,b=h.Vc(c,"Telefono",B.f9,B.jx),a=m.e,a0=h.Vc(a,"Email",B.hs,B.fT),a1=m.f,a2=h.ahI(a1,"Note",B.ks,2),a3=A.a([],j)
+$2(a4,a5){var s,r,q,p,o,n,m=this,l=null,k=A.aE(a4,l,t.l).w,j=t.p,i=A.aq(A.a([B.auA,B.cJ,A.bb(l,l,l,B.BM,l,l,new A.aOr(a4),l,l,l,l)],j),B.k,B.f,B.i,l),h=m.a,g=m.b,f=h.Vb(g,"Nome *",B.dl),e=m.c,d=h.Vb(e,"Cognome",B.dl),c=m.d,b=h.Vc(c,"Telefono",B.f9,B.jx),a=m.e,a0=h.Vc(a,"Email",B.hs,B.fT),a1=m.f,a2=h.ahI(a1,"Note",B.ks,2),a3=A.a([],j)
 for(s=m.r,r=0;r<5;++r){q=B.It[r]
 p=A.B(q,l,l,l,l,l,l,l,l)
 o=s.n(0,q)
 n=s.n(0,q)?B.p:B.w
 a3.push(A.am2(B.p,p,new A.o(!0,n,l,l,l,l,l,l,l,l,l,l,l,l,l,l,l,l,l,l,l,l,l,l,l,l),new A.aOs(a5,s,q),o,B.b1))}for(p=s.gap(0),o=new A.ku(p,new A.aOt());o.q();){n=p.gL(0)
 a3.push(new A.S6(A.B(n,l,l,l,l,l,l,l,l),B.arm,B.ey,new A.aOu(a5,s,n),B.a9,l))}p=m.w
-return new A.ap(new A.a3(0,0,0,k.f.d),A.fA(A.at(A.a([i,B.as,f,B.aY,d,B.aY,b,B.aY,a0,B.aY,a2,B.as,B.Vn,B.ab,A.kv(B.cf,a3,4,8),B.aY,A.aq(A.a([A.aW(A.fW(!0,B.be,!1,l,!0,B.A,l,A.hu(),p,l,l,l,l,l,2,A.ju(l,new A.dv(4,A.au(12),B.bE),l,B.hi,l,l,l,l,!0,new A.dv(4,A.au(12),B.bE),l,l,l,l,l,B.a5,!0,l,l,l,l,new A.dv(4,A.au(12),B.im),l,l,l,l,l,l,l,B.xP,"Nuovo tag personalizzato...",l,l,l,l,l,l,l,l,l,!0,l,B.a4f,l,l,l,l,l,l,l,l,l,l,l),B.x,!0,l,!0,l,!1,l,B.bq,l,l,l,l,l,l,l,1,l,l,!1,"\u2022",l,l,l,new A.aOv(a5,s,p),l,!1,l,!1,l,!0,l,B.bm,l,l,B.bl,B.bh,l,l,l,l,l,l,l,B.ai,l,B.bL,l,B.lw,l,l),1),B.aX,A.mq(!1,B.Vs,l,l,B.a_,l,l,l,l,new A.aOw(p,a5,s),l,A.iI(l,l,B.p,l,l,l,l,l,l,B.h,l,l,B.iu,l,new A.cz(A.au(12),B.z),l,l,l,l))],j),B.k,B.f,B.i,l),B.ct,A.bt(A.mq(!1,B.auG,l,l,B.a_,l,l,l,l,new A.aOx(h,g,e,c,a,a1,s,a4),l,A.iI(l,l,B.p,l,l,l,l,l,l,B.h,l,l,B.cB,l,new A.cz(A.au(12),B.z),l,l,l,l)),l,1/0)],j),B.L,B.f,B.am),l,B.x,B.bm,l,l,B.aj),l)},
+return new A.ap(new A.a3(0,0,0,k.f.d),A.fA(A.at(A.a([i,B.as,f,B.aY,d,B.aY,b,B.aY,a0,B.aY,a2,B.as,B.Vn,B.ab,A.kv(B.cf,a3,4,8),B.aY,A.aq(A.a([A.aW(A.fW(!0,B.be,!1,l,!0,B.A,l,A.hu(),p,l,l,l,l,l,2,A.ju(l,new A.dv(4,A.au(12),B.bE),l,B.hi,l,l,l,l,!0,new A.dv(4,A.au(12),B.bE),l,l,l,l,l,B.a5,!0,l,l,l,l,new A.dv(4,A.au(12),B.im),l,l,l,l,l,l,l,B.xP,"Nuovo tag personalizzato...",l,l,l,l,l,l,l,l,l,!0,l,B.a4f,l,l,l,l,l,l,l,l,l,l,l),B.x,!0,l,!0,l,!1,l,B.bq,l,l,l,l,l,l,l,1,l,l,!1,"\u2022",l,l,l,new A.aOv(a5,s,p),l,!1,l,!1,l,!0,l,B.bm,l,l,B.bl,B.bh,l,l,l,l,l,l,l,B.ai,l,B.bL,l,B.lw,l,l),1),B.aX,A.mq(!1,B.Vs,l,l,B.a_,l,l,l,l,new A.aOw(p,a5,s),l,A.iI(l,l,B.p,l,l,l,l,l,l,B.h,l,l,B.iu,l,new A.cz(A.au(12),B.z),l,l,l,l))],j),B.k,B.f,B.i,l),B.ct,A.bt(A.mq(!1,B.auH,l,l,B.a_,l,l,l,l,new A.aOx(h,g,e,c,a,a1,s,a4),l,A.iI(l,l,B.p,l,l,l,l,l,l,B.h,l,l,B.cB,l,new A.cz(A.au(12),B.z),l,l,l,l)),l,1/0)],j),B.L,B.f,B.am),l,B.x,B.bm,l,l,B.aj),l)},
 $S:756}
 A.aOr.prototype={
 $0(){A.b1(this.a,!1).bt(null)
@@ -119092,7 +119092,7 @@ B.b.H(p,this.d)
 return A.ae(s,A.at(p,B.L,B.f,B.i),B.j,s,s,new A.av(B.h,s,s,r,q,s,B.v),s,s,s,s,s,s,s)}}
 A.a9g.prototype={
 C(a){var s=null
-return new A.ap(B.kh,A.aq(A.a([B.a5l,B.bo,B.auN,B.cJ,A.B(this.c,s,s,s,s,B.tB,s,s,s),B.bo,A.cn(s,A.ae(s,B.a5u,B.j,s,s,new A.av(B.zB,s,s,A.au(8),s,s,B.v),s,s,s,B.Ay,s,s,s),B.x,!1,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,new A.aSl(this),s,s,s,s,s,s,!1,B.a7)],t.p),B.k,B.f,B.i,s),s)}}
+return new A.ap(B.kh,A.aq(A.a([B.a5l,B.bo,B.auO,B.cJ,A.B(this.c,s,s,s,s,B.tB,s,s,s),B.bo,A.cn(s,A.ae(s,B.a5u,B.j,s,s,new A.av(B.zB,s,s,A.au(8),s,s,B.v),s,s,s,B.Ay,s,s,s),B.x,!1,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,new A.aSl(this),s,s,s,s,s,s,!1,B.a7)],t.p),B.k,B.f,B.i,s),s)}}
 A.aSl.prototype={
 $0(){return A.b1A(A.cJ(A.beV(this.a.c),0,null),B.BW)},
 $S:0}
@@ -119594,7 +119594,7 @@ if(o.length===0)k.push(B.ahI)
 else B.b.H(k,new A.a7(o,new A.aS1(n,a),A.a_(o).i("a7<1,e>")))
 k.push(B.cj)
 k.push(new A.ap(B.e4,A.bt(A.qB(B.vA,B.atQ,new A.aS2(n,a),A.qC(m,m,m,m,m,m,m,m,m,m,m,m,B.ke,m,m,B.bE,m,m,m,m)),m,1/0),m))
-k=A.hH(A.a([B.av7,B.ab,B.auT,B.ct,s,B.dv,B.avd,B.a8,A.ae(m,A.at(k,B.k,B.f,B.i),B.j,m,m,new A.av(B.h,m,p,r,m,m,B.v),m,m,m,m,m,m,m),B.jw],q),m,B.b7,m,!1)}return A.fh(l,B.a5,new A.hZ(k,900,m),m,m)},
+k=A.hH(A.a([B.av8,B.ab,B.auU,B.ct,s,B.dv,B.avd,B.a8,A.ae(m,A.at(k,B.k,B.f,B.i),B.j,m,m,new A.av(B.h,m,p,r,m,m,B.v),m,m,m,m,m,m,m),B.jw],q),m,B.b7,m,!1)}return A.fh(l,B.a5,new A.hZ(k,900,m),m,m)},
 Fb(a,b,c){A.ht(B.h,new A.aRT(this,b,c,a),a,!0,B.fN,!1,t.z)},
 axT(a,b){return this.Fb(a,null,b)},
 axR(a){return this.Fb(a,null,!1)},
@@ -119820,7 +119820,7 @@ p=j.d
 B.b.H(r,A.a([B.a8,l,B.ab,B.atH,B.as,A.ae(i,A.at(A.a([B.asW,B.ab,A.B(p,i,i,i,i,B.apY,i,i,i),B.bx,A.B("Gli ospiti che prenotano alle "+p+" ceneranno per 2:00 e usciranno all'orario di chiusura.",i,i,i,i,B.aK,i,i,i),B.a8,A.b3h(A.au(4),A.bax(A.ar(102,B.cc.gl(0)>>>16&255,B.cc.gl(0)>>>8&255,B.cc.gl(0)&255),8,0.85,B.Wv),B.c4),B.bx,A.aq(A.a([A.B(g.w,i,i,i,i,B.fV,i,i,i),A.B(p,i,i,i,i,B.fV,i,i,i),A.B(g.x,i,i,i,i,B.fV,i,i,i)],f),B.k,B.l4,B.i,i)],f),B.L,B.f,B.i),B.j,i,i,new A.av(B.a5,i,m,k,i,i,B.v),i,i,i,B.b7,i,i,i),B.as,new A.lX("Titolo",A.fW(!0,B.be,!1,i,!0,B.A,i,A.hu(),g.as,i,i,i,i,i,2,B.vE,B.x,!0,i,!0,i,!1,i,B.bq,i,i,i,i,i,i,i,1,i,i,!1,"\u2022",i,i,i,i,i,!1,i,!1,i,!0,i,B.bm,i,i,B.bl,B.bh,i,i,i,i,i,i,B.aE,B.ai,i,B.bL,i,i,i,i),i),B.ato,B.a8,new A.lX("Note",A.fW(!0,B.be,!1,i,!0,B.A,i,A.hu(),g.at,i,i,i,i,i,2,B.vE,B.x,!0,i,!0,i,!1,i,B.bq,i,i,i,i,i,i,i,3,i,i,!1,"\u2022",i,i,i,i,i,!1,i,!1,i,!0,i,B.bm,i,i,B.bl,B.bh,i,i,i,i,i,i,B.aE,B.ai,i,B.bL,i,i,i,i),i)],f))}d=A.aW(A.aE8(A.a([A.hH(r,b,B.b7,i,!1),A.hH(A.a([B.avj,B.as,new A.lX("Minimo persone per prenotazione",A.aq(A.a([A.aW(A.B(""+g.z,i,i,i,i,B.db,i,i,i),1),A.bb(i,i,i,B.Br,i,i,new A.aRK(g),i,i,i,i),A.bb(i,i,i,B.BK,i,i,new A.aRL(g),i,i,i,i)],f),B.k,B.f,B.i,i),i),B.a8,new A.lX("Massimo persone per prenotazione",A.aq(A.a([A.aW(A.B(""+g.Q,i,i,i,i,B.db,i,i,i),1),A.bb(i,i,i,B.Br,i,i,new A.aRM(g),i,i,i,i),A.bb(i,i,i,B.BK,i,i,new A.aRN(g),i,i,i,i)],f),B.k,B.f,B.i,i),i)],f),i,B.b7,i,!1),B.Zq,B.Zw],f),d),1)
 r=g.ax?i:g.gauo()
 q=A.iI(i,i,B.p,i,i,i,i,i,i,i,i,i,B.cB,i,i,i,i,i,i)
-return A.at(A.a([h,new A.ap(B.eB,e,i),s,d,A.ae(i,A.aq(A.a([A.aW(A.mq(!1,g.ax?B.zi:B.atb,i,i,B.a_,i,i,i,i,r,i,q),1),B.bo,A.aW(A.bbc(!1,B.aue,i,i,B.a_,i,i,i,i,new A.aRF(j.c),i,A.qC(i,i,i,i,i,i,i,i,i,i,i,i,B.cB,i,i,B.bE,i,i,i,i)),1)],f),B.k,B.f,B.i,i),B.j,B.h,i,i,i,i,i,B.ki,i,i,i)],f),B.k,B.f,B.i)},
+return A.at(A.a([h,new A.ap(B.eB,e,i),s,d,A.ae(i,A.aq(A.a([A.aW(A.mq(!1,g.ax?B.zi:B.atb,i,i,B.a_,i,i,i,i,r,i,q),1),B.bo,A.aW(A.bbc(!1,B.auf,i,i,B.a_,i,i,i,i,new A.aRF(j.c),i,A.qC(i,i,i,i,i,i,i,i,i,i,i,i,B.cB,i,i,B.bE,i,i,i,i)),1)],f),B.k,B.f,B.i,i),B.j,B.h,i,i,i,i,i,B.ki,i,i,i)],f),B.k,B.f,B.i)},
 $S:74}
 A.aRC.prototype={
 $0(){var s=0,r=A.v(t.H),q=this,p,o,n,m
@@ -120051,7 +120051,7 @@ return A.u($async$EZ,r)},
 C(a){var s,r,q,p=this,o=null,n=A.bb(o,o,o,B.vC,o,o,new A.aUl(a),o,o,o,o),m=p.f,l=m?o:p.ga_G(),k=t.p
 n=A.hv(A.a([A.dI(!1,m?B.Uq:B.Vp,o,o,B.a_,o,o,o,o,l,o,o)],k),B.bV,o,o,o,n,B.avl,o,o)
 if(p.e)m=B.di
-else{m=A.cj(A.at(A.a([A.ae(o,B.Zu,B.j,o,o,new A.av(B.p,o,o,A.au(50),o,o,B.v),o,100,o,o,o,o,100),B.ab,A.b56(B.a4x,B.asV,new A.aUm(),o,A.lL(o,o,o,o,o,o,o,o,o,B.w,o,o,o,o,o,o,o,o,o,o))],k),B.k,B.f,B.i),o,o)
+else{m=A.cj(A.at(A.a([A.ae(o,B.Zu,B.j,o,o,new A.av(B.p,o,o,A.au(50),o,o,B.v),o,100,o,o,o,o,100),B.ab,A.b56(B.a4y,B.asV,new A.aUm(),o,A.lL(o,o,o,o,o,o,o,o,o,B.w,o,o,o,o,o,o,o,o,o,o))],k),B.k,B.f,B.i),o,o)
 l=A.au(8)
 s=A.au(8)
 r=A.cx(B.S,1)
@@ -120066,7 +120066,7 @@ r=A.cx(B.S,1)
 s=A.ae(o,A.fW(!0,B.be,!1,o,!0,B.A,o,A.hu(),p.as,o,o,o,o,o,2,B.a5Y,B.x,!0,o,!0,o,!1,o,B.bq,o,o,o,o,o,o,o,5,o,o,!1,"\u2022",o,o,o,o,o,!1,o,!1,o,!0,o,B.bm,o,o,B.bl,B.bh,o,o,o,o,o,o,B.hY,B.ai,o,B.bL,o,o,o,o),B.j,o,o,new A.av(B.h,o,r,s,o,o,B.v),o,o,o,B.e4,o,o,o)
 r=p.f?o:p.ga_G()
 q=A.iI(o,o,B.p,o,o,o,o,o,o,o,o,o,B.cB,o,new A.cz(A.au(12),B.z),o,o,o,o)
-m=A.hH(A.a([m,B.dv,B.aAH,B.a8,new A.pe("Nome ristorante",p.r,B.vx,o,o),B.aY,new A.pe("Indirizzo",p.w,B.a3L,o,o),B.aY,new A.pe("Citt\xe0",p.x,B.a3K,o,o),B.aY,new A.pe("Telefono",p.y,B.f9,B.jx,o),B.aY,new A.pe("Email",p.z,B.hs,B.fT,o),B.aY,new A.pe("Sito web",p.Q,B.a3I,B.anv,o),B.dv,B.aAI,B.ab,B.au6,B.a8,l,B.dv,B.aAE,B.ab,B.avg,B.a8,s,B.jw,A.bt(A.mq(!1,p.f?B.zi:B.aux,o,o,B.a_,o,o,o,o,r,o,q),o,1/0),B.jw],k),o,B.b7,o,!1)}return A.fh(n,B.a5,new A.hZ(m,820,o),o,o)}}
+m=A.hH(A.a([m,B.dv,B.aAH,B.a8,new A.pe("Nome ristorante",p.r,B.vx,o,o),B.aY,new A.pe("Indirizzo",p.w,B.a3L,o,o),B.aY,new A.pe("Citt\xe0",p.x,B.a3K,o,o),B.aY,new A.pe("Telefono",p.y,B.f9,B.jx,o),B.aY,new A.pe("Email",p.z,B.hs,B.fT,o),B.aY,new A.pe("Sito web",p.Q,B.a3J,B.anv,o),B.dv,B.aAI,B.ab,B.au6,B.a8,l,B.dv,B.aAE,B.ab,B.avg,B.a8,s,B.jw,A.bt(A.mq(!1,p.f?B.zi:B.auy,o,o,B.a_,o,o,o,o,r,o,q),o,1/0),B.jw],k),o,B.b7,o,!1)}return A.fh(n,B.a5,new A.hZ(m,820,o),o,o)}}
 A.aUf.prototype={
 $0(){return this.a.e=!0},
 $S:0}
@@ -120114,7 +120114,7 @@ $0(){return A.iY(this.a).ne()},
 $S:0}
 A.aCD.prototype={
 $2(a,b){var s=null,r=A.bvU(b.b),q=t.p
-return new A.hZ(A.hH(A.a([B.aAG,B.a8,A.ba_(0.85,A.a([new A.m0(B.ko,"Orari di apertura",u.Y,!1,s,new A.aCt(a),s),new A.m0(B.mV,"Tavoli","Imposta e gestisci le modalit\xe0 di prenotazione dei tavoli e delle aree del tuo ristorante.",!1,s,new A.aCu(a),s),new A.m0(B.a3z,"Link e widget","Ottieni e gestisci il tuo link e widget di prenotazione online.",!1,s,new A.aCv(),s),new A.m0(B.a3N,"Disegno","Modifica i colori, i caratteri e il layout del widget del flusso di prenotazione.",!0,"Aggiungi su. \u20ac7.99/mm",new A.aCw(),s)],q),r,12,12,B.OT,!0),B.dv,B.aAF,B.a8,A.ba_(0.85,A.a([new A.m0(B.vx,"Profilo ristorante","Modifica le informazioni del tuo ristorante visibili agli ospiti.",!1,s,new A.aCx(a),s),new A.m0(B.hq,"Team","Gestisci i membri del team e i loro permessi.",!1,s,new A.aCy(a),s),new A.m0(B.Bn,"Notifiche","Configura le notifiche per il personale e gli ospiti.",!1,s,new A.aCz(),s),new A.m0(B.a3G,"Integrazioni","Connetti il tuo ristorante con altri servizi.",!1,s,new A.aCA(),s)],q),r,12,12,B.OT,!0),B.jw],q),s,B.b7,s,!1),1040,s)},
+return new A.hZ(A.hH(A.a([B.aAG,B.a8,A.ba_(0.85,A.a([new A.m0(B.ko,"Orari di apertura",u.Y,!1,s,new A.aCt(a),s),new A.m0(B.mV,"Tavoli","Imposta e gestisci le modalit\xe0 di prenotazione dei tavoli e delle aree del tuo ristorante.",!1,s,new A.aCu(a),s),new A.m0(B.a3z,"Link e widget","Ottieni e gestisci il tuo link e widget di prenotazione online.",!1,s,new A.aCv(),s),new A.m0(B.a3N,"Disegno","Modifica i colori, i caratteri e il layout del widget del flusso di prenotazione.",!0,"Aggiungi su. \u20ac7.99/mm",new A.aCw(),s)],q),r,12,12,B.OT,!0),B.dv,B.aAF,B.a8,A.ba_(0.85,A.a([new A.m0(B.vx,"Profilo ristorante","Modifica le informazioni del tuo ristorante visibili agli ospiti.",!1,s,new A.aCx(a),s),new A.m0(B.hq,"Team","Gestisci i membri del team e i loro permessi.",!1,s,new A.aCy(a),s),new A.m0(B.Bn,"Notifiche","Configura le notifiche per il personale e gli ospiti.",!1,s,new A.aCz(),s),new A.m0(B.a3H,"Integrazioni","Connetti il tuo ristorante con altri servizi.",!1,s,new A.aCA(),s)],q),r,12,12,B.OT,!0),B.jw],q),s,B.b7,s,!1),1040,s)},
 $S:765}
 A.aCt.prototype={
 $0(){return A.q7(this.a,"/settings/opening-hours",t.X)},
@@ -120316,7 +120316,7 @@ case 3:return A.t(null,r)}})
 return A.u($async$yh,r)},
 C(a){var s,r,q=this,p=null,o=A.bb(p,p,p,B.vC,p,p,new A.aYf(a),p,p,p,p),n=A.Z(A.pt(a,p),!0,t.o),m=q.e
 m===$&&A.b()
-o=A.hv(n,B.bV,A.aE6(m,B.p,B.p,B.aqB,B.aaf,B.w),p,p,o,B.aut,p,p)
+o=A.hv(n,B.bV,A.aE6(m,B.p,B.p,B.aqB,B.aaf,B.w),p,p,o,B.auu,p,p)
 if(q.w)n=B.di
 else{n=q.e
 m=t.p
@@ -120408,7 +120408,7 @@ $S:158}
 A.aY3.prototype={
 $2(a,b){var s=this,r=null,q=s.a,p=q.a,o=t.p
 p=A.fA(A.at(A.a([new A.p4("Nome tavolo",s.b,!1,r),B.ab,new A.p4("Posti max",s.c,!0,r),B.ab,new A.p4("Posti min",s.d,!0,r),B.a8,A.kv(B.cf,A.a([A.tM(r,B.Vo,r,new A.aXZ(q,b),p==="square",r,r),A.tM(r,B.Vt,r,new A.aY_(q,b),p==="round",r,r),A.tM(r,B.Vj,r,new A.aY0(q,b),p==="rectangle",r,r)],o),0,8)],o),B.k,B.f,B.am),r,B.x,r,r,r,B.aj)
-return A.pA(A.a([A.dI(!1,B.eQ,r,r,B.a_,r,r,r,r,new A.aY1(a),r,r),A.mq(!1,B.atD,r,r,B.a_,r,r,r,r,new A.aY2(a),r,A.iI(r,r,B.p,r,r,r,r,r,r,r,r,r,r,r,r,r,r,r,r))],o),B.h,p,B.auL)},
+return A.pA(A.a([A.dI(!1,B.eQ,r,r,B.a_,r,r,r,r,new A.aY1(a),r,r),A.mq(!1,B.atD,r,r,B.a_,r,r,r,r,new A.aY2(a),r,A.iI(r,r,B.p,r,r,r,r,r,r,r,r,r,r,r,r,r,r,r,r))],o),B.h,p,B.auM)},
 $S:273}
 A.aXZ.prototype={
 $1(a){return this.b.$1(new A.aXY(this.a))},
@@ -120500,7 +120500,7 @@ if(s==null)s=1
 r=n.h(o,"shape")
 if(r==null)r="square"
 q=t.p
-return new A.ap(B.b7,A.aq(A.a([A.aW(A.at(A.a([A.B(J.a1(n.h(o,"name")),p,p,p,p,B.fU,p,p,p),B.bx,A.aq(A.a([B.aug,A.B(A.i(s)+" - "+A.i(m),p,p,p,p,B.b3,p,p,p)],q),B.k,B.f,B.i,p),B.cI,A.aq(A.a([B.auK,A.B(r,p,p,p,p,B.b3,p,p,p)],q),B.k,B.f,B.i,p),B.cI,B.at5],q),B.L,B.f,B.i),1),A.at(A.a([A.bb(p,p,p,B.vB,p,p,this.d,p,p,p,p),A.bb(p,p,p,B.BG,p,p,this.e,p,p,p,p)],q),B.k,B.f,B.i)],q),B.L,B.f,B.i,p),p)}}
+return new A.ap(B.b7,A.aq(A.a([A.aW(A.at(A.a([A.B(J.a1(n.h(o,"name")),p,p,p,p,B.fU,p,p,p),B.bx,A.aq(A.a([B.auh,A.B(A.i(s)+" - "+A.i(m),p,p,p,p,B.b3,p,p,p)],q),B.k,B.f,B.i,p),B.cI,A.aq(A.a([B.auL,A.B(r,p,p,p,p,B.b3,p,p,p)],q),B.k,B.f,B.i,p),B.cI,B.at5],q),B.L,B.f,B.i),1),A.at(A.a([A.bb(p,p,p,B.vB,p,p,this.d,p,p,p,p),A.bb(p,p,p,B.BG,p,p,this.e,p,p,p,p)],q),B.k,B.f,B.i)],q),B.L,B.f,B.i,p),p)}}
 A.wR.prototype={
 C(a){var s=null,r=A.B(this.c,s,s,s,s,B.aE,s,s,s),q=A.fW(!0,B.be,!0,s,!0,B.A,s,A.hu(),this.e,s,s,s,s,s,2,A.ju(s,s,s,s,s,s,s,s,!0,B.VQ,s,s,s,s,s,s,s,s,s,s,s,B.VP,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,B.b_,this.d,!0,s,s,s,s,s,s,s,s,s,s,s,s,s),B.x,!0,s,!0,s,!1,s,B.bq,s,s,s,s,s,s,s,1,s,s,!1,"\u2022",s,s,s,s,s,!1,s,!1,s,!0,s,B.bm,s,s,B.bl,B.bh,s,s,s,s,s,s,B.aE,B.ai,s,B.bL,s,s,s,s)
 return A.pA(A.a([A.dI(!1,B.eQ,s,s,B.a_,s,s,s,s,new A.aPy(a),s,s),A.mq(!1,B.Vq,s,s,B.a_,s,s,s,s,new A.aPz(a),s,A.iI(s,s,B.p,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s))],t.p),B.h,q,r)}}
@@ -120985,7 +120985,7 @@ C(a){var s=null,r=$.tg().b,q=new A.agv(r),p=t.p,o=A.a([A.ae(s,A.at(A.a([A.aq(A.a
 if(q.$1("dashboard"))B.b.H(o,A.a([new A.jX(B.a3A,"Pannello di controllo",new A.agl(a),s),B.Af],p))
 if(q.$1("calendar"))o.push(new A.jX(B.Bp,"Calendario",new A.agm(a),s))
 if(q.$1("reservations"))o.push(new A.jX(B.a3W,"Programma",new A.agn(a),s))
-if(q.$1("bookings"))o.push(new A.jX(B.a3J,"Elenco",new A.ago(a),s))
+if(q.$1("bookings"))o.push(new A.jX(B.Bl,"Elenco",new A.ago(a),s))
 if(q.$1("floor_plan"))o.push(new A.jX(B.kt,"Planimetria",new A.agp(a),s))
 o.push(B.Af)
 if(q.$1("guests"))o.push(new A.jX(B.hq,"Clienti",new A.agq(a),s))
@@ -128161,8 +128161,8 @@ B.Zl=new A.xM(null)
 B.Zp=new A.tH(null,null,null,null,null,null,null)
 B.w=new A.N(1,0.3333333333333333,0.3333333333333333,0.3333333333333333,B.o)
 B.b_=new A.o(!0,B.w,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null)
-B.auJ=new A.Y("Limiti \u2014 in costruzione",null,B.b_,null,null,null,null,null,null,null,null)
-B.Zq=new A.eu(B.aq,null,null,B.auJ,null)
+B.auK=new A.Y("Limiti \u2014 in costruzione",null,B.b_,null,null,null,null,null,null,null,null)
+B.Zq=new A.eu(B.aq,null,null,B.auK,null)
 B.asB=new A.Y("Combinazioni \u2014 in costruzione",null,B.b_,null,null,null,null,null,null,null,null)
 B.Zr=new A.eu(B.aq,null,null,B.asB,null)
 B.atI=new A.Y("Planimetria editor \u2014 in costruzione",null,B.b_,null,null,null,null,null,null,null,null)
@@ -128170,13 +128170,13 @@ B.Zs=new A.eu(B.aq,null,null,B.atI,null)
 B.kk=new A.a3(24,24,24,24)
 B.ah=new A.N(1,0.6,0.6,0.6,B.o)
 B.i0=new A.o(!0,B.ah,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null)
-B.auC=new A.Y("Nessuna prenotazione selezionata.",null,B.i0,null,null,null,null,null,null,null,null)
-B.ahG=new A.ap(B.kk,B.auC,null)
+B.auD=new A.Y("Nessuna prenotazione selezionata.",null,B.i0,null,null,null,null,null,null,null,null)
+B.ahG=new A.ap(B.kk,B.auD,null)
 B.Zt=new A.eu(B.aq,null,null,B.ahG,null)
 B.I=new A.i5(6,700)
 B.aoR=new A.o(!0,B.h,null,null,null,null,28,B.I,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null)
-B.aui=new A.Y("HIO",null,B.aoR,null,null,null,null,null,null,null,null)
-B.Zu=new A.eu(B.aq,null,null,B.aui,null)
+B.auj=new A.Y("HIO",null,B.aoR,null,null,null,null,null,null,null,null)
+B.Zu=new A.eu(B.aq,null,null,B.auj,null)
 B.apG=new A.o(!0,B.ah,null,null,null,null,14,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null)
 B.Vl=new A.Y("\u2014",null,B.apG,null,null,null,null,null,null,null,null)
 B.Zv=new A.eu(B.aq,null,null,B.Vl,null)
@@ -128218,8 +128218,8 @@ B.dl=new A.aJ(58519,"MaterialIcons",null,!1)
 B.a4q=new A.aC(B.dl,20,B.ez,null,null)
 B.ZH=new A.nA(B.a4q,B.ey,null,null)
 B.Bk=new A.aJ(61487,"MaterialIcons",null,!1)
-B.a4E=new A.aC(B.Bk,20,B.p,null,null)
-B.ZI=new A.nA(B.a4E,B.b1,null,null)
+B.a4F=new A.aC(B.Bk,20,B.p,null,null)
+B.ZI=new A.nA(B.a4F,B.b1,null,null)
 B.hb=new A.fa(0,B.z)
 B.zi=new A.jh(4,0,null,null,null,B.h,null,null,null,null)
 B.uC=new A.Ee(null)
@@ -128674,8 +128674,8 @@ B.atJ=new A.Y("Orario",null,B.b3,null,null,null,null,null,null,null,null)
 B.AE=new A.eU(1,B.ck,B.atJ,null)
 B.azH=new A.a7B(null)
 B.AF=new A.eU(1,B.ck,B.azH,null)
-B.auB=new A.Y("Giorno",null,B.b3,null,null,null,null,null,null,null,null)
-B.AG=new A.eU(1,B.ck,B.auB,null)
+B.auC=new A.Y("Giorno",null,B.b3,null,null,null,null,null,null,null,null)
+B.AG=new A.eU(1,B.ck,B.auC,null)
 B.jz=new A.o(!0,B.P,null,null,null,null,15,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null)
 B.au3=new A.Y("Chiuso",null,B.jz,null,null,null,null,null,null,null,null)
 B.a2w=new A.eU(1,B.ck,B.au3,null)
@@ -128836,11 +128836,11 @@ B.a3A=new A.aJ(61345,"MaterialIcons",null,!1)
 B.a3B=new A.aJ(61349,"MaterialIcons",null,!1)
 B.hr=new A.aJ(61453,"MaterialIcons",null,!1)
 B.hs=new A.aJ(61464,"MaterialIcons",null,!1)
-B.a3F=new A.aJ(61734,"MaterialIcons",null,!1)
-B.a3G=new A.aJ(61747,"MaterialIcons",null,!1)
-B.a3H=new A.aJ(61764,"MaterialIcons",null,!1)
-B.a3I=new A.aJ(61775,"MaterialIcons",null,!1)
-B.a3J=new A.aJ(61804,"MaterialIcons",null,!0)
+B.a3G=new A.aJ(61734,"MaterialIcons",null,!1)
+B.a3H=new A.aJ(61747,"MaterialIcons",null,!1)
+B.a3I=new A.aJ(61764,"MaterialIcons",null,!1)
+B.a3J=new A.aJ(61775,"MaterialIcons",null,!1)
+B.Bl=new A.aJ(61804,"MaterialIcons",null,!0)
 B.a3K=new A.aJ(61840,"MaterialIcons",null,!1)
 B.a3L=new A.aJ(61843,"MaterialIcons",null,!1)
 B.Bm=new A.aJ(61846,"MaterialIcons",null,!1)
@@ -128921,21 +128921,21 @@ B.a3t=new A.aJ(58986,"MaterialIcons",null,!1)
 B.a4w=new A.aC(B.a3t,20,B.w,null,null)
 B.BC=new A.aC(B.vw,null,B.p,null,null)
 B.a3x=new A.aJ(61214,"MaterialIcons",null,!1)
-B.a4x=new A.aC(B.a3x,16,null,null,null)
-B.a4y=new A.aC(B.hr,null,B.ad,null,null)
-B.a4z=new A.aC(B.kt,13,B.w,null,null)
-B.a4A=new A.aC(B.kt,14,B.w,null,null)
+B.a4y=new A.aC(B.a3x,16,null,null,null)
+B.a4x=new A.aC(B.Bl,18,null,null,null)
+B.a4z=new A.aC(B.hr,null,B.ad,null,null)
+B.a4A=new A.aC(B.kt,13,B.w,null,null)
+B.a4B=new A.aC(B.kt,14,B.w,null,null)
 B.BD=new A.aC(B.kr,18,B.w,null,null)
-B.Bl=new A.aJ(61655,"MaterialIcons",null,!1)
-B.a4B=new A.aC(B.Bl,18,B.p,null,null)
-B.a4C=new A.aC(B.dk,13,B.p,null,null)
-B.a4D=new A.aC(B.dk,null,B.ad,null,null)
+B.a3F=new A.aJ(61655,"MaterialIcons",null,!1)
+B.a4C=new A.aC(B.a3F,18,B.p,null,null)
+B.a4D=new A.aC(B.dk,13,B.p,null,null)
+B.a4E=new A.aC(B.dk,null,B.ad,null,null)
 B.BE=new A.aC(B.vq,null,B.h,null,null)
 B.BF=new A.aC(B.iG,null,B.P,null,null)
 B.kp=new A.aJ(57787,"MaterialIcons",null,!1)
 B.BH=new A.aC(B.kp,18,B.w,null,null)
 B.BG=new A.aC(B.kp,20,B.w,null,null)
-B.a4F=new A.aC(B.Bl,18,null,null,null)
 B.a4G=new A.aC(B.Bc,18,B.w,null,null)
 B.a3i=new A.aJ(58240,"MaterialIcons",null,!1)
 B.a4H=new A.aC(B.a3i,18,B.ah,null,null)
@@ -129438,8 +129438,8 @@ B.DP=A.a(s(["1-\u0448\u044b \u043a\u0432.","2-\u0433\u0456 \u043a\u0432.","3-\u0
 B.a89=A.a(s(["af","am","ar","as","az","be","bg","bn","bs","ca","cs","cy","da","de","el","en","es","et","eu","fa","fi","fil","fr","gl","gsw","gu","he","hi","hr","hu","hy","id","is","it","ja","ka","kk","km","kn","ko","ky","lo","lt","lv","mk","ml","mn","mr","ms","my","nb","ne","nl","no","or","pa","pl","pt","ro","ru","si","sk","sl","sq","sr","sv","sw","ta","te","th","tl","tr","uk","ur","uz","vi","zh","zu"]),t.s)
 B.DQ=A.a(s(["\u0458\u0430\u043d.","\u0444\u0435\u0432.","\u043c\u0430\u0440.","\u0430\u043f\u0440.","\u043c\u0430\u0458","\u0458\u0443\u043d.","\u0458\u0443\u043b.","\u0430\u0432\u0433.","\u0441\u0435\u043f\u0442.","\u043e\u043a\u0442.","\u043d\u043e\u0435\u043c.","\u0434\u0435\u043a."]),t.s)
 B.DR=A.a(s(["Ch1","Ch2","Ch3","Ch4"]),t.s)
-B.auM=new A.Y("Stato",null,B.b3,null,null,null,null,null,null,null,null)
-B.a2u=new A.eU(1,B.ck,B.auM,null)
+B.auN=new A.Y("Stato",null,B.b3,null,null,null,null,null,null,null,null)
+B.a2u=new A.eU(1,B.ck,B.auN,null)
 B.a8a=A.a(s([B.AG,B.a2u,B.AE]),t.p)
 B.DS=A.a(s(["\u0b92\u0ba9\u0bcd\u0bb1\u0bbe\u0bae\u0bcd \u0b95\u0bbe\u0bb2\u0bbe\u0ba3\u0bcd\u0b9f\u0bc1","\u0b87\u0bb0\u0ba3\u0bcd\u0b9f\u0bbe\u0bae\u0bcd \u0b95\u0bbe\u0bb2\u0bbe\u0ba3\u0bcd\u0b9f\u0bc1","\u0bae\u0bc2\u0ba9\u0bcd\u0bb1\u0bbe\u0bae\u0bcd \u0b95\u0bbe\u0bb2\u0bbe\u0ba3\u0bcd\u0b9f\u0bc1","\u0ba8\u0bbe\u0ba9\u0bcd\u0b95\u0bbe\u0bae\u0bcd \u0b95\u0bbe\u0bb2\u0bbe\u0ba3\u0bcd\u0b9f\u0bc1"]),t.s)
 B.a8b=A.a(s(["Tr\u01b0\u1edbc Thi\xean Ch\xfaa","Sau C\xf4ng Nguy\xean"]),t.s)
@@ -129945,8 +129945,8 @@ B.GG=A.a(s(["\u0ec4\u0e95\u0ea3\u0ea1\u0eb2\u0e94 1","\u0ec4\u0e95\u0ea3\u0ea1\u
 B.GH=A.a(s(["s\xe1nz\xe1 ya yambo","s\xe1nz\xe1 ya m\xedbal\xe9","s\xe1nz\xe1 ya m\xeds\xe1to","s\xe1nz\xe1 ya m\xednei","s\xe1nz\xe1 ya m\xedt\xe1no","s\xe1nz\xe1 ya mot\xf3b\xe1","s\xe1nz\xe1 ya nsambo","s\xe1nz\xe1 ya mwambe","s\xe1nz\xe1 ya libwa","s\xe1nz\xe1 ya z\xf3mi","s\xe1nz\xe1 ya z\xf3mi na m\u0254\u030ck\u0254\u0301","s\xe1nz\xe1 ya z\xf3mi na m\xedbal\xe9"]),t.s)
 B.asH=new A.Y("\ud83d\udc4d Accettato",null,B.b_,null,null,null,null,null,null,null,null)
 B.a0F=new A.d7("approved",B.asH,B.b6,null,t.Q)
-B.auS=new A.Y("\ud83c\udf7d\ufe0f Al tavolo",null,B.b_,null,null,null,null,null,null,null,null)
-B.a0M=new A.d7("seated",B.auS,B.b6,null,t.Q)
+B.auT=new A.Y("\ud83c\udf7d\ufe0f Al tavolo",null,B.b_,null,null,null,null,null,null,null,null)
+B.a0M=new A.d7("seated",B.auT,B.b6,null,t.Q)
 B.asS=new A.Y("\u23f3 In attesa",null,B.b_,null,null,null,null,null,null,null,null)
 B.a0C=new A.d7("pending",B.asS,B.b6,null,t.Q)
 B.atU=new A.Y("\u274c Cancellato",null,B.b_,null,null,null,null,null,null,null,null)
@@ -130226,8 +130226,8 @@ B.wb=A.a(s(["Kuartal ke-1","Kuartal ke-2","Kuartal ke-3","Kuartal ke-4"]),t.s)
 B.HV=A.a(s(["\xee.Hr.","d.Hr."]),t.s)
 B.HW=A.a(s(["s\xf8n.","man.","tirs.","ons.","tors.","fre.","l\xf8r."]),t.s)
 B.qG=A.a(s(["sunnudagur","m\xe1nudagur","\xferi\xf0judagur","mi\xf0vikudagur","fimmtudagur","f\xf6studagur","laugardagur"]),t.s)
-B.auY=new A.Y("\ud83d\udcde Telefono",null,B.aE,null,null,null,null,null,null,null,null)
-B.a0G=new A.d7("phone",B.auY,B.b6,null,t.Q)
+B.auZ=new A.Y("\ud83d\udcde Telefono",null,B.aE,null,null,null,null,null,null,null,null)
+B.a0G=new A.d7("phone",B.auZ,B.b6,null,t.Q)
 B.asZ=new A.Y("\ud83c\udf10 Web",null,B.aE,null,null,null,null,null,null,null,null)
 B.a0L=new A.d7("web",B.asZ,B.b6,null,t.Q)
 B.atl=new A.Y("\ud83d\udeb6 Walk-in",null,B.aE,null,null,null,null,null,null,null,null)
@@ -130530,8 +130530,8 @@ B.Jr=A.a(s(["Sul","Lun","Meu.","Mer.","Yaou","Gwe.","Sad."]),t.s)
 B.kR=A.a(s(["av. J.-C.","ap. J.-C."]),t.s)
 B.asR=new A.Y("Staff",null,null,null,null,null,null,null,null,null,null)
 B.Yc=new A.ny("staff",B.asR,t.Zx)
-B.auf=new A.Y("Amministratore",null,null,null,null,null,null,null,null,null,null)
-B.Yd=new A.ny("admin",B.auf,t.Zx)
+B.aug=new A.Y("Amministratore",null,null,null,null,null,null,null,null,null,null)
+B.Yd=new A.ny("admin",B.aug,t.Zx)
 B.abk=A.a(s([B.Yc,B.Yd]),A.aV("H<ny<f>>"))
 B.fF=A.a(s(["\u0930","\u0938\u094b","\u092e\u0902","\u092c\u0941","\u0917\u0941","\u0936\u0941","\u0936"]),t.s)
 B.fG=A.a(s(["\u0458","\u0444","\u043c","\u0430","\u043c","\u0458","\u0458","\u0430","\u0441","\u043e","\u043d","\u0434"]),t.s)
@@ -131795,16 +131795,16 @@ B.ahx=new A.He(null)
 B.ahy=new A.Zm(0,"start")
 B.P3=new A.Zm(1,"end")
 B.xP=new A.o(!0,B.ah,null,null,null,null,13,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null)
-B.auy=new A.Y("Nessun dato.",null,B.xP,null,null,null,null,null,null,null,null)
-B.ahz=new A.ap(B.vd,B.auy,null)
-B.auU=new A.Y("Nessun tavolo in questa area",null,B.b3,null,null,null,null,null,null,null,null)
-B.ahA=new A.ap(B.b7,B.auU,null)
+B.auz=new A.Y("Nessun dato.",null,B.xP,null,null,null,null,null,null,null,null)
+B.ahz=new A.ap(B.vd,B.auz,null)
+B.auV=new A.Y("Nessun tavolo in questa area",null,B.b3,null,null,null,null,null,null,null,null)
+B.ahA=new A.ap(B.b7,B.auV,null)
 B.avb=new A.Y("Nessuna prenotazione",null,B.b_,null,null,null,null,null,null,null,null)
 B.ahB=new A.ap(B.b7,B.avb,null)
 B.Ao=new A.a3(12,8,12,0)
 B.apZ=new A.o(!0,B.p,null,null,null,null,12,B.b8,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null)
-B.auh=new A.Y("Motivo",null,B.apZ,null,null,null,null,null,null,null,null)
-B.ahC=new A.ap(B.Ao,B.auh,null)
+B.aui=new A.Y("Motivo",null,B.apZ,null,null,null,null,null,null,null,null)
+B.ahC=new A.ap(B.Ao,B.aui,null)
 B.a1z=new A.a3(0,40,0,0)
 B.asP=new A.Y("Nessun membro.",null,B.i0,B.bD,null,null,null,null,null,null,null)
 B.ahD=new A.ap(B.a1z,B.asP,null)
@@ -131825,8 +131825,8 @@ B.ata=new A.Y("Sto guardando le prenotazioni\u2026",null,B.b3,null,null,null,nul
 B.aaH=A.a(s([B.am9,B.fR,B.ata]),t.p)
 B.ajG=new A.A5(B.b0,B.f,B.i,B.k,null,B.dc,null,0,B.aaH,null)
 B.ahJ=new A.ap(B.vd,B.ajG,null)
-B.aum=new A.Y("Prenotazioni senza tavolo",null,B.dz,null,null,null,null,null,null,null,null)
-B.ahK=new A.ap(B.kj,B.aum,null)
+B.aun=new A.Y("Prenotazioni senza tavolo",null,B.dz,null,null,null,null,null,null,null,null)
+B.ahK=new A.ap(B.kj,B.aun,null)
 B.a23=new A.a3(20,16,20,4)
 B.asI=new A.Y("Da sbrigare",null,B.dz,null,null,null,null,null,null,null,null)
 B.Wq=new A.dw(B.ev,null,null,B.asI,null)
@@ -132286,8 +132286,8 @@ B.amn=new A.lF(3,"hide")
 B.aBh=new A.lF(4,"remove")
 B.Uy=new A.lF(5,"timeout")
 B.amo=new A.At(null,null,null,null,null,null,null,null,null,null,null,null,null,null)
-B.auA=new A.Y("Profilo salvato",null,null,null,null,null,null,null,null,null,null)
-B.amp=new A.jR(B.auA,B.aR,null,null,null,null,null,null,null,null,null,null,null,B.br,null,null,null,B.A,null)
+B.auB=new A.Y("Profilo salvato",null,null,null,null,null,null,null,null,null,null)
+B.amp=new A.jR(B.auB,B.aR,null,null,null,null,null,null,null,null,null,null,null,B.br,null,null,null,B.A,null)
 B.avi=new A.Y("Prenotazione accettata!",null,null,null,null,null,null,null,null,null,null)
 B.amq=new A.jR(B.avi,B.aR,null,null,null,null,null,null,null,null,null,null,null,B.br,null,null,null,B.A,null)
 B.atn=new A.Y("Prenotazione creata!",null,null,null,null,null,null,null,null,null,null)
@@ -132295,10 +132295,10 @@ B.amr=new A.jR(B.atn,B.aR,null,null,null,null,null,null,null,null,null,null,null
 B.at1=new A.Y("Non salvato: il database ha rifiutato la scrittura. Mancano i permessi di modifica sulla tabella opening_hours.",null,null,null,null,null,null,null,null,null,null)
 B.a18=new A.bk(6e6)
 B.ams=new A.jR(B.at1,B.p,null,null,null,null,null,null,null,null,null,null,null,B.a18,null,null,null,B.A,null)
-B.auw=new A.Y("Scegli la data dell'orario speciale",null,null,null,null,null,null,null,null,null,null)
-B.amt=new A.jR(B.auw,B.p,null,null,null,null,null,null,null,null,null,null,null,B.br,null,null,null,B.A,null)
-B.av3=new A.Y("Prenotazione salvata",null,null,null,null,null,null,null,null,null,null)
-B.Uz=new A.jR(B.av3,B.aR,null,null,null,null,null,null,null,null,null,null,null,B.br,null,null,null,B.A,null)
+B.aux=new A.Y("Scegli la data dell'orario speciale",null,null,null,null,null,null,null,null,null,null)
+B.amt=new A.jR(B.aux,B.p,null,null,null,null,null,null,null,null,null,null,null,B.br,null,null,null,B.A,null)
+B.av4=new A.Y("Prenotazione salvata",null,null,null,null,null,null,null,null,null,null)
+B.Uz=new A.jR(B.av4,B.aR,null,null,null,null,null,null,null,null,null,null,null,B.br,null,null,null,B.A,null)
 B.ati=new A.Y("Prenotazione creata",null,null,null,null,null,null,null,null,null,null)
 B.amu=new A.jR(B.ati,B.aR,null,null,null,null,null,null,null,null,null,null,null,B.br,null,null,null,B.A,null)
 B.UA=new A.J3(0,"permissive")
@@ -132851,64 +132851,64 @@ B.au9=new A.Y("CENA",null,B.apJ,null,null,null,null,null,null,null,null)
 B.aua=new A.Y("Go to home page",null,B.V9,null,null,null,null,null,null,null,null)
 B.aub=new A.Y("Forma:",null,B.b_,null,null,null,null,null,null,null,null)
 B.aud=new A.Y("Modifica prenotazione",null,null,null,null,null,null,null,null,null,null)
-B.aue=new A.Y("Annulla",null,B.db,null,null,null,null,null,null,null,null)
-B.aug=new A.Y("Posti a sedere  ",null,B.b3,null,null,null,null,null,null,null,null)
-B.auj=new A.Y("Vai al profilo cliente",null,null,null,null,null,null,null,null,null,null)
-B.auk=new A.Y('Scarica un file da aprire sul telefono: i clienti entrano in rubrica col nome preceduto da "HIO", cos\xec non si confondono con i tuoi contatti e li ritrovi tutti insieme.',null,B.i_,null,null,null,null,null,null,null,null)
-B.aul=new A.Y("Elimina cliente",null,null,null,null,null,null,null,null,null,null)
+B.aue=new A.Y("Apri l'elenco del giorno",null,null,null,null,null,null,null,null,null,null)
+B.auf=new A.Y("Annulla",null,B.db,null,null,null,null,null,null,null,null)
+B.auh=new A.Y("Posti a sedere  ",null,B.b3,null,null,null,null,null,null,null,null)
+B.auk=new A.Y("Vai al profilo cliente",null,null,null,null,null,null,null,null,null,null)
+B.aul=new A.Y('Scarica un file da aprire sul telefono: i clienti entrano in rubrica col nome preceduto da "HIO", cos\xec non si confondono con i tuoi contatti e li ritrovi tutti insieme.',null,B.i_,null,null,null,null,null,null,null,null)
+B.aum=new A.Y("Elimina cliente",null,null,null,null,null,null,null,null,null,null)
 B.anR=new A.o(!0,B.ez,null,null,null,null,12,null,null,null,null,null,1.4,null,null,null,null,null,null,null,null,null,null,null,null,null)
-B.aun=new A.Y("Conferma solo dopo aver importato davvero. Segnandoli prima, questi nomi non verrebbero pi\xf9 riproposti e resterebbero fuori dalla rubrica.",null,B.anR,null,null,null,null,null,null,null,null)
+B.auo=new A.Y("Conferma solo dopo aver importato davvero. Segnandoli prima, questi nomi non verrebbero pi\xf9 riproposti e resterebbero fuori dalla rubrica.",null,B.anR,null,null,null,null,null,null,null,null)
 B.Vo=new A.Y("Quadrato",null,null,null,null,null,null,null,null,null,null)
 B.Vc=new A.o(!0,null,null,null,null,null,13,B.I,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null)
-B.auo=new A.Y("Accetta",null,B.Vc,null,null,null,null,null,null,null,null)
-B.aup=new A.Y("Chiedi quello che ti serve",null,B.dz,B.bD,null,null,null,null,null,null,null)
+B.aup=new A.Y("Accetta",null,B.Vc,null,null,null,null,null,null,null,null)
+B.auq=new A.Y("Chiedi quello che ti serve",null,B.dz,B.bD,null,null,null,null,null,null,null)
 B.aoS=new A.o(!0,B.h,null,null,null,null,12,B.I,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null)
-B.auq=new A.Y("Disponi in griglia",null,B.aoS,null,null,null,null,null,null,null,null)
-B.aur=new A.Y('Dal computer apri icloud.com/contacts e scegli "Importa vCard": il telefono si aggiorna da solo. Torna qui solo quando \xe8 fatto.',null,B.i_,null,null,null,null,null,null,null,null)
+B.aur=new A.Y("Disponi in griglia",null,B.aoS,null,null,null,null,null,null,null,null)
+B.aus=new A.Y('Dal computer apri icloud.com/contacts e scegli "Importa vCard": il telefono si aggiorna da solo. Torna qui solo quando \xe8 fatto.',null,B.i_,null,null,null,null,null,null,null,null)
 B.arU=new A.o(!0,B.a9,null,null,null,null,16,B.I,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null)
 B.Vp=new A.Y("Salva",null,B.arU,null,null,null,null,null,null,null,null)
 B.Vd=new A.o(!0,null,null,null,null,null,18,B.I,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null)
-B.aus=new A.Y("Nuovo cliente",null,B.Vd,null,null,null,null,null,null,null,null)
-B.aut=new A.Y("Tavoli",null,B.Vf,null,null,null,null,null,null,null,null)
-B.auu=new A.Y("E-mail",null,B.tC,null,null,null,null,null,null,null,null)
+B.aut=new A.Y("Nuovo cliente",null,B.Vd,null,null,null,null,null,null,null,null)
+B.auu=new A.Y("Tavoli",null,B.Vf,null,null,null,null,null,null,null,null)
+B.auv=new A.Y("E-mail",null,B.tC,null,null,null,null,null,null,null,null)
 B.Vq=new A.Y("Conferma",null,null,null,null,null,null,null,null,null,null)
-B.auv=new A.Y("VIP",null,B.V6,null,null,null,null,null,null,null,null)
-B.aux=new A.Y("Salva profilo",null,B.tE,null,null,null,null,null,null,null,null)
-B.auz=new A.Y("Modifica cliente",null,B.Vd,null,null,null,null,null,null,null,null)
+B.auw=new A.Y("VIP",null,B.V6,null,null,null,null,null,null,null,null)
+B.auy=new A.Y("Salva profilo",null,B.tE,null,null,null,null,null,null,null,null)
+B.auA=new A.Y("Modifica cliente",null,B.Vd,null,null,null,null,null,null,null,null)
 B.eQ=new A.Y("Annulla",null,null,null,null,null,null,null,null,null,null)
-B.auD=new A.Y("Perch\xe9 rifiuti la prenotazione?",null,B.V4,null,null,null,null,null,null,null,null)
-B.auE=new A.Y("Stampa",null,null,null,null,null,null,null,null,null,null)
-B.auF=new A.Y("Nessun tavolo configurato",null,B.b_,null,null,null,null,null,null,null,null)
+B.auE=new A.Y("Perch\xe9 rifiuti la prenotazione?",null,B.V4,null,null,null,null,null,null,null,null)
+B.auF=new A.Y("Stampa",null,null,null,null,null,null,null,null,null,null)
+B.auG=new A.Y("Nessun tavolo configurato",null,B.b_,null,null,null,null,null,null,null,null)
 B.Vr=new A.Y("Riprova",null,null,null,null,null,null,null,null,null,null)
-B.auG=new A.Y("Salva modifiche",null,B.tE,null,null,null,null,null,null,null,null)
+B.auH=new A.Y("Salva modifiche",null,B.tE,null,null,null,null,null,null,null,null)
 B.aro=new A.o(!0,B.a9,null,null,null,null,14,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null)
-B.auH=new A.Y("Tocca per assegnare un tavolo",null,B.aro,null,null,null,null,null,null,null,null)
-B.auI=new A.Y("Da assegnare",null,B.fU,null,null,null,null,null,null,null,null)
+B.auI=new A.Y("Tocca per assegnare un tavolo",null,B.aro,null,null,null,null,null,null,null,null)
+B.auJ=new A.Y("Da assegnare",null,B.fU,null,null,null,null,null,null,null,null)
 B.Vs=new A.Y("Aggiungi",null,null,null,null,null,null,null,null,null,null)
-B.auK=new A.Y("Forma  ",null,B.b3,null,null,null,null,null,null,null,null)
-B.auL=new A.Y("Modifica tavolo",null,B.aE,null,null,null,null,null,null,null,null)
-B.auN=new A.Y("Telefono",null,B.jC,null,null,null,null,null,null,null,null)
-B.auP=new A.Y("Rifiuta",null,B.Vc,null,null,null,null,null,null,null,null)
+B.auL=new A.Y("Forma  ",null,B.b3,null,null,null,null,null,null,null,null)
+B.auM=new A.Y("Modifica tavolo",null,B.aE,null,null,null,null,null,null,null,null)
+B.auO=new A.Y("Telefono",null,B.jC,null,null,null,null,null,null,null,null)
+B.auQ=new A.Y("Rifiuta",null,B.Vc,null,null,null,null,null,null,null,null)
 B.aqD=new A.o(!0,null,null,null,null,null,16,B.I,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null)
-B.auO=new A.Y("Rifiuta",null,B.aqD,null,null,null,null,null,null,null,null)
-B.auQ=new A.Y("Nessun tavolo",null,B.aE,null,null,null,null,null,null,null,null)
-B.auR=new A.Y("Nessuna sezione abilitata",null,B.dz,null,null,null,null,null,null,null,null)
-B.auT=new A.Y(u.Y,null,B.b3,null,null,null,null,null,null,null,null)
-B.auV=new A.Y("Risponde leggendo le prenotazioni vere: non inventa numeri n\xe9 nomi. Pu\xf2 anche preparare operazioni \u2014 accettare, assegnare un tavolo, annullare \u2014 ma non le esegue: le confermi tu, una per una.",null,B.xQ,B.bD,null,null,null,null,null,null,null)
-B.auX=new A.Y("Assistente",null,B.fW,null,null,null,null,null,null,null,null)
-B.auW=new A.Y("Calendario",null,B.fW,null,null,null,null,null,null,null,null)
-B.auZ=new A.Y("Esci",null,null,null,null,null,null,null,null,null,null)
-B.av_=new A.Y("Annulla",null,B.xO,null,null,null,null,null,null,null,null)
-B.av0=new A.Y("Rifiuta",null,null,null,null,null,null,null,null,null,null)
-B.av1=new A.Y("Ora importali sul telefono",null,B.xN,null,null,null,null,null,null,null,null)
-B.av2=new A.Y("Entra",null,B.lz,null,null,null,null,null,null,null,null)
-B.av4=new A.Y("Stato della prenotazione e link di pagamento",null,B.ly,null,null,null,null,null,null,null,null)
-B.av5=new A.Y("Dettaglio prenotazione",null,B.fW,null,null,null,null,null,null,null,null)
-B.av6=new A.Y("visite",null,B.tD,null,null,null,null,null,null,null,null)
+B.auP=new A.Y("Rifiuta",null,B.aqD,null,null,null,null,null,null,null,null)
+B.auR=new A.Y("Nessun tavolo",null,B.aE,null,null,null,null,null,null,null,null)
+B.auS=new A.Y("Nessuna sezione abilitata",null,B.dz,null,null,null,null,null,null,null,null)
+B.auU=new A.Y(u.Y,null,B.b3,null,null,null,null,null,null,null,null)
+B.auW=new A.Y("Risponde leggendo le prenotazioni vere: non inventa numeri n\xe9 nomi. Pu\xf2 anche preparare operazioni \u2014 accettare, assegnare un tavolo, annullare \u2014 ma non le esegue: le confermi tu, una per una.",null,B.xQ,B.bD,null,null,null,null,null,null,null)
+B.auY=new A.Y("Assistente",null,B.fW,null,null,null,null,null,null,null,null)
+B.auX=new A.Y("Calendario",null,B.fW,null,null,null,null,null,null,null,null)
+B.av_=new A.Y("Esci",null,null,null,null,null,null,null,null,null,null)
+B.av0=new A.Y("Annulla",null,B.xO,null,null,null,null,null,null,null,null)
+B.av1=new A.Y("Rifiuta",null,null,null,null,null,null,null,null,null,null)
+B.av2=new A.Y("Ora importali sul telefono",null,B.xN,null,null,null,null,null,null,null,null)
+B.av3=new A.Y("Entra",null,B.lz,null,null,null,null,null,null,null,null)
+B.av5=new A.Y("Stato della prenotazione e link di pagamento",null,B.ly,null,null,null,null,null,null,null,null)
+B.av6=new A.Y("Dettaglio prenotazione",null,B.fW,null,null,null,null,null,null,null,null)
+B.av7=new A.Y("visite",null,B.tD,null,null,null,null,null,null,null,null)
 B.Vt=new A.Y("Rotondo",null,null,null,null,null,null,null,null,null,null)
 B.aps=new A.o(!0,B.P,null,null,null,null,26,B.I,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null)
-B.av7=new A.Y("Orari di Apertura",null,B.aps,null,null,null,null,null,null,null,null)
-B.av8=new A.Y("Apri il piano sala",null,null,null,null,null,null,null,null,null,null)
+B.av8=new A.Y("Orari di Apertura",null,B.aps,null,null,null,null,null,null,null,null)
 B.ava=new A.Y("Nessuna prenotazione",null,B.xO,null,null,null,null,null,null,null,null)
 B.anU=new A.o(!0,B.ah,null,null,null,null,13,null,B.dI,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null)
 B.avc=new A.Y("Solo visibili allo staff",null,B.anU,null,null,null,null,null,null,null,null)
