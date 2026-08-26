@@ -25,7 +25,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp.router(
-      title: 'Fenix Restaurant',
+      title: 'HIO ORIENTAL Gestionale',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light,
       routerConfig: router,
