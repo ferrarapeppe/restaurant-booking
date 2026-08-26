@@ -7,6 +7,7 @@ import 'package:restaurant_booking/features/bookings/bookings_screen.dart';
 import 'package:restaurant_booking/features/bookings/new_booking_screen.dart';
 import 'package:restaurant_booking/features/guests/guests_screen.dart';
 import 'package:restaurant_booking/features/reports/reports_screen.dart';
+import 'package:restaurant_booking/features/assistente/assistente_screen.dart';
 import 'package:restaurant_booking/features/settings/settings_screen.dart';
 import 'package:restaurant_booking/features/settings/opening_hours_screen.dart';
 import 'package:restaurant_booking/features/settings/restaurant_profile_screen.dart';
@@ -75,6 +76,7 @@ final router = GoRouter(
     ),
     GoRoute(path: '/guests', builder: (context, state) => const GuestsScreen()),
     GoRoute(path: '/reports', builder: (context, state) => const ReportsScreen()),
+    GoRoute(path: '/assistente', builder: (context, state) => const AssistenteScreen()),
     GoRoute(
       path: '/settings',
       builder: (context, state) => const SettingsScreen(),

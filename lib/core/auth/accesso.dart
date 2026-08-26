@@ -20,6 +20,7 @@ const sezioniApp = <SezioneApp>[
   SezioneApp('floor_plan', 'Planimetria'),
   SezioneApp('guests', 'Clienti'),
   SezioneApp('reports', 'Rapporti'),
+  SezioneApp('assistente', 'Assistente'),
   SezioneApp('settings', 'Impostazioni'),
 ];
 
@@ -32,6 +33,7 @@ String percorsoDiSezione(String chiave) => switch (chiave) {
       'floor_plan' => '/floor-plan/${DateFormat('yyyy-MM-dd').format(DateTime.now())}',
       'guests' => '/guests',
       'reports' => '/reports',
+      'assistente' => '/assistente',
       _ => '/settings',
     };
 
@@ -44,6 +46,7 @@ String? sezioneDelPercorso(String percorso) {
   if (percorso.startsWith('/floor-plan')) return 'floor_plan';
   if (percorso.startsWith('/guests')) return 'guests';
   if (percorso.startsWith('/reports')) return 'reports';
+  if (percorso.startsWith('/assistente')) return 'assistente';
   if (percorso.startsWith('/settings')) return 'settings';
   return null;
 }

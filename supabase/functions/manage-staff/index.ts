@@ -16,7 +16,7 @@ const corsHeaders = {
 // permessi non previsti passando chiavi arbitrarie.
 const SEZIONI_VALIDE = [
   'dashboard', 'calendar', 'reservations', 'bookings',
-  'floor_plan', 'guests', 'reports', 'settings',
+  'floor_plan', 'guests', 'reports', 'assistente', 'settings',
 ];
 
 function risposta(corpo: unknown, stato = 200) {

@@ -64,6 +64,8 @@ class AppDrawer extends StatelessWidget {
                 _DrawerItem(icon: Icons.people_outline, label: 'Clienti', onTap: () { context.go('/guests'); Navigator.pop(context); }),
               if (puo('reports'))
                 _DrawerItem(icon: Icons.bar_chart_outlined, label: 'Rapporti', onTap: () { context.go('/reports'); Navigator.pop(context); }),
+              if (puo('assistente'))
+                _DrawerItem(icon: Icons.auto_awesome_outlined, label: 'Assistente', onTap: () { context.go('/assistente'); Navigator.pop(context); }),
               if (puo('settings'))
                 _DrawerItem(icon: Icons.settings_outlined, label: 'Impostazioni e componenti aggiuntivi', onTap: () { context.go('/settings'); Navigator.pop(context); }),
               const Divider(color: AppColors.divider),
