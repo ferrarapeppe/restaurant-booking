@@ -28,8 +28,14 @@ class BookingRepository {
         .gte('date', startDate)
         .lte('date', endDate);
 
+    // Il calendario mostra solo le prenotazioni vive. Prima sommava tutto,
+    // annullate comprese, mentre l'elenco di default mostra solo le attive:
+    // la cella diceva "1 prenotaz." e aprendo il giorno non c'era niente.
+    // I coperti seguono la stessa regola: una disdetta non occupa un tavolo.
+    const spente = {'canceled', 'rejected', 'no_show'};
     final Map<String, Map<String, int>> counts = {};
     for (final row in response as List) {
+      if (spente.contains((row['status'] ?? '').toString())) continue;
       final d = row['date'] as String;
       counts[d] ??= {'prenotazioni': 0, 'ospiti': 0, 'pending': 0};
       counts[d]!['prenotazioni'] = (counts[d]?['prenotazioni'] ?? 0) + 1;

@@ -97,10 +97,36 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
     return 'altro';
   }
 
-  /// Le prenotazioni effettivamente mostrate, dopo il filtro sul turno.
-  List<Map<String, dynamic>> get _visibili => _turnoFiltro == 'tutti'
+  /// Stati che contano come prenotazione viva.
+  static const _statiAttivi = {'approved', 'pending', 'seated', 'completed'};
+
+  /// Le righe del periodo dopo il solo filtro sul turno: la base su cui si
+  /// contano gli stati, perche' i numeri devono seguire il turno scelto.
+  List<Map<String, dynamic>> get _delTurno => _turnoFiltro == 'tutti'
       ? _bookingsWithDetails
       : _bookingsWithDetails.where((b) => _turnoDi(b) == _turnoFiltro).toList();
+
+  bool _passaStato(Map<String, dynamic> b) {
+    final s = (b['status'] ?? '').toString();
+    if (_statusFilter == 'tutti') return true;
+    if (_statusFilter == 'attivo') return _statiAttivi.contains(s);
+    return s == _statusFilter;
+  }
+
+  /// Le prenotazioni effettivamente mostrate, dopo turno e stato.
+  List<Map<String, dynamic>> get _visibili =>
+      _delTurno.where(_passaStato).toList();
+
+  /// Quante righe per ogni stato, per le pastiglie sopra la tabella.
+  Map<String, int> get _conteggiStato {
+    final m = <String, int>{'attivo': 0, 'tutti': _delTurno.length};
+    for (final b in _delTurno) {
+      final s = (b['status'] ?? '').toString();
+      m[s] = (m[s] ?? 0) + 1;
+      if (_statiAttivi.contains(s)) m['attivo'] = (m['attivo'] ?? 0) + 1;
+    }
+    return m;
+  }
 
   void _mostraFiltroTurno(BuildContext context) {
     showModalBottomSheet(
@@ -186,28 +212,16 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
         query = query.eq('source', 'web').eq('status', 'pending');
       } else if (_perArrivo) {
         query = query.gte('created_at', _daQuandoArrivate.toIso8601String());
-        if (_statusFilter != 'tutti' && _statusFilter != 'attivo') {
-          query = query.eq('status', _statusFilter);
-        } else if (_statusFilter == 'attivo') {
-          query = query.inFilter('status', ['approved', 'pending', 'seated']);
-        }
       } else if (estremi != null) {
         query = query
             .gte('date', DateFormat('yyyy-MM-dd').format(estremi.$1))
             .lte('date', DateFormat('yyyy-MM-dd').format(estremi.$2));
-        if (_statusFilter != 'tutti' && _statusFilter != 'attivo') {
-          query = query.eq('status', _statusFilter);
-        } else if (_statusFilter == 'attivo') {
-          query = query.inFilter('status', ['approved', 'pending', 'seated']);
-        }
       } else {
         query = query.eq('date', dateStr);
-        if (_statusFilter != 'tutti' && _statusFilter != 'attivo') {
-          query = query.eq('status', _statusFilter);
-        } else if (_statusFilter == 'attivo') {
-          query = query.inFilter('status', ['approved', 'pending', 'seated']);
-        }
       }
+      // Lo stato non lo filtra piu' il database ma `_visibili`: servono tutte
+      // le righe per poter dire "Annullate (2)" accanto ad "Attive (2)".
+      // Senza il conteggio, una prenotazione disdetta spariva e basta.
 
       // Guardando gli arrivi conta l'ordine in cui sono entrate, dalla piu'
       // recente. Su piu' giorni di servizio, l'ora da sola non basta.
@@ -520,8 +534,35 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
                 ),
               ),
             ]),
-            const SizedBox(height: 8),
-            Text('Totale $total \u2022 $totalGuests',
+            const SizedBox(height: 10),
+            // Quante ce ne sono per stato, e un tocco per vederle. Prima una
+            // prenotazione annullata spariva senza lasciare traccia: il
+            // calendario la contava, l'elenco no, e sembrava un guasto.
+            Builder(builder: (_) {
+              final c = _conteggiStato;
+              final voci = <(String, String)>[
+                ('attivo', 'Attive'),
+                if ((c['pending'] ?? 0) > 0) ('pending', 'In attesa'),
+                if ((c['canceled'] ?? 0) > 0) ('canceled', 'Annullate'),
+                if ((c['no_show'] ?? 0) > 0) ('no_show', 'No-show'),
+                if ((c['rejected'] ?? 0) > 0) ('rejected', 'Rifiutate'),
+                if ((c['tutti'] ?? 0) != (c['attivo'] ?? 0)) ('tutti', 'Tutte'),
+              ];
+              return Wrap(spacing: 6, runSpacing: 6, children: [
+                for (final v in voci)
+                  _PastigliaStato(
+                    etichetta: v.$2,
+                    numero: c[v.$1] ?? 0,
+                    scelta: _statusFilter == v.$1,
+                    spenta: v.$1 == 'canceled' || v.$1 == 'no_show' || v.$1 == 'rejected',
+                    // Le righe sono gia' in memoria: cambiare stato non
+                    // richiede di tornare al database.
+                    onTap: () => setState(() => _statusFilter = v.$1),
+                  ),
+              ]);
+            }),
+            const SizedBox(height: 6),
+            Text('Mostrate $total \u2022 $totalGuests coperti',
                 style: const TextStyle(color: AppColors.textSecondary, fontSize: 12)),
           ]),
         ),
@@ -663,6 +704,54 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
   }
 
 }
+
+/// Pastiglia "Annullate (2)": conta e filtra insieme.
+///
+/// Gli stati spenti restano grigi anche da selezionati: un'annullata non deve
+/// somigliare a una prenotazione viva nemmeno per un attimo.
+class _PastigliaStato extends StatelessWidget {
+  final String etichetta;
+  final int numero;
+  final bool scelta;
+  final bool spenta;
+  final VoidCallback onTap;
+
+  const _PastigliaStato({
+    required this.etichetta,
+    required this.numero,
+    required this.scelta,
+    required this.spenta,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final tinta = spenta ? AppColors.textSecondary : AppColors.accent;
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(20),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+        decoration: BoxDecoration(
+          color: scelta
+              ? (spenta ? AppColors.cardLight : AppColors.accentLight)
+              : AppColors.background,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: scelta ? tinta : AppColors.divider),
+        ),
+        child: Text(
+          '$etichetta ($numero)',
+          style: TextStyle(
+            color: scelta ? tinta : AppColors.textSecondary,
+            fontSize: 12.5,
+            fontWeight: scelta ? FontWeight.bold : FontWeight.normal,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 // ── Status menu items ─────────────────────────────────────────────────────────
 const _kStatusChoices = [
   ('pending',   'Richiesta',          Icons.help_outline),
