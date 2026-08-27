@@ -34,6 +34,10 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
   final _supabase = Supabase.instance.client;
   String _statusFilter = 'attivo';
   String? _sourceFilter;
+
+  /// 'senza_tavolo' o 'da_approvare': elenchi che ignorano la giornata
+  /// mostrata e guardano tutte le date da oggi in avanti.
+  String? _filtroSpeciale;
   List<Map<String, dynamic>> _bookingsWithDetails = [];
   bool _loading = false;
 
@@ -57,6 +61,16 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
       if (widget.initialFilter == 'da_assegnare') {
         _statusFilter = 'pending';
         _sourceFilter = 'web';
+      }
+      // Due elenchi che attraversano i giorni: non hanno una data, hanno una
+      // condizione. Prima "senza tavolo" veniva mandato su `da_assegnare`,
+      // che pero' vuol dire "arrivate dal web e in attesa": una prenotazione
+      // gia' accettata e senza tavolo non compariva, ed era proprio quella
+      // che si stava cercando.
+      if (widget.initialFilter == 'senza_tavolo' ||
+          widget.initialFilter == 'da_approvare') {
+        _filtroSpeciale = widget.initialFilter;
+        _statusFilter = 'tutti';
       }
       _periodo = widget.initialPeriodo;
       _loadBookings();
@@ -174,6 +188,12 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
     };
   }
 
+  String get _etichettaFiltro => switch (_filtroSpeciale) {
+        'senza_tavolo' => 'Senza tavolo assegnato',
+        'da_approvare' => 'Da approvare',
+        _ => '',
+      };
+
   String get _etichettaPeriodo => switch (_periodo) {
         'settimana' => 'Prossimi 7 giorni',
         'mese' => 'Questo mese',
@@ -208,7 +228,16 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
           .select('*, guests(first_name, surname, name, phone, email, tags), tables(name, capacity, area_id, areas(name))')
           .eq('restaurant_id', _restaurantId);
       final estremi = _estremiPeriodo;
-      if (_sourceFilter == 'web') {
+      if (_filtroSpeciale == 'senza_tavolo') {
+        query = query
+            .isFilter('table_id', null)
+            .gte('date', DateFormat('yyyy-MM-dd').format(DateTime.now()))
+            .inFilter('status', ['approved', 'pending', 'seated']);
+      } else if (_filtroSpeciale == 'da_approvare') {
+        query = query
+            .eq('status', 'pending')
+            .gte('date', DateFormat('yyyy-MM-dd').format(DateTime.now()));
+      } else if (_sourceFilter == 'web') {
         query = query.eq('source', 'web').eq('status', 'pending');
       } else if (_perArrivo) {
         query = query.gte('created_at', _daQuandoArrivate.toIso8601String());
@@ -227,7 +256,7 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
       // recente. Su piu' giorni di servizio, l'ora da sola non basta.
       final res = _perArrivo
           ? await query.order('created_at', ascending: false)
-          : estremi != null
+          : (estremi != null || _filtroSpeciale != null)
               ? await query.order('date').order('time_start')
               : await query.order('time_start');
       debugPrint('BOOKINGS RESULT count=${res.length}');
@@ -324,7 +353,14 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
   }
 
   void _tornaAllaGiornata() {
-    setState(() => _periodo = null);
+    setState(() {
+      _periodo = null;
+      // Anche il filtro va tolto, altrimenti si torna alla giornata ma
+      // l'elenco resta quello di prima e sembra rotto.
+      _filtroSpeciale = null;
+      _sourceFilter = null;
+      _statusFilter = 'attivo';
+    });
     _loadBookings();
     _caricaStatoGiornata();
   }
@@ -411,14 +447,19 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Row(children: [
               Expanded(
-                child: Text(_periodo != null ? _etichettaPeriodo : capitalDay,
+                child: Text(
+                    _filtroSpeciale != null
+                        ? _etichettaFiltro
+                        : _periodo != null
+                            ? _etichettaPeriodo
+                            : capitalDay,
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
                         color: AppColors.textPrimary, fontSize: 20, fontWeight: FontWeight.bold)),
               ),
-              // Su un periodo il comando della giornata non ha senso: aprire o
-              // chiudere "il mese" non vuol dire niente.
-              if (_periodo == null)
+              // Su un periodo o su un filtro il comando della giornata non ha
+              // senso: aprire o chiudere "il mese" non vuol dire niente.
+              if (_periodo == null && _filtroSpeciale == null)
                 _MenuGiornata(
                   stato: _statoGiornata,
                   inCorso: _cambioStatoInCorso,
@@ -428,7 +469,7 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
                   onCambia: _cambiaPrenotazioniOnline,
                 ),
             ]),
-            if (_periodo != null) ...[
+            if (_periodo != null || _filtroSpeciale != null) ...[
               const SizedBox(height: 6),
               InkWell(
                 onTap: _tornaAllaGiornata,
@@ -441,13 +482,20 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
                     border: Border.all(color: AppColors.accent.withValues(alpha: 0.35)),
                   ),
                   child: Row(mainAxisSize: MainAxisSize.min, children: [
-                    Icon(_perArrivo ? Icons.inbox_outlined : Icons.date_range_outlined,
+                    Icon(
+                        _filtroSpeciale != null
+                            ? Icons.filter_alt_outlined
+                            : _perArrivo
+                                ? Icons.inbox_outlined
+                                : Icons.date_range_outlined,
                         size: 13, color: AppColors.accent),
                     const SizedBox(width: 6),
                     Text(
-                        _perArrivo
-                            ? 'Per ordine di arrivo — tocca per tornare alla giornata'
-                            : 'Più giorni insieme — tocca per tornare alla giornata',
+                        _filtroSpeciale != null
+                            ? 'Tutte le date — tocca per tornare alla giornata'
+                            : _perArrivo
+                                ? 'Per ordine di arrivo — tocca per tornare alla giornata'
+                                : 'Più giorni insieme — tocca per tornare alla giornata',
                         style: const TextStyle(
                             color: AppColors.accent, fontSize: 12, fontWeight: FontWeight.bold)),
                     const SizedBox(width: 4),
@@ -634,7 +682,7 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
                           // diversa.
                           key: ValueKey(b['id']),
                           // Su piu' giorni la sola ora non basta a capire quando.
-                          mostraData: _periodo != null,
+                          mostraData: _periodo != null || _filtroSpeciale != null,
                           mostraArrivo: _perArrivo,
                           booking: b,
                           guestName: _guestName(b),

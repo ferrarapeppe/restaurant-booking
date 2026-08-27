@@ -31,6 +31,25 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   int _arrivateOggi = 0;
   int _arrivateOggiOspiti = 0;
   int _daAssegnare = 0;
+
+  // ── Stasera ────────────────────────────────────────────────────────────
+  /// Coperti e tavoli per turno: 'aperitivo', 'primo', 'secondo', 'altro'.
+  Map<String, (int, int)> _turniStasera = {};
+  int _copertiStasera = 0;
+  int _postiTotali = 0;
+  int _abitualiStasera = 0;
+  int _primaVoltaStasera = 0;
+  int _noteStasera = 0;
+
+  // ── Da fare ────────────────────────────────────────────────────────────
+  int _daApprovare = 0;
+  int _senzaTavolo = 0;
+  int _messaggiRecenti = 0;
+
+  // ── La settimana ───────────────────────────────────────────────────────
+  /// Coperti giorno per giorno, da oggi in avanti.
+  List<(DateTime, int)> _settimana = [];
+
   String _nomeLocale = '';
   String _indirizzoLocale = '';
 
@@ -78,10 +97,11 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           .eq('date', oggiStr)
           .inFilter('status', ['approved', 'pending']);
 
-      // Query prossimi 7 giorni
+      // Query prossimi 7 giorni. La data serve anche a disegnare la striscia
+      // dei giorni: senza, i coperti sarebbero un totale e basta.
       final settimanaRes = await supabase
           .from('bookings')
-          .select('party_size')
+          .select('party_size, date')
           .eq('restaurant_id', _restaurantId)
           .gte('date', oggiStr)
           .lte('date', tra7Str)
@@ -136,12 +156,93 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           .eq('source', 'web')
           .eq('status', 'pending');
 
+      // Il servizio di stasera, non solo il suo conteggio: turni, tavoli e
+      // chi arriva. Sono le cose che si guardano alle sei del pomeriggio.
+      final staseraRes = await supabase
+          .from('bookings')
+          .select('party_size, time_start, internal_notes, table_id, notes, '
+              'guests(visits_count, tags)')
+          .eq('restaurant_id', _restaurantId)
+          .eq('date', oggiStr)
+          .inFilter('status', ['approved', 'pending', 'seated']);
+
+      // Capienza vera, per dire quanto e' piena la serata.
+      final tavoliRes = await supabase
+          .from('tables')
+          .select('capacity, is_active')
+          .eq('restaurant_id', _restaurantId);
+
+      // Le cose in sospeso, oggi sparse fra campanella e riquadro rosso.
+      final daApprovareRes = await supabase
+          .from('bookings')
+          .select('id')
+          .eq('restaurant_id', _restaurantId)
+          .eq('status', 'pending')
+          .gte('date', oggiStr);
+
+      final senzaTavoloRes = await supabase
+          .from('bookings')
+          .select('id')
+          .eq('restaurant_id', _restaurantId)
+          .isFilter('table_id', null)
+          .gte('date', oggiStr)
+          .inFilter('status', ['approved', 'pending']);
+
+      // `booking_messages` non tiene traccia di cosa e' stato letto, quindi
+      // si contano quelli recenti e non quelli "non letti": dire non letti
+      // sarebbe una mezza verita'.
+      final messaggiRes = await supabase
+          .from('booking_messages')
+          .select('id')
+          .eq('sender', 'guest')
+          .gte('created_at',
+              oggi.subtract(const Duration(days: 7)).toIso8601String());
+
       int sommaOspiti(List<dynamic> righe) {
         var totale = 0;
         for (final r in righe) {
           totale += ((r as Map)['party_size'] as int? ?? 0);
         }
         return totale;
+      }
+
+      // ── Stasera, per turno ───────────────────────────────────────────────
+      final turni = <String, (int, int)>{};
+      var abituali = 0, primaVolta = 0, conNote = 0;
+      for (final r in staseraRes) {
+        final b = r as Map;
+        final t = _turnoDi(b);
+        final (coperti, tavoli) = turni[t] ?? (0, 0);
+        turni[t] = (coperti + ((b['party_size'] as int?) ?? 0), tavoli + 1);
+
+        final g = b['guests'] as Map?;
+        // Le visite si contano all'accettazione, quindi questa prenotazione
+        // e' gia' dentro: "abituale" vuol dire che ne aveva altre prima.
+        final visite = (g?['visits_count'] as int?) ?? 0;
+        if (visite > 1) {
+          abituali++;
+        } else {
+          primaVolta++;
+        }
+        if ((b['notes'] ?? '').toString().trim().isNotEmpty) conNote++;
+      }
+
+      var posti = 0;
+      for (final t in tavoliRes as List) {
+        if ((t as Map)['is_active'] == false) continue;
+        posti += (t['capacity'] as int?) ?? 0;
+      }
+
+      // ── La settimana, giorno per giorno ─────────────────────────────────
+      final perGiorno = <String, int>{};
+      for (final r in settimanaRes) {
+        final d = ((r as Map)['date'] ?? '').toString();
+        perGiorno[d] = (perGiorno[d] ?? 0) + ((r['party_size'] as int?) ?? 0);
+      }
+      final giorni = <(DateTime, int)>[];
+      for (var i = 0; i < 7; i++) {
+        final g = DateTime(oggi.year, oggi.month, oggi.day + i);
+        giorni.add((g, perGiorno[DateFormat('yyyy-MM-dd').format(g)] ?? 0));
       }
 
       setState(() {
@@ -156,6 +257,16 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         _arrivateOggi = arrivateRes.length;
         _arrivateOggiOspiti = sommaOspiti(arrivateRes);
         _daAssegnare = daAssegnareRes.length;
+        _turniStasera = turni;
+        _copertiStasera = sommaOspiti(staseraRes);
+        _postiTotali = posti;
+        _abitualiStasera = abituali;
+        _primaVoltaStasera = primaVolta;
+        _noteStasera = conNote;
+        _daApprovare = daApprovareRes.length;
+        _senzaTavolo = senzaTavoloRes.length;
+        _messaggiRecenti = messaggiRes.length;
+        _settimana = giorni;
         _nomeLocale = (profilo?['name'] ?? '').toString();
         _indirizzoLocale = [profilo?['address'], profilo?['city']]
             .where((v) => (v ?? '').toString().trim().isNotEmpty)
@@ -166,6 +277,25 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       debugPrint('Dashboard stats error: $e');
       setState(() => _loading = false);
     }
+  }
+
+  /// A quale turno appartiene una prenotazione.
+  ///
+  /// Stessa regola dell'elenco e dei rapporti: quelle prese al telefono non
+  /// hanno un turno scelto e si collocano sull'orario, altrimenti finirebbero
+  /// tutte in "altro".
+  static String _turnoDi(Map b) {
+    final grezzo = (b['internal_notes'] ?? '').toString().toUpperCase();
+    if (grezzo.contains('APERITIF') || grezzo.contains('APERITIVO')) {
+      return 'aperitivo';
+    }
+    if (grezzo.contains('1°') || grezzo.contains('1 TURNO')) return 'primo';
+    if (grezzo.contains('2°') || grezzo.contains('2 TURNO')) return 'secondo';
+    final ora = (b['time_start'] ?? '').toString();
+    if (ora.startsWith('18') || ora.startsWith('19')) return 'aperitivo';
+    if (ora.startsWith('20') || ora.startsWith('21')) return 'primo';
+    if (ora.startsWith('22') || ora.startsWith('23')) return 'secondo';
+    return 'altro';
   }
 
   /// Le scorciatoie: tre per riga su schermo largo, due sul telefono.
@@ -282,6 +412,40 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
               GestureDetector(
                 onTap: () => context.go('/bookings?filter=da_assegnare'),
                 child: _DaAssegnareCard(count: _daAssegnare, loading: _loading),
+              ),
+              const SizedBox(height: 24),
+              // Le cose in sospeso, tutte insieme. Quando non ce n'e' il
+              // pannello sparisce invece di restare a occupare spazio.
+              if (!_loading && (_daApprovare + _senzaTavolo + _messaggiRecenti) > 0) ...[
+                _DaFareCard(
+                  daApprovare: _daApprovare,
+                  senzaTavolo: _senzaTavolo,
+                  messaggi: _messaggiRecenti,
+                ),
+                const SizedBox(height: 16),
+              ],
+              _StaseraCard(
+                turni: _turniStasera,
+                coperti: _copertiStasera,
+                postiTotali: _postiTotali,
+                abituali: _abitualiStasera,
+                primaVolta: _primaVoltaStasera,
+                conNote: _noteStasera,
+                loading: _loading,
+                onTap: () {
+                  final today = DateTime.now();
+                  ref.read(selectedDateProvider.notifier).state = today;
+                  context.go('/reservations');
+                },
+              ),
+              const SizedBox(height: 16),
+              _SettimanaCard(
+                giorni: _settimana,
+                loading: _loading,
+                onGiorno: (g) {
+                  ref.read(selectedDateProvider.notifier).state = g;
+                  context.go('/bookings?date=${DateFormat('yyyy-MM-dd').format(g)}');
+                },
               ),
               const SizedBox(height: 24),
               const Text('Scorciatoie', style: TextStyle(color: AppColors.textPrimary, fontSize: 20, fontWeight: FontWeight.bold)),
@@ -413,6 +577,389 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         backgroundColor: AppColors.accent,
         child: const Icon(Icons.add, color: Colors.white),
       ),
+    );
+  }
+}
+
+/// Com'e' fatta la serata di oggi, non quanto fa il totale.
+class _StaseraCard extends StatelessWidget {
+  final Map<String, (int, int)> turni;
+  final int coperti, postiTotali, abituali, primaVolta, conNote;
+  final bool loading;
+  final VoidCallback onTap;
+
+  const _StaseraCard({
+    required this.turni,
+    required this.coperti,
+    required this.postiTotali,
+    required this.abituali,
+    required this.primaVolta,
+    required this.conNote,
+    required this.loading,
+    required this.onTap,
+  });
+
+  static const _ordine = <(String, String)>[
+    ('aperitivo', 'Aperitivo 18:30'),
+    ('primo', '1º turno 20:00'),
+    ('secondo', '2º turno 22:00'),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    final data = DateFormat('EEEE d MMMM', 'it_IT').format(DateTime.now());
+    final quota = postiTotali > 0 ? (coperti / postiTotali).clamp(0.0, 1.0) : 0.0;
+    final fuoriTurno = turni['altro'];
+
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: Color.alphaBlend(
+              AppColors.accent.withValues(alpha: 0.13), AppColors.card),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+              color: AppColors.accent.withValues(alpha: 0.6), width: 1.5),
+        ),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Row(children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                  color: AppColors.accent,
+                  borderRadius: BorderRadius.circular(10)),
+              child: const Icon(Icons.nightlight_outlined,
+                  color: Colors.white, size: 18),
+            ),
+            const SizedBox(width: 10),
+            const Text('Stasera',
+                style: TextStyle(
+                    color: AppColors.textPrimary,
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold)),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(data,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                      color: AppColors.textSecondary, fontSize: 14)),
+            ),
+            if (postiTotali > 0)
+              Text('$coperti su $postiTotali coperti',
+                  style: const TextStyle(
+                      color: AppColors.textSecondary, fontSize: 13)),
+          ]),
+          const SizedBox(height: 14),
+          if (loading)
+            const SizedBox(
+                height: 80,
+                child: Center(
+                    child: CircularProgressIndicator(
+                        strokeWidth: 2, color: AppColors.accent)))
+          else if (coperti == 0)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 14),
+              child: Text('Nessuna prenotazione per stasera.',
+                  style:
+                      TextStyle(color: AppColors.textSecondary, fontSize: 14)),
+            )
+          else ...[
+            // La barra dice quanto e' piena la sala solo se sappiamo quanti
+            // posti ci sono: con le capienze a zero direbbe una bugia.
+            if (postiTotali > 0) ...[
+              ClipRRect(
+                borderRadius: BorderRadius.circular(5),
+                child: LinearProgressIndicator(
+                  value: quota,
+                  minHeight: 10,
+                  backgroundColor: AppColors.cardLight,
+                  valueColor: const AlwaysStoppedAnimation(AppColors.gold),
+                ),
+              ),
+              const SizedBox(height: 14),
+            ],
+            Row(children: [
+              for (final t in _ordine) ...[
+                Expanded(child: _riquadroTurno(t.$2, turni[t.$1])),
+                if (t != _ordine.last) const SizedBox(width: 10),
+              ],
+            ]),
+            if (fuoriTurno != null) ...[
+              const SizedBox(height: 10),
+              Text('Fuori turno: ${fuoriTurno.$1} coperti su ${fuoriTurno.$2} tavoli',
+                  style: const TextStyle(
+                      color: AppColors.textSecondary, fontSize: 12)),
+            ],
+            const SizedBox(height: 12),
+            Wrap(spacing: 8, runSpacing: 8, children: [
+              if (abituali > 0)
+                _pastiglia('$abituali già stati qui', AppColors.goldLight,
+                    AppColors.goldDark),
+              if (conNote > 0)
+                _pastiglia('$conNote con note', AppColors.accentLight,
+                    AppColors.accentDark),
+              if (primaVolta > 0)
+                _pastiglia('$primaVolta alla prima volta', AppColors.cardLight,
+                    AppColors.textSecondary),
+            ]),
+          ],
+        ]),
+      ),
+    );
+  }
+
+  Widget _riquadroTurno(String titolo, (int, int)? dati) {
+    final (coperti, tavoli) = dati ?? (0, 0);
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
+      decoration: BoxDecoration(
+          color: AppColors.background, borderRadius: BorderRadius.circular(10)),
+      child: Column(children: [
+        Text(titolo,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+                color: AppColors.textSecondary, fontSize: 12)),
+        const SizedBox(height: 2),
+        Text('$coperti',
+            style: TextStyle(
+                color: coperti == 0
+                    ? AppColors.textMuted
+                    : AppColors.textPrimary,
+                fontSize: 26,
+                fontWeight: FontWeight.w300)),
+        Text(tavoli == 1 ? '1 tavolo' : '$tavoli tavoli',
+            style:
+                const TextStyle(color: AppColors.textSecondary, fontSize: 12)),
+      ]),
+    );
+  }
+
+  Widget _pastiglia(String testo, Color sfondo, Color tinta) => Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+        decoration: BoxDecoration(
+            color: sfondo, borderRadius: BorderRadius.circular(999)),
+        child: Text(testo,
+            style: TextStyle(
+                color: tinta, fontSize: 12, fontWeight: FontWeight.w600)),
+      );
+}
+
+/// Le cose in sospeso, in un posto solo.
+class _DaFareCard extends StatelessWidget {
+  final int daApprovare, senzaTavolo, messaggi;
+  const _DaFareCard({
+    required this.daApprovare,
+    required this.senzaTavolo,
+    required this.messaggi,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final voci = <(IconData, String, int, Color, String)>[
+      // Filtri che attraversano i giorni, non periodi: chi guarda "senza
+      // tavolo" vuole tutte quelle senza tavolo, non quelle di oggi.
+      (Icons.help_outline, 'Prenotazioni da approvare', daApprovare,
+          AppColors.accent, '/bookings?filter=da_approvare'),
+      (Icons.table_restaurant_outlined, 'Senza tavolo assegnato', senzaTavolo,
+          AppColors.goldDark, '/bookings?filter=senza_tavolo'),
+      (Icons.chat_bubble_outline, 'Messaggi dei clienti, ultimi 7 giorni',
+          messaggi, AppColors.textSecondary, '/bookings?periodo=arrivate7'),
+    ].where((v) => v.$3 > 0).toList();
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Color.alphaBlend(
+            AppColors.gold.withValues(alpha: 0.13), AppColors.card),
+        borderRadius: BorderRadius.circular(16),
+        border:
+            Border.all(color: AppColors.gold.withValues(alpha: 0.7), width: 1.5),
+      ),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Row(children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+                color: AppColors.goldDark,
+                borderRadius: BorderRadius.circular(10)),
+            child: const Icon(Icons.checklist_outlined,
+                color: Colors.white, size: 18),
+          ),
+          const SizedBox(width: 10),
+          const Text('Da fare',
+              style: TextStyle(
+                  color: AppColors.textPrimary,
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold)),
+          const Spacer(),
+          Text(voci.length == 1 ? '1 cosa' : '${voci.length} cose',
+              style: const TextStyle(
+                  color: AppColors.textSecondary, fontSize: 13)),
+        ]),
+        const SizedBox(height: 12),
+        for (final v in voci)
+          InkWell(
+            onTap: () => context.go(v.$5),
+            borderRadius: BorderRadius.circular(8),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 10),
+              child: Row(children: [
+                Icon(v.$1, size: 18, color: v.$4),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(v.$2,
+                      style: const TextStyle(
+                          color: AppColors.textPrimary, fontSize: 14)),
+                ),
+                Text('${v.$3}',
+                    style: TextStyle(
+                        color: v.$4,
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold)),
+                const SizedBox(width: 4),
+                const Icon(Icons.chevron_right,
+                    color: AppColors.textMuted, size: 18),
+              ]),
+            ),
+          ),
+      ]),
+    );
+  }
+}
+
+/// I prossimi sette giorni in una riga di barrette.
+///
+/// Serve a vedere la serata pesante prima che arrivi, e a decidere se
+/// chiudere le prenotazioni online su un giorno che si sta riempiendo.
+class _SettimanaCard extends StatelessWidget {
+  final List<(DateTime, int)> giorni;
+  final bool loading;
+  final void Function(DateTime) onGiorno;
+
+  const _SettimanaCard({
+    required this.giorni,
+    required this.loading,
+    required this.onGiorno,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final massimo = giorni.fold<int>(0, (m, g) => g.$2 > m ? g.$2 : m);
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: AppColors.card,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.divider),
+      ),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Row(children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+                color: AppColors.statoAlTavolo,
+                borderRadius: BorderRadius.circular(10)),
+            child: const Icon(Icons.bar_chart_outlined,
+                color: Colors.white, size: 18),
+          ),
+          const SizedBox(width: 10),
+          const Text('La settimana',
+              style: TextStyle(
+                  color: AppColors.textPrimary,
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold)),
+          const SizedBox(width: 8),
+          const Expanded(
+            child: Text('coperti per giorno',
+                overflow: TextOverflow.ellipsis,
+                style:
+                    TextStyle(color: AppColors.textSecondary, fontSize: 14)),
+          ),
+        ]),
+        const SizedBox(height: 16),
+        if (loading)
+          const SizedBox(
+              height: 90,
+              child: Center(
+                  child: CircularProgressIndicator(
+                      strokeWidth: 2, color: AppColors.accent)))
+        else
+          SizedBox(
+            height: 116,
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                for (final g in giorni) ...[
+                  Expanded(child: _colonna(g.$1, g.$2, massimo)),
+                  if (g != giorni.last) const SizedBox(width: 6),
+                ],
+              ],
+            ),
+          ),
+      ]),
+    );
+  }
+
+  Widget _colonna(DateTime giorno, int coperti, int massimo) {
+    // Le barrette sono in proporzione al giorno piu' pieno, non a una scala
+    // fissa: con pochi coperti una scala assoluta le farebbe sparire tutte.
+    //
+    // L'altezza e' una frazione dello spazio che avanza, non un numero di
+    // punti: sommando a mano numero, barra, giorno e data si sforava di
+    // sedici pixel, e la scheda mostrava la fascia gialla dell'errore.
+    final frazione = coperti == 0
+        ? 0.05
+        : (massimo == 0 ? 0.12 : (coperti / massimo).clamp(0.12, 1.0));
+    final oggi = giorno.day == DateTime.now().day &&
+        giorno.month == DateTime.now().month;
+
+    return InkWell(
+      onTap: () => onGiorno(giorno),
+      borderRadius: BorderRadius.circular(8),
+      child: Column(children: [
+        Text(coperti == 0 ? '·' : '$coperti',
+            style: TextStyle(
+                color: coperti == 0
+                    ? AppColors.textMuted
+                    : AppColors.textPrimary,
+                fontSize: 13,
+                fontWeight: FontWeight.w600)),
+        const SizedBox(height: 4),
+        Expanded(
+          child: Align(
+            alignment: Alignment.bottomCenter,
+            child: FractionallySizedBox(
+              heightFactor: frazione,
+              child: Container(
+                decoration: BoxDecoration(
+                  color: coperti == 0
+                      ? AppColors.divider
+                      : (oggi ? AppColors.accent : AppColors.gold),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: 6),
+        Text(DateFormat('E', 'it_IT').format(giorno),
+            maxLines: 1,
+            overflow: TextOverflow.clip,
+            style: TextStyle(
+                color: oggi ? AppColors.accent : AppColors.textSecondary,
+                fontSize: 12,
+                fontWeight: oggi ? FontWeight.bold : FontWeight.normal)),
+        Text('${giorno.day}',
+            maxLines: 1,
+            style: const TextStyle(
+                color: AppColors.textMuted, fontSize: 11)),
+      ]),
     );
   }
 }

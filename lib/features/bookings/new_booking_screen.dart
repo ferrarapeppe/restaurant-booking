@@ -58,6 +58,210 @@ class _NewBookingScreenState extends ConsumerState<NewBookingScreen> {
     }
   }
 
+  /// Il cliente scelto, oppure `null` finché non se ne sceglie uno.
+  GuestModel? get _clienteScelto {
+    if (_selectedGuestId == null) return null;
+    for (final g in _guests) {
+      if (g.id == _selectedGuestId) return g;
+    }
+    return null;
+  }
+
+  /// Il campo del cliente: mostra chi è stato scelto, coi suoi tag, e apre
+  /// la ricerca.
+  ///
+  /// Prima era un menu a tendina con dentro l'archivio intero — oltre
+  /// seicento schede, in ordine di inserimento e senza modo di cercare —
+  /// e mostrava il solo nome, quindi due omonimi erano indistinguibili.
+  Widget _campoCliente() {
+    final scelto = _clienteScelto;
+    return InkWell(
+      onTap: _scegliCliente,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: AppColors.divider),
+        ),
+        child: Row(children: [
+          Icon(scelto == null ? Icons.search : Icons.person_outline,
+              size: 20, color: AppColors.textSecondary),
+          const SizedBox(width: 12),
+          Expanded(
+            child: scelto == null
+                ? const Text('Cerca e scegli un cliente',
+                    style: TextStyle(color: AppColors.textMuted, fontSize: 16))
+                : Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Row(children: [
+                        Flexible(
+                          child: Text(scelto.displayName,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                  color: AppColors.textPrimary,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600)),
+                        ),
+                        ..._tagPastiglie(scelto.tags),
+                      ]),
+                      if ((scelto.phone ?? '').isNotEmpty)
+                        Text(scelto.phone!,
+                            style: const TextStyle(
+                                color: AppColors.textSecondary, fontSize: 13)),
+                    ],
+                  ),
+          ),
+          const Icon(Icons.arrow_drop_down, color: AppColors.textSecondary),
+        ]),
+      ),
+    );
+  }
+
+  List<Widget> _tagPastiglie(List<String> tags) => [
+        for (final t in tags.take(3)) ...[
+          const SizedBox(width: 6),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+            decoration: BoxDecoration(
+              color: AppColors.goldLight,
+              borderRadius: BorderRadius.circular(6),
+              border: Border.all(color: AppColors.gold),
+            ),
+            child: Text(t,
+                style: const TextStyle(
+                    color: AppColors.goldDark,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600)),
+          ),
+        ],
+      ];
+
+  /// Ricerca fra i clienti in archivio.
+  ///
+  /// Cerca nel nome, nel telefono, nell'email e anche nei tag: "rubrica" o
+  /// "vip" digitati per intero filtrano il gruppo. La punteggiatura si
+  /// ignora, perché in archivio ci sono nomi scritti "Rossi, Mario".
+  Future<void> _scegliCliente() async {
+    final scelto = await showModalBottomSheet<GuestModel>(
+      context: context,
+      backgroundColor: AppColors.surface,
+      isScrollControlled: true,
+      useSafeArea: true,
+      shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
+      builder: (ctx) {
+        var filtro = '';
+        return StatefulBuilder(builder: (ctx, aggiorna) {
+          String pulisci(String s) => s
+              .toLowerCase()
+              .replaceAll(RegExp(r'[,()%_*."\\]'), ' ')
+              .replaceAll(RegExp(r'\s+'), ' ')
+              .trim();
+          final cerca = pulisci(filtro);
+          final trovati = cerca.isEmpty
+              ? _guests
+              : _guests.where((g) {
+                  final mucchio = pulisci([
+                    g.displayName,
+                    g.name,
+                    g.phone ?? '',
+                    g.email ?? '',
+                    ...g.tags,
+                  ].join(' '));
+                  return mucchio.contains(cerca);
+                }).toList();
+
+          return Padding(
+            padding: EdgeInsets.only(
+                bottom: MediaQuery.of(ctx).viewInsets.bottom),
+            child: SizedBox(
+              height: MediaQuery.of(ctx).size.height * 0.75,
+              child: Column(children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                  child: TextField(
+                    autofocus: true,
+                    onChanged: (v) => aggiorna(() => filtro = v),
+                    style: const TextStyle(color: AppColors.textPrimary),
+                    decoration: InputDecoration(
+                      hintText: 'Nome, telefono, email o tag',
+                      prefixIcon: const Icon(Icons.search,
+                          color: AppColors.textSecondary),
+                      filled: true,
+                      fillColor: AppColors.cardLight,
+                      border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide.none),
+                    ),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 18),
+                  child: Row(children: [
+                    Text(
+                        trovati.length == _guests.length
+                            ? '${_guests.length} clienti in archivio'
+                            : '${trovati.length} trovati',
+                        style: const TextStyle(
+                            color: AppColors.textSecondary, fontSize: 12)),
+                  ]),
+                ),
+                const SizedBox(height: 4),
+                Expanded(
+                  child: trovati.isEmpty
+                      ? const Center(
+                          child: Text('Nessun cliente con questo nome.',
+                              style: TextStyle(
+                                  color: AppColors.textSecondary,
+                                  fontSize: 14)))
+                      : ListView.separated(
+                          itemCount: trovati.length,
+                          separatorBuilder: (_, __) => const Divider(
+                              height: 1, color: AppColors.divider),
+                          itemBuilder: (_, i) {
+                            final g = trovati[i];
+                            final sotto = [
+                              if ((g.phone ?? '').isNotEmpty) g.phone!,
+                              if (g.visitsCount > 0)
+                                g.visitsCount == 1
+                                    ? '1 visita'
+                                    : '${g.visitsCount} visite',
+                            ].join(' · ');
+                            return ListTile(
+                              title: Row(children: [
+                                Flexible(
+                                  child: Text(g.displayName,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(
+                                          color: AppColors.textPrimary,
+                                          fontWeight: FontWeight.w600)),
+                                ),
+                                ..._tagPastiglie(g.tags),
+                              ]),
+                              subtitle: sotto.isEmpty
+                                  ? null
+                                  : Text(sotto,
+                                      style: const TextStyle(
+                                          color: AppColors.textSecondary,
+                                          fontSize: 13)),
+                              onTap: () => Navigator.pop(ctx, g),
+                            );
+                          },
+                        ),
+                ),
+              ]),
+            ),
+          );
+        });
+      },
+    );
+    if (scelto != null) setState(() => _selectedGuestId = scelto.id);
+  }
+
   Future<void> _loadTablesForArea(String areaId) async {
     final tables = await ref.read(tableRepositoryProvider).getTablesByArea(areaId);
     setState(() { _tables = tables; _selectedTableId = null; });
@@ -191,23 +395,7 @@ class _NewBookingScreenState extends ConsumerState<NewBookingScreen> {
                 const SizedBox(height: 10),
                 _buildField(_emailCtrl, 'Email', Icons.email_outlined, type: TextInputType.emailAddress),
               ] else ...[
-                Container(
-                  decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.divider)),
-                  child: DropdownButtonHideUnderline(
-                    child: DropdownButton<String>(
-                      value: _selectedGuestId,
-                      hint: const Padding(padding: EdgeInsets.symmetric(horizontal: 16), child: Text('Seleziona cliente', style: TextStyle(color: AppColors.textMuted))),
-                      isExpanded: true,
-                      dropdownColor: AppColors.surface,
-                      padding: const EdgeInsets.symmetric(horizontal: 8),
-                      items: _guests.map((g) => DropdownMenuItem(
-                        value: g.id,
-                        child: Text(g.name, style: const TextStyle(color: AppColors.textPrimary)),
-                      )).toList(),
-                      onChanged: (v) => setState(() => _selectedGuestId = v),
-                    ),
-                  ),
-                ),
+                _campoCliente(),
               ],
 
               const SizedBox(height: 20),
