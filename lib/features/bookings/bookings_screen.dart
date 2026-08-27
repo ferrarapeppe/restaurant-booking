@@ -1536,6 +1536,17 @@ class _BookingDetailSheetState extends State<BookingDetailSheet>
                 stato: _editStatus,
                 cambiato: _editStatus != (widget.booking['status'] ?? ''),
                 onScelto: (v) => setState(() => _editStatus = v),
+                // Non passa dal salvataggio: la schermata di rifiuto annulla
+                // la prenotazione e manda il messaggio per conto suo.
+                onRifiuta: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => RejectionScreen(
+                      booking: widget.booking,
+                      onRejected: widget.onSaved,
+                    ),
+                  ),
+                ),
               ),
               // Niente pulsante di chiusura: si esce trascinando giu' la
               // scheda o toccando fuori. Un tondo identico a quello del
@@ -1620,10 +1631,19 @@ class _BottoneStato extends StatelessWidget {
   final bool cambiato;
   final ValueChanged<String> onScelto;
 
+  /// Rifiutare avvisando il cliente non e' uno stato ma un'azione: apre la
+  /// schermata del messaggio. Se fosse una voce come le altre scriverebbe
+  /// "rifiutato" e basta, senza far partire niente — cioe' il contrario di
+  /// quello che promette il nome.
+  final VoidCallback onRifiuta;
+
+  static const _vociRifiuta = '__rifiuta';
+
   const _BottoneStato({
     required this.stato,
     required this.cambiato,
     required this.onScelto,
+    required this.onRifiuta,
   });
 
   @override
@@ -1632,7 +1652,7 @@ class _BottoneStato extends StatelessWidget {
       tooltip: 'Stato della prenotazione',
       color: AppColors.surface,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      onSelected: onScelto,
+      onSelected: (v) => v == _vociRifiuta ? onRifiuta() : onScelto(v),
       itemBuilder: (_) => [
         for (final s in _statiPrenotazione)
           PopupMenuItem<String>(
@@ -1653,6 +1673,18 @@ class _BottoneStato extends StatelessWidget {
               ],
             ]),
           ),
+        const PopupMenuDivider(),
+        const PopupMenuItem<String>(
+          value: _vociRifiuta,
+          child: Row(children: [
+            Icon(Icons.thumb_down_outlined, size: 18, color: AppColors.accent),
+            SizedBox(width: 10),
+            Expanded(
+              child: Text('Rifiuta e avvisa il cliente',
+                  style: TextStyle(color: AppColors.accent)),
+            ),
+          ]),
+        ),
       ],
       child: Container(
         width: 48,
