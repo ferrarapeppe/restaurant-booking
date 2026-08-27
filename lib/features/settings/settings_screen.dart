@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:restaurant_booking/shared/widgets/app_drawer.dart';
 import 'package:restaurant_booking/shared/theme/app_theme.dart';
 import 'package:restaurant_booking/shared/widgets/azioni_barra.dart';
@@ -55,16 +54,8 @@ class SettingsScreen extends StatelessWidget {
               _SettingsCard(
                 icon: Icons.dashboard_customize_outlined,
                 title: 'Link e widget',
-                description: 'Ottieni e gestisci il tuo link e widget di prenotazione online.',
-                onTap: () {},
-              ),
-              _SettingsCard(
-                icon: Icons.palette_outlined,
-                title: 'Disegno',
-                description: 'Modifica i colori, i caratteri e il layout del widget del flusso di prenotazione.',
-                isPremium: true,
-                premiumLabel: 'Aggiungi su. €7.99/mm',
-                onTap: () {},
+                description: 'Il link da dare ai clienti e il codice per mettere il modulo dentro un sito.',
+                onTap: () => context.push('/settings/link'),
               ),
             ],
           ),
@@ -91,18 +82,6 @@ class SettingsScreen extends StatelessWidget {
                 description: 'Gestisci i membri del team e i loro permessi.',
                 onTap: () => context.push('/settings/team'),
               ),
-              _SettingsCard(
-                icon: Icons.notifications_outlined,
-                title: 'Notifiche',
-                description: 'Configura le notifiche per il personale e gli ospiti.',
-                onTap: () {},
-              ),
-              _SettingsCard(
-                icon: Icons.integration_instructions_outlined,
-                title: 'Integrazioni',
-                description: 'Connetti il tuo ristorante con altri servizi.',
-                onTap: () {},
-              ),
             ],
           ),
           const SizedBox(height: 32),
@@ -128,8 +107,6 @@ class _SettingsCard extends StatelessWidget {
   final IconData icon;
   final String title;
   final String description;
-  final bool isPremium;
-  final String? premiumLabel;
   final VoidCallback onTap;
 
   const _SettingsCard({
@@ -137,8 +114,6 @@ class _SettingsCard extends StatelessWidget {
     required this.title,
     required this.description,
     required this.onTap,
-    this.isPremium = false,
-    this.premiumLabel,
   });
 
   @override
@@ -151,9 +126,7 @@ class _SettingsCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(12),
           border: Border.all(color: AppColors.divider),
         ),
-        child: Stack(
-          children: [
-            Padding(
+        child: Padding(
               padding: const EdgeInsets.all(16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -167,27 +140,8 @@ class _SettingsCard extends StatelessWidget {
                     child: Text(description, style: const TextStyle(
                       color: AppColors.textSecondary, fontSize: 12)),
                   ),
-                  if (isPremium && premiumLabel != null) ...[
-                    const SizedBox(height: 8),
-                    Text(premiumLabel!, style: const TextStyle(
-                      color: AppColors.textSecondary, fontSize: 11)),
-                  ],
                 ],
               ),
-            ),
-            if (isPremium)
-              Positioned(
-                top: 8, right: 8,
-                child: Container(
-                  width: 24, height: 24,
-                  decoration: BoxDecoration(
-                    color: AppColors.textSecondary.withOpacity(0.3),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(Icons.add, color: AppColors.textPrimary, size: 16),
-                ),
-              ),
-          ],
         ),
       ),
     );

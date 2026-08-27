@@ -16,6 +16,7 @@ import 'package:restaurant_booking/features/floor_plan/floor_plan_screen.dart';
 import 'package:restaurant_booking/features/bookings/reservations_screen.dart';
 import 'package:restaurant_booking/features/auth/login_screen.dart';
 import 'package:restaurant_booking/features/settings/team_screen.dart';
+import 'package:restaurant_booking/features/settings/link_widget_screen.dart';
 import 'package:restaurant_booking/core/auth/accesso.dart';
 
 final router = GoRouter(
@@ -85,6 +86,7 @@ final router = GoRouter(
         GoRoute(path: 'opening-hours', builder: (context, state) => const OpeningHoursScreen()),
         GoRoute(path: 'profile', builder: (context, state) => const RestaurantProfileScreen()),
         GoRoute(path: 'team', builder: (context, state) => const TeamScreen()),
+        GoRoute(path: 'link', builder: (context, state) => const LinkWidgetScreen()),
       ],
     ),
   ],

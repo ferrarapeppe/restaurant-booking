@@ -456,7 +456,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                 _ShortcutButton(icon: Icons.calendar_month_outlined, label: 'Prenotazioni questo mese', onTap: () => context.go('/calendar')),
                 _ShortcutButton(icon: Icons.list_alt_outlined, label: 'Elenco prenotazioni', onTap: () => context.go('/bookings')),
                 _ShortcutButton(icon: Icons.view_week_outlined, label: 'Programma di sala', onTap: () => context.go('/reservations')),
-                _ShortcutButton(icon: Icons.settings_outlined, label: 'Impostazioni e componenti aggiuntivi', onTap: () => context.go('/settings')),
+                _ShortcutButton(icon: Icons.settings_outlined, label: 'Impostazioni', onTap: () => context.go('/settings')),
               ]),
               const SizedBox(height: 24),
               Row(

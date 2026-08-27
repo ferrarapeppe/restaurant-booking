@@ -19,6 +19,7 @@ class AppDrawer extends StatelessWidget {
       child: SafeArea(
         child: SingleChildScrollView(
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               // Intestazione nera col logo, come la barra in alto e il modulo.
               Container(
@@ -67,14 +68,21 @@ class AppDrawer extends StatelessWidget {
               if (puo('assistente'))
                 _DrawerItem(icon: Icons.auto_awesome_outlined, label: 'Assistente', onTap: () { context.go('/assistente'); Navigator.pop(context); }),
               if (puo('settings'))
-                _DrawerItem(icon: Icons.settings_outlined, label: 'Impostazioni e componenti aggiuntivi', onTap: () { context.go('/settings'); Navigator.pop(context); }),
+                _DrawerItem(icon: Icons.settings_outlined, label: 'Impostazioni', onTap: () { context.go('/settings'); Navigator.pop(context); }),
               const Divider(color: AppColors.divider),
 
               // Chi e' entrato, e come uscirne
+              // A tutta larghezza: la colonna del menu centra i suoi figli, e
+              // questo era l'unico a non allargarsi — quindi finiva in mezzo
+              // mentre le voci qui sopra, che sono ListTile, riempiono la riga
+              // e sembrano allineate a sinistra.
               if (profilo != null)
                 Padding(
                   padding: const EdgeInsets.fromLTRB(24, 8, 24, 0),
-                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
                     Text(profilo.nome.isEmpty ? profilo.email : profilo.nome,
                         style: const TextStyle(color: AppColors.textPrimary, fontSize: 14, fontWeight: FontWeight.w600)),
                     Text(profilo.eAmministratore ? 'Amministratore' : 'Staff',
