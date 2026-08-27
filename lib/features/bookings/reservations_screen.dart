@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:restaurant_booking/shared/widgets/app_drawer.dart';
 import 'package:restaurant_booking/shared/theme/app_theme.dart';
+import 'package:restaurant_booking/shared/theme/colori_sala.dart';
 import 'package:restaurant_booking/shared/widgets/azioni_barra.dart';
 import 'package:restaurant_booking/core/providers/booking_providers.dart';
 import 'package:restaurant_booking/features/bookings/bookings_screen.dart';
@@ -119,7 +120,9 @@ class _ScheduleBodyState extends ConsumerState<_ScheduleBody> {
   static const int _slotMinutes = 15;
   static const double _slotWidth = 52.0;
   static const double _rowHeight = 50.0;
-  static const double _labelWidth = 76.0;
+  // Larga abbastanza per il numero del tavolo e la sua capienza a testo
+  // leggibile: a 76 il pallino dei posti schiacciava il numero.
+  static const double _labelWidth = 96.0;
 
   @override
   void initState() {
@@ -274,8 +277,10 @@ class _ScheduleBodyState extends ConsumerState<_ScheduleBody> {
 
     return Column(children: [
       // ── Date header ────────────────────────────────────────────────────────
+      // Fondo pagina, non bianco: cosi' il riquadro della griglia qui sotto
+      // stacca dallo sfondo come i box del pannello di controllo.
       Container(
-        color: AppColors.surface,
+        color: AppColors.background,
         padding: const EdgeInsets.fromLTRB(16, 10, 16, 4),
         child: Row(children: [
           Text(
@@ -300,7 +305,7 @@ class _ScheduleBodyState extends ConsumerState<_ScheduleBody> {
         ]),
       ),
       Container(
-        color: AppColors.surface,
+        color: AppColors.background,
         padding: const EdgeInsets.fromLTRB(16, 2, 16, 10),
         child: Row(children: [
           _statChip('Totale', totalBookings, totalGuests),
@@ -311,22 +316,31 @@ class _ScheduleBodyState extends ConsumerState<_ScheduleBody> {
               totalGuests - noTableBookings.fold(0, (s, b) => s + ((b['party_size'] as int?) ?? 0))),
         ]),
       ),
-      const Divider(height: 1, color: AppColors.divider),
 
       // ── Timeline ───────────────────────────────────────────────────────────
       if (_loading)
         const Expanded(child: Center(child: CircularProgressIndicator(color: AppColors.accent)))
       else
         Expanded(
-          child: SingleChildScrollView(
+          child: Container(
+            margin: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+            decoration: BoxDecoration(
+              color: AppColors.card,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: AppColors.divider),
+            ),
+            clipBehavior: Clip.antiAlias,
+            child: SingleChildScrollView(
             scrollDirection: Axis.vertical,
             child: SingleChildScrollView(
               scrollDirection: Axis.horizontal,
               child: SizedBox(
                 width: totalWidth,
-                child: Column(
+                child: Stack(children: [
+                Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    _buildTurniStrip(slots.length * _slotWidth),
                     // Time slot header
                     _buildSlotHeader(slots),
                     // Occupancy counter row
@@ -340,59 +354,167 @@ class _ScheduleBodyState extends ConsumerState<_ScheduleBody> {
                     ],
 
                     // Area sections
-                    ...tablesByArea.entries.map((entry) => Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _buildAreaLabel(entry.key, slots),
-                        ...entry.value.map((table) => _buildTableRow(context, table, slots)),
-                      ],
-                    )),
+                    ...tablesByArea.entries.map((entry) {
+                      final occupati = entry.value
+                          .where((t) => _bookings.any(
+                              (b) => b['table_id']?.toString() == t['id']?.toString()))
+                          .length;
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _buildAreaLabel(entry.key, slots,
+                              tavoli: entry.value.length, occupati: occupati),
+                          ...entry.value.map((table) => _buildTableRow(context, table, slots)),
+                        ],
+                      );
+                    }),
                   ],
                 ),
+                // A servizio in corso è l'informazione più utile della
+                // schermata, e prima non c'era. Solo guardando oggi.
+                if (_xAdesso(selectedDate) != null)
+                  Positioned(
+                    left: _labelWidth + _xAdesso(selectedDate)!,
+                    top: 0,
+                    bottom: 0,
+                    width: 2,
+                    child: Container(color: AppColors.accent),
+                  ),
+                ]),
               ),
             ),
+          ),
           ),
         ),
     ]);
   }
 
+  /// Dove cade l'ora corrente nella griglia, `null` se non serve mostrarla.
+  double? _xAdesso(DateTime giornoMostrato) {
+    final ora = DateTime.now();
+    final stessoGiorno = giornoMostrato.year == ora.year &&
+        giornoMostrato.month == ora.month &&
+        giornoMostrato.day == ora.day;
+    if (!stessoGiorno) return null;
+    if (ora.hour < _startHour || ora.hour >= _endHour) return null;
+    return _timeToX('${ora.hour}:${ora.minute}');
+  }
+
   Widget _statChip(String label, int count, int guests) {
     return Text(
       '$label $count • $guests',
-      style: const TextStyle(color: AppColors.textSecondary, fontSize: 12),
+      style: const TextStyle(color: AppColors.textSecondary, fontSize: 14),
     );
   }
 
-  // ── Slot header (rotated time labels) ──────────────────────────────────────
+  static const double _larghezzaOra = _slotWidth * 60 / _slotMinutes;
+
+  /// Le ore in cui il fondo è appena più scuro, per dare ritmo alla griglia.
+  static bool _bandaOra(int ora) => ora.isOdd;
+
+  /// I turni del locale, come li sceglie il cliente nel modulo.
+  static const _turni = <(String, String, String)>[
+    ('Aperitivo', '18:30', '20:00'),
+    ('1º turno', '20:00', '22:00'),
+    ('2º turno', '22:00', '23:00'),
+  ];
+
+  /// Striscia dei turni sopra le ore.
+  ///
+  /// È il ritmo con cui si lavora davvero: guardando la griglia si devono
+  /// vedere i turni, non solo i minuti. Nera e oro come la barra del marchio,
+  /// così non ruba il significato ai colori delle sale.
+  Widget _buildTurniStrip(double larghezzaGriglia) {
+    return Container(
+      color: AppColors.nero,
+      height: 26,
+      child: Row(children: [
+        const SizedBox(width: _labelWidth),
+        SizedBox(
+          width: larghezzaGriglia,
+          child: Stack(children: [
+            for (final t in _turni)
+              Positioned(
+                left: _timeToX('${t.$2}:00'),
+                width: _timeToX('${t.$3}:00') - _timeToX('${t.$2}:00'),
+                top: 0,
+                bottom: 0,
+                child: Container(
+                  alignment: Alignment.centerLeft,
+                  padding: const EdgeInsets.only(left: 8),
+                  decoration: const BoxDecoration(
+                      border: Border(
+                          left: BorderSide(color: AppColors.gold, width: 1))),
+                  child: Text(t.$1,
+                      style: const TextStyle(
+                          color: AppColors.gold,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600),
+                      overflow: TextOverflow.clip),
+                ),
+              ),
+          ]),
+        ),
+      ]),
+    );
+  }
+
+  /// Le ore, in orizzontale e solo piene.
+  ///
+  /// Erano scritte in verticale una ogni quarto d'ora: ventiquattro etichette
+  /// ruotate che nessuno legge. I quarti restano come tacche, servono a
+  /// posizionare i blocchi, non a essere letti.
   Widget _buildSlotHeader(List<String> slots) {
     return Container(
       color: AppColors.surface,
-      height: 44,
+      height: 30,
       child: Row(children: [
-        SizedBox(width: _labelWidth),
-        ...slots.map((slot) {
-          final isHour = slot.endsWith(':00');
-          final isHighlight = slot == '20:00' || slot == '21:00' || slot == '22:00';
-          return SizedBox(
-            width: _slotWidth,
-            child: Column(mainAxisAlignment: MainAxisAlignment.end, children: [
-              RotatedBox(
-                quarterTurns: 3,
-                child: Text(slot,
-                    style: TextStyle(
-                      color: isHighlight
-                          ? Colors.white
-                          : (isHour ? AppColors.textSecondary : AppColors.textMuted),
-                      fontSize: isHour ? 11 : 10,
-                      fontWeight: isHighlight ? FontWeight.bold : FontWeight.normal,
-                    )),
-              ),
-              const SizedBox(height: 3),
-            ]),
-          );
-        }),
+        const SizedBox(width: _labelWidth),
+        for (int h = _startHour; h < _endHour; h++)
+          Container(
+            width: _larghezzaOra,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: _bandaOra(h) ? AppColors.background : null,
+              border: const Border(
+                  left: BorderSide(color: AppColors.divider, width: 1)),
+            ),
+            child: Text('$h',
+                style: const TextStyle(
+                    color: AppColors.textPrimary,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600)),
+          ),
       ]),
     );
+  }
+
+  /// Le celle vuote di una riga: banda alternata per ora, linea marcata
+  /// sull'ora piena e capello sui quarti.
+  List<Widget> _celleGriglia(List<String> slots) {
+    return [
+      for (final s in slots)
+        Builder(builder: (_) {
+          final oraPiena = s.endsWith(':00');
+          final h = int.tryParse(s.split(':')[0]) ?? _startHour;
+          return Container(
+            width: _slotWidth,
+            decoration: BoxDecoration(
+              color: _bandaOra(h)
+                  ? Colors.black.withValues(alpha: 0.022)
+                  : null,
+              border: Border(
+                left: BorderSide(
+                  color: oraPiena
+                      ? AppColors.divider
+                      : AppColors.divider.withValues(alpha: 0.45),
+                  width: oraPiena ? 1 : 0.5,
+                ),
+              ),
+            ),
+          );
+        }),
+    ];
   }
 
   // ── Occupancy counter row ──────────────────────────────────────────────────
@@ -412,7 +534,7 @@ class _ScheduleBodyState extends ConsumerState<_ScheduleBody> {
                 hasData ? '$b•$g' : '·',
                 style: TextStyle(
                   color: hasData ? AppColors.textSecondary : AppColors.divider,
-                  fontSize: 9,
+                  fontSize: 11,
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -424,42 +546,49 @@ class _ScheduleBodyState extends ConsumerState<_ScheduleBody> {
   }
 
   // ── Area / section label row ───────────────────────────────────────────────
-  Widget _buildAreaLabel(String name, List<String> slots, {bool isNoTable = false}) {
+  /// Barra piena di inizio sala.
+  ///
+  /// Era una striscia grigia con dentro una scritta piccola: scorrendo, dopo
+  /// tre righe non si sapeva piu' in quale sala si stesse guardando. Ora la
+  /// barra e' del colore della sala e porta a destra quanti tavoli sono
+  /// occupati, che e' la cosa che si cerca davvero.
+  Widget _buildAreaLabel(String name, List<String> slots,
+      {bool isNoTable = false, int tavoli = 0, int occupati = 0}) {
+    final c = isNoTable ? ColoriSala.senzaTavolo : ColoriSala.di(name);
+    final riassunto = isNoTable
+        ? ''
+        : occupati == 0
+            ? '$tavoli tavoli · tutti liberi'
+            : '$tavoli tavoli · $occupati occupati';
+
     return Container(
-      color: AppColors.cardLight,
-      height: 30,
+      color: c.forte,
+      height: 36,
+      padding: const EdgeInsets.symmetric(horizontal: 10),
+      // Il nome non e' piu' rinchiuso nella colonna dei numeri: li' dentro
+      // "Bancone" diventava "Banc..." e "Dehors" spariva a meta'. La barra
+      // e' larga quanto tutta la riga, tanto vale usarla.
       child: Row(children: [
-        SizedBox(
-          width: _labelWidth,
-          child: Padding(
-            padding: const EdgeInsets.only(left: 8),
-            child: isNoTable
-                ? Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: AppColors.gold,
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    child: Text(name,
-                        style: const TextStyle(
-                            color: Colors.black,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 10),
-                        overflow: TextOverflow.ellipsis),
-                  )
-                : Text(name.toUpperCase(),
-                    style: const TextStyle(
-                        color: AppColors.textPrimary,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 12)),
-          ),
-        ),
-        ...slots.map((_) => Container(
-            width: _slotWidth,
-            decoration: const BoxDecoration(
-                border: Border(left: BorderSide(color: AppColors.divider, width: 0.5))))),
+        Icon(c.icona, size: 17, color: c.suForte),
+        const SizedBox(width: 8),
+        Text(_nomeSala(name),
+            style: TextStyle(
+                color: c.suForte, fontWeight: FontWeight.bold, fontSize: 15)),
+        if (riassunto.isNotEmpty) ...[
+          const SizedBox(width: 14),
+          Text(riassunto,
+              style: TextStyle(
+                  color: c.suForte.withValues(alpha: 0.88), fontSize: 13)),
+        ],
       ]),
     );
+  }
+
+  /// "BANCONE" gridato diventa "Bancone": le maiuscole piene si leggono peggio
+  /// e qui il colore fa gia' tutto il lavoro di far notare la riga.
+  String _nomeSala(String n) {
+    final s = n.trim().toLowerCase();
+    return s.isEmpty ? n : s[0].toUpperCase() + s.substring(1);
   }
 
   // ── Row for no-table booking ───────────────────────────────────────────────
@@ -477,18 +606,23 @@ class _ScheduleBodyState extends ConsumerState<_ScheduleBody> {
 
     return Container(
       height: _rowHeight,
-      decoration: const BoxDecoration(
-          border: Border(bottom: BorderSide(color: AppColors.divider, width: 0.5))),
+      decoration: BoxDecoration(
+          color: ColoriSala.senzaTavolo.tintaGriglia,
+          border: const Border(
+              bottom: BorderSide(color: AppColors.divider, width: 0.5))),
       child: Stack(children: [
         Row(children: [
           Container(
             width: _labelWidth,
-            color: AppColors.gold.withValues(alpha:0.08),
+            // Stessa banda delle sale, in oro: queste righe non appartengono
+            // a nessuna sala perche' il tavolo non e' ancora stato assegnato.
+            decoration: BoxDecoration(
+              color: ColoriSala.senzaTavolo.tinta,
+              border: Border(
+                  left: BorderSide(color: ColoriSala.senzaTavolo.forte, width: 4)),
+            ),
           ),
-          ...slots.map((_) => Container(
-              width: _slotWidth,
-              decoration: const BoxDecoration(
-                  border: Border(left: BorderSide(color: AppColors.divider, width: 0.5))))),
+          ..._celleGriglia(slots),
         ]),
         Positioned(
           left: x, top: 5, height: _rowHeight - 10, width: w.clamp(80.0, 500.0),
@@ -515,37 +649,45 @@ class _ScheduleBodyState extends ConsumerState<_ScheduleBody> {
     final capacity = (table['capacity'] as int?) ?? 0;
     final tableBookings =
         _bookings.where((b) => b['table_id']?.toString() == tableId).toList();
+    final c = ColoriSala.di(table['areas']?['name']?.toString());
 
     return Container(
       height: _rowHeight,
-      decoration: const BoxDecoration(
-          border: Border(bottom: BorderSide(color: AppColors.divider, width: 0.5))),
+      decoration: BoxDecoration(
+          // La tinta attraversa tutta la riga: prima il colore moriva alla
+          // colonna del numero e a destra restava mezzo schermo di beige.
+          color: c.tintaGriglia,
+          border: const Border(
+              bottom: BorderSide(color: AppColors.divider, width: 0.5))),
       child: Stack(children: [
         Row(children: [
           Container(
             width: _labelWidth,
-            color: AppColors.surface,
-            padding: const EdgeInsets.symmetric(horizontal: 8),
+            // Banda del colore della sala a sinistra e fondo piu' carico:
+            // a meta' scorrimento si sa dove si e' senza risalire in cima.
+            decoration: BoxDecoration(
+              color: c.tinta,
+              border: Border(left: BorderSide(color: c.forte, width: 4)),
+            ),
+            padding: const EdgeInsets.only(left: 8, right: 8),
             child: Row(children: [
               Text(tableName,
                   style: const TextStyle(
-                      color: AppColors.textPrimary, fontSize: 14, fontWeight: FontWeight.w600)),
+                      color: AppColors.textPrimary, fontSize: 16, fontWeight: FontWeight.w600)),
               const Spacer(),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                 decoration: BoxDecoration(
-                  border: Border.all(color: AppColors.divider),
+                  border: Border.all(color: c.forte.withValues(alpha: 0.35)),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: Text('$capacity-$capacity',
-                    style: const TextStyle(color: AppColors.textSecondary, fontSize: 9)),
+                child: Text('$capacity',
+                    style: TextStyle(
+                        color: c.forte, fontSize: 12, fontWeight: FontWeight.w600)),
               ),
             ]),
           ),
-          ...slots.map((_) => Container(
-              width: _slotWidth,
-              decoration: const BoxDecoration(
-                  border: Border(left: BorderSide(color: AppColors.divider, width: 0.5))))),
+          ..._celleGriglia(slots),
         ]),
         ...tableBookings.map((b) {
           final timeStart = (b['time_start'] ?? '${_startHour}:00:00').toString();
@@ -625,18 +767,18 @@ class _BookingBar extends StatelessWidget {
           child: Text(guestName,
               style: TextStyle(
                   color: contentColor,
-                  fontSize: 11,
+                  fontSize: 13,
                   fontWeight: FontWeight.bold),
               overflow: TextOverflow.ellipsis),
         ),
         const SizedBox(width: 4),
         // Party size circle
         Container(
-          width: 18, height: 18,
+          width: 21, height: 21,
           decoration: BoxDecoration(shape: BoxShape.circle, color: circleColor),
           child: Center(
             child: Text('$partySize',
-                style: TextStyle(color: contentColor, fontSize: 10, fontWeight: FontWeight.bold)),
+                style: TextStyle(color: contentColor, fontSize: 12, fontWeight: FontWeight.bold)),
           ),
         ),
         if (hasEmail && !lightContent) ...[

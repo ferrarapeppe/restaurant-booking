@@ -8,6 +8,7 @@ import 'package:restaurant_booking/shared/widgets/azioni_barra.dart';
 import 'package:restaurant_booking/shared/widgets/contenuto_centrato.dart';
 import 'package:restaurant_booking/core/providers/booking_providers.dart';
 import 'package:restaurant_booking/features/bookings/stato_giornata.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 // Provider per il mese focalizzato
 final focusedMonthProvider = StateProvider<DateTime>((ref) => DateTime(DateTime.now().year, DateTime.now().month));
@@ -15,6 +16,24 @@ final focusedMonthProvider = StateProvider<DateTime>((ref) => DateTime(DateTime.
 // Aperture e chiusure, per colorare il mese e per aprire/chiudere una giornata.
 final regoleGiornateProvider =
     FutureProvider.autoDispose<RegoleGiornate>((ref) async => RegoleGiornate.carica());
+
+/// Quanti posti ha il locale in tutto, sommando la capienza dei tavoli attivi.
+///
+/// Serve a dire quanto è piena una serata. Se i tavoli non hanno ancora una
+/// capienza sensata il totale viene basso o zero: in quel caso il calendario
+/// non colora niente, invece di dare per pieno un giorno con due persone.
+final postiTotaliProvider = FutureProvider<int>((ref) async {
+  final res = await Supabase.instance.client
+      .from('tables')
+      .select('capacity, is_active')
+      .eq('restaurant_id', '2b126a92-24d5-4e83-b38c-dfc82035a0cf');
+  var somma = 0;
+  for (final t in res as List) {
+    if (t['is_active'] == false) continue;
+    somma += (t['capacity'] as int?) ?? 0;
+  }
+  return somma;
+});
 
 // Provider per i conteggi del mese
 final monthBookingCountsProvider = FutureProvider.autoDispose<Map<String, Map<String, int>>>((ref) async {
@@ -105,14 +124,16 @@ class CalendarBodyState extends ConsumerState<CalendarBody> {
     final selectedDay = ref.watch(selectedDateProvider);
     final countsAsync = ref.watch(monthBookingCountsProvider);
     final regole = ref.watch(regoleGiornateProvider).value;
+    final postiTotali = ref.watch(postiTotaliProvider).value ?? 0;
     final days = _getDaysInMonth(focusedMonth);
     final monthName = DateFormat('MMMM', 'it_IT').format(focusedMonth);
     final capitalMonth = monthName[0].toUpperCase() + monthName.substring(1);
 
     return Column(children: [
-      // Header mese
+      // Header mese, sul fondo pagina: cosi' il riquadro della griglia
+      // stacca, come i box del pannello di controllo.
       Container(
-        color: AppColors.surface,
+        color: AppColors.background,
         padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
         child: Row(children: [
           IconButton(
@@ -121,7 +142,7 @@ class CalendarBodyState extends ConsumerState<CalendarBody> {
           ),
           Expanded(child: Text('$capitalMonth ${focusedMonth.year}',
               textAlign: TextAlign.center,
-              style: const TextStyle(color: AppColors.textPrimary, fontSize: 17, fontWeight: FontWeight.bold))),
+              style: const TextStyle(color: AppColors.textPrimary, fontSize: 20, fontWeight: FontWeight.bold))),
           IconButton(
             icon: const Icon(Icons.chevron_right, color: AppColors.textPrimary),
             onPressed: () => ref.read(focusedMonthProvider.notifier).state = DateTime(focusedMonth.year, focusedMonth.month + 1),
@@ -132,12 +153,23 @@ class CalendarBodyState extends ConsumerState<CalendarBody> {
           ),
         ]),
       ),
-      // Giorni settimana
+      // Il riquadro del mese: intestazione dei giorni e griglia dentro lo
+      // stesso box, staccato dal fondo tortora.
+      Expanded(
+        child: Container(
+          margin: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+          decoration: BoxDecoration(
+            color: AppColors.card,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: AppColors.divider),
+          ),
+          clipBehavior: Clip.antiAlias,
+          child: Column(children: [
       Container(
-        color: AppColors.surface,
-        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+        color: AppColors.cardLight,
+        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
         child: Row(children: ['Lun','Mar','Mer','Gio','Ven','Sab','Dom'].map((d) => Expanded(
-          child: Center(child: Text(d, style: const TextStyle(color: AppColors.textSecondary, fontSize: 12, fontWeight: FontWeight.w600))),
+          child: Center(child: Text(d, style: const TextStyle(color: AppColors.textSecondary, fontSize: 14, fontWeight: FontWeight.w600))),
         )).toList()),
       ),
       const Divider(height: 1, color: AppColors.divider),
@@ -145,14 +177,14 @@ class CalendarBodyState extends ConsumerState<CalendarBody> {
       Expanded(
         child: countsAsync.when(
           loading: () => GridView.builder(
-            padding: const EdgeInsets.all(2),
+            padding: const EdgeInsets.all(4),
             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 7, childAspectRatio: 0.52),
             itemCount: days.length,
-            itemBuilder: (_, i) => _DayCell(day: days[i], focusedMonth: focusedMonth, isSelected: _isSameDay(days[i], selectedDay), counts: null, stato: StatoGiornata.inCaricamento),
+            itemBuilder: (_, i) => _DayCell(day: days[i], focusedMonth: focusedMonth, isSelected: _isSameDay(days[i], selectedDay), counts: null, stato: StatoGiornata.inCaricamento, postiTotali: postiTotali),
           ),
           error: (e, _) => Center(child: Text('Errore: $e', style: const TextStyle(color: AppColors.textSecondary))),
           data: (counts) => GridView.builder(
-            padding: const EdgeInsets.all(2),
+            padding: const EdgeInsets.all(4),
             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 7, childAspectRatio: 0.52),
             itemCount: days.length,
             itemBuilder: (context, index) {
@@ -172,6 +204,7 @@ class CalendarBodyState extends ConsumerState<CalendarBody> {
                   focusedMonth: focusedMonth,
                   isSelected: _isSameDay(day, selectedDay),
                   counts: dayData,
+                  postiTotali: postiTotali,
                   stato: delMese && regole != null
                       ? regole.stato(day)
                       : StatoGiornata.inCaricamento,
@@ -179,6 +212,9 @@ class CalendarBodyState extends ConsumerState<CalendarBody> {
               );
             },
           ),
+        ),
+      ),
+          ]),
         ),
       ),
     ]);
@@ -190,57 +226,131 @@ class _DayCell extends StatelessWidget {
   final bool isSelected;
   final StatoGiornata stato;
   final Map<String, int>? counts;
-  const _DayCell({required this.day, required this.focusedMonth, required this.isSelected, required this.stato, required this.counts});
+  final int postiTotali;
+  const _DayCell({
+    required this.day,
+    required this.focusedMonth,
+    required this.isSelected,
+    required this.stato,
+    required this.counts,
+    required this.postiTotali,
+  });
 
   bool get _isCurrentMonth => day.month == focusedMonth.month;
   bool get _isToday { final n = DateTime.now(); return day.year == n.year && day.month == n.month && day.day == n.day; }
+  bool get _weekend => day.weekday == DateTime.saturday || day.weekday == DateTime.sunday;
 
-  /// Sfondo e testo del badge di stato. `null` per le giornate regolarmente
-  /// aperte, che restano senza badge come prima.
-  (Color, Color)? get _colori => switch (stato) {
-        StatoGiornata.chiuse => (AppColors.accentLight, AppColors.accent),
-        StatoGiornata.chiusuraSettimanale => (AppColors.cardLight, AppColors.textSecondary),
-        StatoGiornata.nonAncoraAperte => (AppColors.cardLight, AppColors.textMuted),
-        _ => null,
-      };
+  /// Una giornata in cui non si lavora: chiusura settimanale, chiusura
+  /// straordinaria, oppure data ancora fuori dal periodo prenotabile.
+  bool get _spenta =>
+      stato == StatoGiornata.chiuse ||
+      stato == StatoGiornata.chiusuraSettimanale ||
+      stato == StatoGiornata.nonAncoraAperte;
+
+  int get _coperti => counts?['ospiti'] ?? 0;
+  int get _prenotazioni => counts?['prenotazioni'] ?? 0;
+  int get _daApprovare => counts?['pending'] ?? 0;
+
+  /// Da vuoto a pieno su una scala sola, l'oro del marchio.
+  ///
+  /// Una scala e non cinque colori diversi: cosi' il fondo si legge come una
+  /// quantita' invece che come categorie da ricordare. Senza una capienza
+  /// credibile non si colora niente, altrimenti due persone in un locale
+  /// con i tavoli a zero risulterebbero "al completo".
+  (Color, Color) get _fondoERiempimento {
+    if (_spenta) return (AppColors.background, AppColors.textMuted);
+    if (_coperti == 0 || postiTotali <= 0) {
+      return (AppColors.surface, AppColors.textSecondary);
+    }
+    final quota = _coperti / postiTotali;
+    if (quota < 0.25) return (const Color(0xFFFBF7EE), AppColors.goldDark);
+    if (quota < 0.60) return (const Color(0xFFF1E6C9), AppColors.goldDark);
+    if (quota < 0.90) return (const Color(0xFFE3D0A0), const Color(0xFF4A3D12));
+    return (AppColors.gold, const Color(0xFF3D2F06));
+  }
 
   @override
   Widget build(BuildContext context) {
+    final (fondo, testo) = _fondoERiempimento;
+    final pieno = postiTotali > 0 && _coperti >= postiTotali;
+
     return Container(
-      margin: const EdgeInsets.all(1),
+      margin: const EdgeInsets.all(1.5),
       decoration: BoxDecoration(
-        color: isSelected ? AppColors.accentLight : AppColors.surface,
+        color: !_isCurrentMonth
+            ? AppColors.background
+            : isSelected
+                ? AppColors.accentLight
+                // Sabato e domenica appena piu' caldi, per dare ritmo alla
+                // griglia: lo stesso trucco delle bande orarie.
+                : (fondo == AppColors.surface && _weekend
+                    ? AppColors.cardLight
+                    : fondo),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: _isToday ? AppColors.accent : AppColors.divider, width: _isToday ? 2 : 0.5),
+        border: Border.all(
+            color: _isToday ? AppColors.accent : AppColors.divider,
+            width: _isToday ? 2 : 0.5),
       ),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(6, 5, 0, 2),
-          child: Text('${day.day}', style: TextStyle(
-            color: !_isCurrentMonth ? AppColors.textMuted : _isToday ? AppColors.accent : AppColors.textPrimary,
-            fontSize: 14, fontWeight: _isToday ? FontWeight.bold : FontWeight.w500,
-          )),
-        ),
-        // Una giornata non aperta al pubblico lo dice subito; sotto restano
-        // le prenotazioni, che possiamo comunque inserire dall'app.
-        if (_isCurrentMonth && _colori != null) ...[
-          _Pill(label: AspettoStato.di(stato).breve, bg: _colori!.$1, fg: _colori!.$2),
-          const SizedBox(height: 2),
-          if ((counts?['pending'] ?? 0) > 0) ...[
-            _Pill(label: '${counts!['pending']} in attesa', bg: AppColors.statoAttesaSfondo, fg: AppColors.gold),
-            const SizedBox(height: 2),
+      child: Stack(children: [
+        Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(8, 5, 0, 2),
+            child: Text('${day.day}', style: TextStyle(
+              color: !_isCurrentMonth
+                  ? AppColors.textMuted
+                  : _isToday
+                      ? AppColors.accent
+                      : _spenta
+                          ? AppColors.textMuted
+                          : AppColors.textPrimary,
+              fontSize: 17,
+              fontWeight: _isToday ? FontWeight.bold : FontWeight.w600,
+            )),
+          ),
+          if (_isCurrentMonth) ...[
+            if (_spenta)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                child: Text(AspettoStato.di(stato).breve.toLowerCase(),
+                    style: const TextStyle(
+                        color: AppColors.textMuted, fontSize: 12),
+                    overflow: TextOverflow.ellipsis),
+              ),
+            // Testo semplice al posto delle pastiglie: impilate mangiavano
+            // meta' cella per dire due numeri, e ora e' il fondo a farsi notare.
+            if (_prenotazioni > 0) ...[
+              const SizedBox(height: 2),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                child: Text('$_prenotazioni prenotaz. · $_coperti pers.',
+                    style: TextStyle(
+                        color: testo, fontSize: 12, fontWeight: FontWeight.w600),
+                    overflow: TextOverflow.ellipsis),
+              ),
+            ],
+            if (pieno)
+              Padding(
+                padding: const EdgeInsets.only(left: 8, top: 2),
+                child: Text('al completo',
+                    style: TextStyle(color: testo, fontSize: 12)),
+              ),
           ],
-          if ((counts?['prenotazioni'] ?? 0) > 0)
-            _Pill(label: '${counts!['prenotazioni']} prenotaz.', bg: AppColors.statoConfermatoSfondo, fg: AppColors.statoConfermato),
-        ] else if (counts != null && _isCurrentMonth) ...[
-          if ((counts?['pending'] ?? 0) > 0) ...[
-            _Pill(label: '${counts!['pending']} in attesa', bg: AppColors.statoAttesaSfondo, fg: AppColors.gold),
-            const SizedBox(height: 2),
-          ],
-          _Pill(label: '${counts?['prenotazioni'] ?? 0} prenotaz.', bg: AppColors.statoConfermatoSfondo, fg: AppColors.statoConfermato),
-          const SizedBox(height: 2),
-          _Pill(label: '${counts?['ospiti'] ?? 0} persone', bg: AppColors.cardLight, fg: AppColors.statoAlTavolo),
-        ],
+        ]),
+        // L'unica cosa su cui si deve agire: si vede da lontano.
+        if (_isCurrentMonth && _daApprovare > 0)
+          Positioned(
+            top: 7,
+            right: 7,
+            child: Tooltip(
+              message: '$_daApprovare da approvare',
+              child: Container(
+                width: 10,
+                height: 10,
+                decoration: const BoxDecoration(
+                    color: AppColors.accent, shape: BoxShape.circle),
+              ),
+            ),
+          ),
       ]),
     );
   }
@@ -370,14 +480,3 @@ class _SchedaGiornoState extends State<_SchedaGiorno> {
   }
 }
 
-class _Pill extends StatelessWidget {
-  final String label; final Color bg, fg;
-  const _Pill({required this.label, required this.bg, required this.fg});
-  @override
-  Widget build(BuildContext context) => Container(
-    width: double.infinity, margin: const EdgeInsets.symmetric(horizontal: 2, vertical: 1),
-    padding: const EdgeInsets.symmetric(vertical: 3),
-    decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(4)),
-    child: Text(label, textAlign: TextAlign.center, style: TextStyle(color: fg, fontSize: 10, fontWeight: FontWeight.w700)),
-  );
-}
