@@ -2,40 +2,45 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class AppColors {
-  // Colori principali HIO — gli stessi del modulo di prenotazione, cosi'
-  // l'app e la pagina che vede il cliente sembrano la stessa cosa.
+  // Colori del marchio HIO, presi dai token del sito hiooriental.com
+  // (`assets/css/variables.css` e `design-system/MASTER.md`): gestionale,
+  // modulo di prenotazione e sito devono sembrare la stessa cosa.
   //
-  // Prima lo sfondo della pagina era bianco quanto le schede, quindi non
-  // staccava niente. Ora la pagina e' una tortora calda e le schede bianche
-  // ci galleggiano sopra.
-  static const background = Color(0xFFF4F2EF);      // Tortora, fondo pagina
-  static const surface = Color(0xFFFFFFFF);         // Bianco, schede e barre
-  static const card = Color(0xFFFFFFFF);
-  static const cardLight = Color(0xFFF4F2EF);
+  // Rispetto a prima cambia soprattutto la temperatura: dove c'erano grigi
+  // neutri ora ci sono beige. Il grigio accanto all'oro del marchio lo
+  // faceva sembrare sporco.
+  static const background = Color(0xFFF5F0E7);      // Fondo caldo di pagina
+  static const surface = Color(0xFFFFFDF8);         // Bianco caldo, schede e barre
+  static const card = Color(0xFFFFFDF8);
+  static const surfaceElevated = Color(0xFFFFFFFF); // Bianco pieno, in evidenza
+  static const cardLight = Color(0xFFEFE8DA);       // Tinta sotto le schede
 
-  // Nero delle fasce in alto e in basso, come nel modulo.
-  static const nero = Color(0xFF0E0E0E);
+  // Inchiostro delle fasce in alto e in basso.
+  static const nero = Color(0xFF160E0A);
 
   // Accent
-  static const accent = Color(0xFFB7182A);          // Rosso HIO
-  static const accentDark = Color(0xFF8F1220);
-  static const accentLight = Color(0xFFFDECED);     // Rosso chiaro per sfondi
+  static const accent = Color(0xFFB9172A);          // Rosso HIO
+  static const accentDark = Color(0xFF8E1220);
+  static const accentLight = Color(0xFFFBEAE9);     // Rosso chiaro per sfondi
 
   // Oro
-  static const gold = Color(0xFFC9B06E);            // Oro HIO
-  static const goldLight = Color(0xFFFBF7EE);       // Oro chiaro per sfondi
+  static const gold = Color(0xFFCAB16F);            // Oro HIO
+  static const goldLight = Color(0xFFF8F1E1);       // Oro chiaro per sfondi
   // L'oro HIO su fondo chiaro sta intorno a 2,2:1, sotto il minimo leggibile
   // di 4,5:1. Per i testi piccoli si usa questa versione scura (~5,4:1),
-  // lasciando l'oro pieno a bordi, filetti e riempimenti.
+  // lasciando l'oro pieno a bordi, filetti e riempimenti. Anche il sito
+  // dichiara di non usare mai l'oro come testo su bianco.
   static const goldDark = Color(0xFF8A6D1F);        // Oro scuro per i testi
 
   // Testi
-  static const textPrimary = Color(0xFF1A1A1A);     // Quasi nero
-  static const textSecondary = Color(0xFF555555);   // Grigio medio
-  static const textMuted = Color(0xFF999999);       // Grigio chiaro
+  static const textPrimary = Color(0xFF18130F);     // Inchiostro
+  static const textSecondary = Color(0xFF655D54);   // Bruno attenuato
+  // Era #999999, circa 2,8:1: sotto il minimo leggibile. Questo sta sopra
+  // 4,5:1 sul fondo caldo e resta comunque chiaramente secondario.
+  static const textMuted = Color(0xFF7C7366);
 
   // UI
-  static const divider = Color(0xFFE0E0E0);
+  static const divider = Color(0xFFD9CCB7);         // Filetto caldo
   static const badgeGreen = Color(0xFF2E7D52);
   static const accentGreen = Color(0xFF2E7D52);
   static const badgeGrey = Color(0xFF6B7280);
@@ -57,18 +62,32 @@ class AppColors {
 }
 
 class AppTheme {
-  /// Stessa coppia tipografica del modulo di prenotazione e delle email:
-  /// Playfair Display SC per i titoli, Karla per il testo corrente.
+  /// La coppia tipografica del sito: Fraunces per i titoli, Manrope per il
+  /// testo corrente.
+  ///
+  /// Prima erano Playfair Display SC e Karla. Fraunces ha grazie a cuneo ma
+  /// aste piene, quindi regge anche in piccolo su schermo, dove i filetti
+  /// sottili dei serif classici si spezzano. Manrope è geometrica e sta bene
+  /// accanto al lettering sottile del logo.
+  ///
+  /// Playfair era in versione *small caps*: scriveva "Calendario" e si
+  /// leggeva "CALENDARIO". Fraunces non lo fa, quindi i titoli delle barre
+  /// ora appaiono come sono scritti.
   static TextTheme _testo(TextTheme base) {
-    final corpo = GoogleFonts.karlaTextTheme(base);
+    final corpo = GoogleFonts.manropeTextTheme(base);
+    TextStyle titolo(TextStyle? s) => GoogleFonts.fraunces(
+          textStyle: s,
+          fontWeight: FontWeight.w600,
+          letterSpacing: -0.3,
+        );
     return corpo.copyWith(
-      displayLarge: GoogleFonts.playfairDisplaySc(textStyle: base.displayLarge, fontWeight: FontWeight.bold),
-      displayMedium: GoogleFonts.playfairDisplaySc(textStyle: base.displayMedium, fontWeight: FontWeight.bold),
-      displaySmall: GoogleFonts.playfairDisplaySc(textStyle: base.displaySmall, fontWeight: FontWeight.bold),
-      headlineLarge: GoogleFonts.playfairDisplaySc(textStyle: base.headlineLarge, fontWeight: FontWeight.bold),
-      headlineMedium: GoogleFonts.playfairDisplaySc(textStyle: base.headlineMedium, fontWeight: FontWeight.bold),
-      headlineSmall: GoogleFonts.playfairDisplaySc(textStyle: base.headlineSmall, fontWeight: FontWeight.bold),
-      titleLarge: GoogleFonts.playfairDisplaySc(textStyle: base.titleLarge, fontWeight: FontWeight.bold),
+      displayLarge: titolo(base.displayLarge),
+      displayMedium: titolo(base.displayMedium),
+      displaySmall: titolo(base.displaySmall),
+      headlineLarge: titolo(base.headlineLarge),
+      headlineMedium: titolo(base.headlineMedium),
+      headlineSmall: titolo(base.headlineSmall),
+      titleLarge: titolo(base.titleLarge),
     );
   }
 
@@ -92,10 +111,11 @@ class AppTheme {
       elevation: 0,
       iconTheme: const IconThemeData(color: AppColors.textPrimary),
       // Gli stili in linea non ereditano dal textTheme: il font va indicato qui
-      titleTextStyle: GoogleFonts.playfairDisplaySc(
+      titleTextStyle: GoogleFonts.fraunces(
         color: AppColors.accent,
         fontSize: 20,
-        fontWeight: FontWeight.bold,
+        fontWeight: FontWeight.w600,
+        letterSpacing: 0.2,
       ),
     ),
     cardTheme: CardTheme(
@@ -150,8 +170,9 @@ class AppTheme {
     ),
     dialogTheme: DialogTheme(
       backgroundColor: AppColors.surface,
-      titleTextStyle: GoogleFonts.playfairDisplaySc(color: AppColors.accent, fontSize: 18, fontWeight: FontWeight.bold),
-      contentTextStyle: GoogleFonts.karla(color: AppColors.textPrimary),
+      titleTextStyle: GoogleFonts.fraunces(
+          color: AppColors.accent, fontSize: 18, fontWeight: FontWeight.w600),
+      contentTextStyle: GoogleFonts.manrope(color: AppColors.textPrimary),
     ),
     bottomSheetTheme: const BottomSheetThemeData(
       backgroundColor: AppColors.surface,

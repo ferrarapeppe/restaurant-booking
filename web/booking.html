@@ -3,29 +3,31 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <meta name="theme-color" content="#0E0E0E">
+  <meta name="theme-color" content="#160E0A">
   <meta name="description" content="Prenota il tuo tavolo da Hio Oriental Bar — Via Giuseppe Mazzini 5, Palermo.">
   <title>Prenota — Hio Oriental Bar</title>
   <link rel="icon" href="favicon.png" type="image/png">
   <link rel="apple-touch-icon" href="logo.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Karla:wght@400;500;600;700&family=Playfair+Display+SC:wght@400;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300..800&family=Fraunces:opsz,wght@9..144,300..700&display=swap" rel="stylesheet">
   <style>
     /* ─── Token ──────────────────────────────────────────────────────────── */
+    /* Gli stessi di hiooriental.com (assets/css/variables.css): il modulo si
+       apre dal sito, e passare da una tavolozza all'altra si nota. */
     :root {
-      --nero:        #0E0E0E;
-      --nero-soft:   #1A1A1A;
-      --rosso:       #B7182A;
-      --rosso-scuro: #8F1220;
-      --rosso-chiaro:#FDECED;
-      --oro:         #C9B06E;
-      --oro-chiaro:  #FBF7EE;
-      --testo:       #1A1A1A;
-      --testo-soft:  #5A5A5A;
-      --bordo:       #E4E1DC;
-      --superficie:  #FFFFFF;
-      --sfondo:      #F4F2EF;
+      --nero:        #160E0A;
+      --nero-soft:   #241A14;
+      --rosso:       #B9172A;
+      --rosso-scuro: #8E1220;
+      --rosso-chiaro:#FBEAE9;
+      --oro:         #CAB16F;
+      --oro-chiaro:  #F8F1E1;
+      --testo:       #18130F;
+      --testo-soft:  #655D54;
+      --bordo:       #D9CCB7;
+      --superficie:  #FFFDF8;
+      --sfondo:      #F5F0E7;
 
       --raggio:    16px;
       --raggio-sm: 10px;
@@ -33,8 +35,8 @@
       --ombra:     0 1px 2px rgba(14,14,14,.04), 0 10px 30px rgba(14,14,14,.07);
       --t:         200ms cubic-bezier(.2,.7,.3,1);
 
-      --font-display: 'Playfair Display SC', Georgia, 'Times New Roman', serif;
-      --font-body:    'Karla', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      --font-display: 'Fraunces', 'Iowan Old Style', Georgia, 'Times New Roman', serif;
+      --font-body:    'Manrope', 'Avenir Next', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -90,7 +92,7 @@
       font-size: 13px;
       line-height: 1.4;
       letter-spacing: .04em;
-      color: #B9B4AC;
+      color: #A79E90;
     }
 
     /* ─── Layout ─────────────────────────────────────────────────────────── */
@@ -236,7 +238,7 @@
       transition: background var(--t), border-color var(--t);
     }
     .cal-nav:active:not(:disabled) { background: var(--rosso-chiaro); border-color: var(--rosso); }
-    .cal-nav:disabled { color: #C4C0BA; border-color: #EFEDE9; cursor: not-allowed; }
+    .cal-nav:disabled { color: #BCB0A0; border-color: #E8E0D3; cursor: not-allowed; }
     .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; }
     .cal-day-name {
       text-align: center;
@@ -269,7 +271,7 @@
       font-weight: 700;
       box-shadow: none;
     }
-    .cal-day.disabled { color: #C4C0BA; cursor: default; }
+    .cal-day.disabled { color: #BCB0A0; cursor: default; }
     .cal-day.empty { cursor: default; }
 
     /* ─── Passo 3 · Aree e orari ─────────────────────────────────────────── */
@@ -340,8 +342,8 @@
       color: #fff;
     }
     .time-btn.unavailable {
-      color: #C4C0BA;
-      border-color: #EFEDE9;
+      color: #BCB0A0;
+      border-color: #E8E0D3;
       cursor: default;
     }
 
@@ -379,7 +381,7 @@
       box-shadow: 0 0 0 3px var(--rosso-chiaro);
     }
     .form-group input::placeholder,
-    .form-group textarea::placeholder { color: #A9A49C; }
+    .form-group textarea::placeholder { color: #9C9285; }
 
     /* Su schermi molto stretti prefisso e numero vanno a capo invece di comprimersi */
     /* Campi obbligatori ed errori in linea */
@@ -493,8 +495,8 @@
     .btn-primary:hover:not(:disabled) { background: var(--rosso-scuro); }
     .btn-primary:active:not(:disabled) { transform: scale(.99); }
     .btn-primary:disabled {
-      background: #D8D5D0;
-      color: #8A857E;
+      background: #DDD3C4;
+      color: #857C70;
       cursor: not-allowed;
     }
 
@@ -552,8 +554,8 @@
       cursor: pointer;
       transition: background var(--t);
     }
-    .btn-modal-close { background: #F0EEEA; color: var(--testo); }
-    .btn-modal-close:hover { background: #E4E1DC; }
+    .btn-modal-close { background: #EFE8DA; color: var(--testo); }
+    .btn-modal-close:hover { background: #D9CCB7; }
     .btn-modal-accept { background: var(--rosso); color: #fff; }
     .btn-modal-accept:hover { background: var(--rosso-scuro); }
 
@@ -598,7 +600,7 @@
     /* ─── Footer con indirizzo ───────────────────────────────────────────── */
     footer {
       background: var(--nero);
-      color: #B9B4AC;
+      color: #A79E90;
       text-align: center;
       padding: 26px 20px calc(26px + env(safe-area-inset-bottom));
       border-top: 1px solid rgba(201,176,110,.35);
@@ -611,7 +613,7 @@
       color: var(--oro);
       margin-bottom: 6px;
     }
-    #footer-address { font-size: 14px; color: #B9B4AC; }
+    #footer-address { font-size: 14px; color: #A79E90; }
 
     /* ─── Schermi più larghi ─────────────────────────────────────────────── */
     @media (min-width: 560px) {
@@ -663,7 +665,7 @@
     <p>Se non sei in grado di soddisfare la tua prenotazione, sei obbligato a cancellarla il prima possibile utilizzando il link di prenotazione che ti invieremo dopo aver completato la prenotazione o contattandoci telefonicamente (grazie).</p>
     <p>Accetti che Hio Oriental Bar e i suoi fornitori raccolgano, memorizzino ed elaborino i tuoi dati personali e i dati raccolti automaticamente quando effettui questa prenotazione. I dati vengono raccolti anche durante la comunicazione e la visita al ristorante.</p>
     <p>Questi dati includono, ma non sono limitati a: nome, indirizzo e-mail, numero di telefono, altri dati forniti tramite il modulo, posizione e dispositivo specifiche.</p>
-    <p>In base alla legge europea GDPR puoi richiedere una copia dei dati che abbiamo raccolto, inviando un'e-mail a <a href="mailto:prenota@hiooriental.com" style="color:#B7182A">prenota@hiooriental.com</a>.</p>
+    <p>In base alla legge europea GDPR puoi richiedere una copia dei dati che abbiamo raccolto, inviando un'e-mail a <a href="mailto:prenota@hiooriental.com" style="color:#B9172A">prenota@hiooriental.com</a>.</p>
     <div class="modal-footer">
       <button class="btn-modal-close" id="terms-vicino">Vicino</button>
       <button class="btn-modal-accept" id="terms-accetta">Accetta</button>
@@ -969,8 +971,8 @@ function renderStep4() {
 function renderSuccess() {
   return '<div class="success-box">' +
     '<svg class="success-icon" viewBox="0 0 48 48" width="58" height="58" fill="none" role="img" aria-label="Richiesta inviata">' +
-      '<circle cx="24" cy="24" r="22" stroke="#C9B06E" stroke-width="2"/>' +
-      '<path d="M15 24.5l6.5 6.5L33 19" stroke="#B7182A" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>' +
+      '<circle cx="24" cy="24" r="22" stroke="#CAB16F" stroke-width="2"/>' +
+      '<path d="M15 24.5l6.5 6.5L33 19" stroke="#B9172A" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>' +
     '</svg>' +
     '<h2>Abbiamo ricevuto correttamente la tua richiesta di prenotazione.</h2>' +
     '<p>Ti ricordiamo che questa comunicazione non costituisce una conferma di prenotazione. ' +
