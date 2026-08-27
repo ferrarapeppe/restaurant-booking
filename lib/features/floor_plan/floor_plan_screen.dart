@@ -409,7 +409,7 @@ class _FloorPlanScreenState extends State<FloorPlanScreen> {
                                     const Text('Nessun tavolo configurato', style: TextStyle(color: AppColors.textSecondary)),
                                     const SizedBox(height: 8),
                                     TextButton(
-                                      onPressed: () {},
+                                      onPressed: () => context.push('/settings/tables'),
                                       child: const Text('Aggiungi tavoli in Impostazioni', style: TextStyle(color: AppColors.accent)),
                                     ),
                                   ],
@@ -1016,7 +1016,7 @@ class _TableDetailSheetState extends State<_TableDetailSheet>
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Errore: $e'), backgroundColor: Colors.red),
+          SnackBar(content: Text('Errore: $e'), backgroundColor: AppColors.accent),
         );
       }
     } finally {
@@ -1064,7 +1064,7 @@ class _TableDetailSheetState extends State<_TableDetailSheet>
       }
     } catch (e) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Errore: $e'), backgroundColor: Colors.red),
+        SnackBar(content: Text('Errore: $e'), backgroundColor: AppColors.accent),
       );
     } finally {
       if (mounted) setState(() => _saving = false);
@@ -1369,16 +1369,12 @@ class _TableDetailSheetState extends State<_TableDetailSheet>
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
                 if (isOccupied) ...[
-                  _ActionButton(icon: Icons.more_horiz, onTap: () {}),
-                  const SizedBox(width: 12),
                   _ActionButton(icon: Icons.close, onTap: () => Navigator.pop(context)),
                   const SizedBox(width: 12),
                   _saving
                       ? const CircularProgressIndicator(color: AppColors.accent)
                       : _ActionButton(icon: Icons.check, color: AppColors.badgeGreen, onTap: _save),
                 ] else ...[
-                  _ActionButton(icon: Icons.more_horiz, onTap: () {}),
-                  const SizedBox(width: 12),
                   _ActionButton(icon: Icons.close, onTap: () => Navigator.pop(context)),
                   const SizedBox(width: 12),
                   _saving
@@ -1734,7 +1730,8 @@ extension FloorPlanPending on _FloorPlanScreenState {
                         child: ElevatedButton(
                           onPressed: () { Navigator.pop(context); _acceptBooking(b); },
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.accent,
+                            // Verde conferma, rosso nega: qui erano due rossi.
+                            backgroundColor: AppColors.badgeGreen,
                             padding: const EdgeInsets.symmetric(vertical: 8),
                           ),
                           child: const Text('Accetta', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
@@ -1745,7 +1742,7 @@ extension FloorPlanPending on _FloorPlanScreenState {
                         child: ElevatedButton(
                           onPressed: () { Navigator.pop(context); _rejectBooking(b); },
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.red,
+                            backgroundColor: AppColors.accent,
                             padding: const EdgeInsets.symmetric(vertical: 8),
                           ),
                           child: const Text('Rifiuta', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),

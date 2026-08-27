@@ -700,7 +700,7 @@ class _GuestDetailScreenState extends ConsumerState<GuestDetailScreen> {
               children: _loading
                   ? [const Padding(padding: EdgeInsets.all(16), child: Center(child: CircularProgressIndicator(color: AppColors.accent)))]
                   : _loadError != null
-                      ? [Padding(padding: const EdgeInsets.all(16), child: Text('Errore: $_loadError', style: const TextStyle(color: Colors.red)))]
+                      ? [Padding(padding: const EdgeInsets.all(16), child: Text('Errore: $_loadError', style: const TextStyle(color: AppColors.accent)))]
                   : _bookings.isEmpty
                       ? [const Padding(padding: EdgeInsets.all(16), child: Text('Nessuna prenotazione', style: TextStyle(color: AppColors.textSecondary)))]
                       // Si apre la stessa scheda di elenco e calendario: prima
@@ -792,7 +792,7 @@ class _GuestDetailScreenState extends ConsumerState<GuestDetailScreen> {
                       content: Text('Eliminare "${guest.name}"?'),
                       actions: [
                         TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Annulla')),
-                        TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('Elimina', style: TextStyle(color: Colors.red))),
+                        TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('Elimina', style: TextStyle(color: AppColors.accent))),
                       ],
                     ),
                   );
@@ -806,17 +806,17 @@ class _GuestDetailScreenState extends ConsumerState<GuestDetailScreen> {
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
                             content: Text('Errore eliminazione: $e'),
-                            backgroundColor: Colors.red,
+                            backgroundColor: AppColors.accent,
                           ),
                         );
                       }
                     }
                   }
                 },
-                icon: const Icon(Icons.delete_outline, color: Colors.red),
-                label: const Text('Elimina cliente', style: TextStyle(color: Colors.red)),
+                icon: const Icon(Icons.delete_outline, color: AppColors.accent),
+                label: const Text('Elimina cliente', style: TextStyle(color: AppColors.accent)),
                 style: OutlinedButton.styleFrom(
-                  side: const BorderSide(color: Colors.red),
+                  side: const BorderSide(color: AppColors.accent),
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 ),

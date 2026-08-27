@@ -339,7 +339,7 @@ class _NewBookingScreenState extends ConsumerState<NewBookingScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Errore: $e'), backgroundColor: Colors.red),
+          SnackBar(content: Text('Errore: $e'), backgroundColor: AppColors.accent),
         );
       }
     } finally {

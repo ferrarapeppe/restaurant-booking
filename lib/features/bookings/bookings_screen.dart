@@ -815,7 +815,7 @@ Color _statusDotColor(String status) {
     case 'seated':   return AppColors.statoConfermato;
     case 'left':     return Colors.grey;
     case 'canceled':
-    case 'no_show':  return Colors.red;
+    case 'no_show':  return AppColors.accent;
     case 'pending':  return AppColors.statoAttesa;
     default:         return AppColors.textMuted;
   }
@@ -1253,7 +1253,7 @@ class _BookingDetailSheetState extends State<BookingDetailSheet>
       );
     } catch (e) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Errore: $e'), backgroundColor: Colors.red),
+        SnackBar(content: Text('Errore: $e'), backgroundColor: AppColors.accent),
       );
     } finally {
       if (mounted) setState(() => _saving = false);
@@ -1477,14 +1477,17 @@ class _BookingDetailSheetState extends State<BookingDetailSheet>
                         widget.onSaved();
                       } catch (e) {
                         if (mounted) ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('Errore: $e'), backgroundColor: Colors.red),
+                          SnackBar(content: Text('Errore: $e'), backgroundColor: AppColors.accent),
                         );
                       }
                     },
                     icon: const Icon(Icons.check, size: 16),
                     label: const Text('Accetta'),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.accent,
+                      // Verde: era rosso come il Rifiuta accanto, due pulsanti
+                      // identici a un centimetro di distanza per due azioni
+                      // opposte.
+                      backgroundColor: AppColors.badgeGreen,
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 12),
                     ),
@@ -1919,7 +1922,7 @@ class _RejectionScreenState extends State<RejectionScreen> {
       if (mounted) { Navigator.pop(context); widget.onRejected(); }
     } catch (e) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Errore: $e'), backgroundColor: Colors.red));
+        SnackBar(content: Text('Errore: $e'), backgroundColor: AppColors.accent));
     } finally {
       if (mounted) setState(() => _sending = false);
     }

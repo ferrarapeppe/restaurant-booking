@@ -428,7 +428,7 @@ class _OpeningHoursFormState extends State<_OpeningHoursForm> with SingleTickerP
       widget.onSaved();
     } catch (e) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Errore: $e'), backgroundColor: Colors.red),
+        SnackBar(content: Text('Errore: $e'), backgroundColor: AppColors.accent),
       );
     } finally {
       if (mounted) setState(() => _saving = false);
@@ -585,7 +585,7 @@ class _OpeningHoursFormState extends State<_OpeningHoursForm> with SingleTickerP
                       borderRadius: BorderRadius.circular(4),
                       child: LinearProgressIndicator(
                         value: 0.85,
-                        backgroundColor: Colors.red.withOpacity(0.4),
+                        backgroundColor: AppColors.accent.withOpacity(0.4),
                         valueColor: const AlwaysStoppedAnimation<Color>(AppColors.accent),
                         minHeight: 8,
                       ),

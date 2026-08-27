@@ -103,7 +103,7 @@ class _TablesScreenState extends State<TablesScreen> with SingleTickerProviderSt
           TextButton(onPressed: () => Navigator.pop(context, false),
               child: const Text('Annulla')),
           TextButton(onPressed: () => Navigator.pop(context, true),
-              child: const Text('Elimina', style: TextStyle(color: Colors.red))),
+              child: const Text('Elimina', style: TextStyle(color: AppColors.accent))),
         ],
       ),
     );
@@ -238,7 +238,7 @@ class _TablesScreenState extends State<TablesScreen> with SingleTickerProviderSt
           TextButton(onPressed: () => Navigator.pop(context, false),
               child: const Text('Annulla')),
           TextButton(onPressed: () => Navigator.pop(context, true),
-              child: const Text('Elimina', style: TextStyle(color: Colors.red))),
+              child: const Text('Elimina', style: TextStyle(color: AppColors.accent))),
         ],
       ),
     );
