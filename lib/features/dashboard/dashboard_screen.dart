@@ -7,6 +7,7 @@ import 'package:restaurant_booking/shared/widgets/azioni_barra.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:restaurant_booking/core/providers/booking_providers.dart';
+import 'package:restaurant_booking/shared/widgets/logo_hio.dart';
 
 const _restaurantId = '2b126a92-24d5-4e83-b38c-dfc82035a0cf';
 
@@ -167,6 +168,28 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     }
   }
 
+  /// Le scorciatoie: tre per riga su schermo largo, due sul telefono.
+  ///
+  /// Tutte alla stessa altezza dentro la riga, altrimenti quella con
+  /// l'etichetta su due righe alzerebbe da sola la fila.
+  Widget _grigliaScorciatoie(bool schermoLargo, List<Widget> voci) {
+    final colonne = schermoLargo ? 3 : 2;
+    final righe = <Widget>[];
+    for (var i = 0; i < voci.length; i += colonne) {
+      final fetta = voci.sublist(i, (i + colonne).clamp(0, voci.length));
+      righe.add(IntrinsicHeight(
+        child: Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+          for (var c = 0; c < colonne; c++) ...[
+            if (c > 0) const SizedBox(width: 10),
+            Expanded(child: c < fetta.length ? fetta[c] : const SizedBox()),
+          ],
+        ]),
+      ));
+      righe.add(const SizedBox(height: 10));
+    }
+    return Column(children: righe);
+  }
+
   /// Dispone le schede una sotto l'altra sul telefono, due per riga quando
   /// c'e' spazio. Su un monitor largo quattro lenzuoli impilati costringono a
   /// scorrere per vedere numeri che starebbero benissimo affiancati.
@@ -209,8 +232,11 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       appBar: AppBar(
         backgroundColor: AppColors.nero,
         elevation: 0,
-        // Il logo intero non entra nei 56 punti standard di una barra.
-        toolbarHeight: stretto ? 68 : 84,
+        // Il logo intero non entra nei 56 punti standard di una barra, e nemmeno
+        // negli 84 di prima: il marchio e' disegnato a filo di capello e sotto
+        // i 90 punti di altezza i tratti scendono sotto il pixel e sbiadiscono.
+        // Provato riducendo l'originale a 56 e a 96: a 56 e' illeggibile.
+        toolbarHeight: stretto ? 84 : 116,
         // Su schermo stretto il logo centrato finirebbe a contendersi lo
         // spazio con le tre icone: li' si appoggia a sinistra e rimpicciolisce.
         centerTitle: !stretto,
@@ -225,12 +251,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         // si legge bene. Il marchio ha tratti sottili: sotto una certa
         // dimensione svanisce, quindi la barra si alza per contenerlo intero
         // invece di rimpicciolirlo.
-        title: Image.asset(
-          'assets/images/logo_splash.png',
-          height: stretto ? 46 : 56,
-          fit: BoxFit.contain,
-          filterQuality: FilterQuality.high,
-        ),
+        title: LogoHio(altezza: stretto ? 62 : 92),
         actions: [
           ...azioniBarra(context),
           const SizedBox(width: 8),
@@ -265,16 +286,18 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
               const SizedBox(height: 24),
               const Text('Scorciatoie', style: TextStyle(color: AppColors.textPrimary, fontSize: 20, fontWeight: FontWeight.bold)),
               const SizedBox(height: 12),
-              _ShortcutButton(icon: Icons.calendar_today_outlined, label: 'Prenotazioni oggi', onTap: () {
-                  final today = DateTime.now();
-                  final dateStr = DateFormat('yyyy-MM-dd').format(today);
-                  ref.read(selectedDateProvider.notifier).state = today;
-                  context.go('/bookings?date=' + dateStr);
-                }),
-              const SizedBox(height: 8),
-              _ShortcutButton(icon: Icons.calendar_month_outlined, label: 'Prenotazioni questo mese', onTap: () => context.go('/calendar')),
-              const SizedBox(height: 8),
-              _ShortcutButton(icon: Icons.settings_outlined, label: 'Impostazioni e componenti aggiuntivi', onTap: () => context.go('/settings')),
+              _grigliaScorciatoie(schermoLargo, [
+                _ShortcutButton(icon: Icons.calendar_today_outlined, label: 'Prenotazioni oggi', onTap: () {
+                    final today = DateTime.now();
+                    final dateStr = DateFormat('yyyy-MM-dd').format(today);
+                    ref.read(selectedDateProvider.notifier).state = today;
+                    context.go('/bookings?date=' + dateStr);
+                  }),
+                _ShortcutButton(icon: Icons.calendar_month_outlined, label: 'Prenotazioni questo mese', onTap: () => context.go('/calendar')),
+                _ShortcutButton(icon: Icons.list_alt_outlined, label: 'Elenco prenotazioni', onTap: () => context.go('/bookings')),
+                _ShortcutButton(icon: Icons.view_week_outlined, label: 'Programma di sala', onTap: () => context.go('/reservations')),
+                _ShortcutButton(icon: Icons.settings_outlined, label: 'Impostazioni e componenti aggiuntivi', onTap: () => context.go('/settings')),
+              ]),
               const SizedBox(height: 24),
               Row(
                 children: [
@@ -294,6 +317,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                 _StatsCard(
                   label: 'Oggi',
                   date: oggi,
+                  tinta: AppColors.accent,
+                  icona: Icons.today_outlined,
                   prenotazioni: _oggiPrenotazioni,
                   ospiti: _oggiOspiti,
                   loading: _loading,
@@ -305,6 +330,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                 ),
                 _StatsCard(
                   label: 'Prossimi 7 giorni',
+                  tinta: AppColors.statoAlTavolo,
+                  icona: Icons.date_range_outlined,
                   date: '$oggi - $tra7',
                   prenotazioni: _settimanaPrenotazioni,
                   ospiti: _settimanaOspiti,
@@ -313,6 +340,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                 ),
                 _StatsCard(
                   label: 'Questo mese',
+                  tinta: AppColors.badgeGreen,
+                  icona: Icons.calendar_month_outlined,
                   date: mese,
                   prenotazioni: _mesePrenotazioni,
                   ospiti: _meseOspiti,
@@ -321,6 +350,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                 ),
                 _StatsCard(
                   label: 'Arrivate oggi',
+                  tinta: AppColors.goldDark,
+                  icona: Icons.inbox_outlined,
                   date: 'Richieste entrate',
                   prenotazioni: _arrivateOggi,
                   ospiti: _arrivateOggiOspiti,
@@ -329,6 +360,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                 ),
                 _StatsCard(
                   label: 'Totale ${DateTime.now().year}',
+                  tinta: AppColors.textSecondary,
+                  icona: Icons.insights_outlined,
                   date: 'Tutto l\'anno',
                   prenotazioni: _annoPrenotazioni,
                   ospiti: _annoOspiti,
@@ -390,6 +423,12 @@ class _ShortcutButton extends StatelessWidget {
   final VoidCallback onTap;
   const _ShortcutButton({required this.icon, required this.label, required this.onTap});
 
+  /// Riquadro compatto, non piu' una riga a tutta pagina.
+  ///
+  /// Cinque righe alte 56 punti mangiavano mezza schermata prima di arrivare
+  /// ai numeri. Affiancate tre per riga, le stesse scorciatoie stanno in due
+  /// righe e il pannello si vede quasi tutto senza scorrere. Sparisce la
+  /// freccia: in un riquadro cliccabile per intero non serviva.
   @override
   Widget build(BuildContext context) {
     return InkWell(
@@ -397,19 +436,27 @@ class _ShortcutButton extends StatelessWidget {
       borderRadius: BorderRadius.circular(14),
       child: Container(
         width: double.infinity,
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
         decoration: BoxDecoration(
           color: AppColors.card,
           borderRadius: BorderRadius.circular(14),
           border: Border.all(color: AppColors.divider),
         ),
         child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Icon(icon, color: AppColors.accent, size: 22),
-            const SizedBox(width: 12),
-            Text(label, style: const TextStyle(color: AppColors.textPrimary, fontSize: 15, fontWeight: FontWeight.w500)),
-            const Spacer(),
-            const Icon(Icons.chevron_right, color: AppColors.textMuted, size: 20),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(label,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                      color: AppColors.textPrimary,
+                      fontSize: 14,
+                      height: 1.25,
+                      fontWeight: FontWeight.w500)),
+            ),
           ],
         ),
       ),
@@ -424,30 +471,54 @@ class _StatsCard extends StatelessWidget {
   final int ospiti;
   final bool loading;
   final VoidCallback? onTap;
+
+  /// Colore e icona del riquadro: servono a distinguerlo dagli altri senza
+  /// leggerne il titolo. Non sono una scala — non vogliono dire "piu'" o
+  /// "meno" — ma l'identita' fissa di quel riquadro.
+  final Color tinta;
+  final IconData icona;
+
   const _StatsCard({
     required this.label,
     required this.date,
     required this.prenotazioni,
     required this.ospiti,
+    required this.tinta,
+    required this.icona,
     this.loading = false,
     this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
+    // Il colore serve a riconoscere il riquadro senza leggerne il titolo:
+    // resta sul bordo, sull'icona e su un velo di fondo. I numeri restano
+    // color inchiostro, perche' sono la cosa che si deve leggere meglio.
+    // Al 5% il velo non si vedeva: sembrava che il colore non ci fosse.
+    final velo = Color.alphaBlend(tinta.withValues(alpha: 0.13), AppColors.card);
+
     final scheda = Container(
       width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: AppColors.card,
+        color: velo,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.divider),
+        border: Border.all(color: tinta.withValues(alpha: 0.6), width: 1.5),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: tinta,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(icona, color: Colors.white, size: 18),
+              ),
+              const SizedBox(width: 10),
               Text(label, style: const TextStyle(color: AppColors.textPrimary, fontSize: 16, fontWeight: FontWeight.bold)),
               const SizedBox(width: 8),
               Expanded(

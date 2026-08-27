@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:restaurant_booking/shared/theme/app_theme.dart';
 import 'package:restaurant_booking/core/auth/accesso.dart';
+import 'package:restaurant_booking/shared/widgets/logo_hio.dart';
 
 class AppDrawer extends StatelessWidget {
   const AppDrawer({super.key});
@@ -34,8 +35,7 @@ class AppDrawer extends StatelessWidget {
                       ),
                     ]),
                     const SizedBox(height: 8),
-                    Image.asset('assets/images/logo_splash.png',
-                        height: 52, fit: BoxFit.contain, filterQuality: FilterQuality.high),
+                    const LogoHio(altezza: 84),
                     const SizedBox(height: 4),
                   ],
                 ),

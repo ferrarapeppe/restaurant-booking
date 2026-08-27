@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:restaurant_booking/shared/theme/app_theme.dart';
 import 'package:restaurant_booking/core/auth/accesso.dart';
+import 'package:restaurant_booking/shared/widgets/logo_hio.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -70,8 +71,7 @@ class _LoginScreenState extends State<LoginScreen> {
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 420),
               child: Column(mainAxisSize: MainAxisSize.min, children: [
-                Image.asset('assets/images/logo_splash.png',
-                    width: 260, fit: BoxFit.contain, filterQuality: FilterQuality.high),
+                const LogoHio(larghezza: 260),
                 const SizedBox(height: 8),
                 Text('Gestione prenotazioni',
                     style: TextStyle(

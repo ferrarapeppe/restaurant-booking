@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:restaurant_booking/shared/theme/app_theme.dart';
+import 'package:restaurant_booking/shared/widgets/logo_hio.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -54,7 +55,7 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
                 ),
                 child: Column(
                   children: [
-                    Image.asset('assets/images/logo_splash.png', width: 320, fit: BoxFit.contain, filterQuality: FilterQuality.high),
+                    const LogoHio(larghezza: 320),
                     const SizedBox(height: 12),
                     Text('Gestione prenotazioni', style: TextStyle(color: AppColors.textPrimary.withOpacity(0.7), fontSize: 13, letterSpacing: 3)),
                   ],
