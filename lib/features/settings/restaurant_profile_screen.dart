@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:restaurant_booking/shared/theme/app_theme.dart';
 import 'package:restaurant_booking/shared/widgets/contenuto_centrato.dart';
@@ -27,6 +28,18 @@ class _RestaurantProfileScreenState extends State<RestaurantProfileScreen> {
   /// Vive nella colonna `settings` del ristorante, che era libera.
   DateTime? _prenotazioniDal;
   Map<String, dynamic> _altreImpostazioni = {};
+
+  /// Indirizzo del logo caricato, anche lui dentro `settings`.
+  ///
+  /// Non si salva l'immagine nel database ma solo il suo indirizzo: la
+  /// colonna `settings` viene letta a ogni apertura del calendario, e
+  /// infilarci dentro un'immagine vorrebbe dire riscaricarla ogni volta.
+  String? _logoUrl;
+  bool _caricandoLogo = false;
+
+  /// Il contenitore dei file su Supabase. Va creato una volta sola con
+  /// `supabase/manutenzione/08_contenitore_loghi.sql`.
+  static const _contenitore = 'loghi';
 
   @override
   void initState() {
@@ -61,6 +74,8 @@ class _RestaurantProfileScreenState extends State<RestaurantProfileScreen> {
       if (s is Map) {
         _altreImpostazioni = Map<String, dynamic>.from(s);
         _prenotazioniDal = DateTime.tryParse((s['prenotazioni_dal'] ?? '').toString());
+        final l = (s['logo_url'] ?? '').toString();
+        _logoUrl = l.isEmpty ? null : l;
       }
     } catch (_) {}
     setState(() => _loading = false);
@@ -68,6 +83,84 @@ class _RestaurantProfileScreenState extends State<RestaurantProfileScreen> {
 
   static String _iso(DateTime d) =>
       '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
+
+  /// Sceglie un'immagine, la carica e la salva subito nel profilo.
+  ///
+  /// Il salvataggio è immediato e non aspetta il pulsante Salva: un logo
+  /// caricato che sparisce uscendo dalla schermata sarebbe una sorpresa
+  /// sgradevole, e chi lo cambia lo fa una volta ogni tanto.
+  Future<void> _cambiaLogo() async {
+    final scelta = await ImagePicker().pickImage(
+      source: ImageSource.gallery,
+      maxWidth: 1600,
+      imageQuality: 90,
+    );
+    if (scelta == null) return;
+
+    setState(() => _caricandoLogo = true);
+    try {
+      final byte = await scelta.readAsBytes();
+      final estensione = scelta.name.contains('.')
+          ? scelta.name.split('.').last.toLowerCase()
+          : 'png';
+      // Il nome cambia a ogni caricamento: con un nome fisso le cache dei
+      // browser continuerebbero a mostrare il logo vecchio.
+      final nome = '$_restaurantId/logo-'
+          '${DateTime.now().millisecondsSinceEpoch}.$estensione';
+
+      await _supabase.storage.from(_contenitore).uploadBinary(
+            nome,
+            byte,
+            fileOptions: FileOptions(contentType: scelta.mimeType, upsert: true),
+          );
+      final url = _supabase.storage.from(_contenitore).getPublicUrl(nome);
+
+      await _supabase.from('restaurants').update({
+        'settings': {..._altreImpostazioni, 'logo_url': url},
+      }).eq('id', _restaurantId);
+
+      if (!mounted) return;
+      setState(() {
+        _logoUrl = url;
+        _altreImpostazioni = {..._altreImpostazioni, 'logo_url': url};
+        _caricandoLogo = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text('Logo aggiornato'),
+        backgroundColor: AppColors.badgeGreen,
+      ));
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _caricandoLogo = false);
+      // "Bucket not found" da solo non dice a nessuno cosa fare.
+      final manca = e.toString().toLowerCase().contains('not found') ||
+          e.toString().contains('404');
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(manca
+            ? 'Manca il contenitore dei loghi su Supabase: va creato una volta '
+                'sola con manutenzione/08_contenitore_loghi.sql'
+            : 'Caricamento non riuscito: $e'),
+        backgroundColor: AppColors.accent,
+      ));
+    }
+  }
+
+  Future<void> _togliLogo() async {
+    setState(() => _caricandoLogo = true);
+    try {
+      await _supabase.from('restaurants').update({
+        'settings': {..._altreImpostazioni, 'logo_url': null},
+      }).eq('id', _restaurantId);
+      if (!mounted) return;
+      setState(() {
+        _logoUrl = null;
+        _altreImpostazioni = {..._altreImpostazioni, 'logo_url': null};
+        _caricandoLogo = false;
+      });
+    } catch (_) {
+      if (mounted) setState(() => _caricandoLogo = false);
+    }
+  }
 
   Future<void> _scegliData() async {
     final oggi = DateTime.now();
@@ -96,6 +189,7 @@ class _RestaurantProfileScreenState extends State<RestaurantProfileScreen> {
         'settings': {
           ..._altreImpostazioni,
           if (_prenotazioniDal != null) 'prenotazioni_dal': _iso(_prenotazioniDal!) else 'prenotazioni_dal': null,
+          'logo_url': _logoUrl,
         },
       }).eq('id', _restaurantId);
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(
@@ -142,21 +236,60 @@ class _RestaurantProfileScreenState extends State<RestaurantProfileScreen> {
                   child: Column(children: [
                     Container(
                       width: 100, height: 100,
+                      clipBehavior: Clip.antiAlias,
                       decoration: BoxDecoration(
-                        color: AppColors.accent,
+                        // Fondo chiaro quando c'è un'immagine: molti loghi
+                        // hanno lo sfondo trasparente e sul rosso pieno
+                        // sparirebbero.
+                        color: _logoUrl == null ? AppColors.accent : AppColors.surface,
                         borderRadius: BorderRadius.circular(50),
+                        border: _logoUrl == null
+                            ? null
+                            : Border.all(color: AppColors.divider),
                       ),
-                      child: const Center(
-                        child: Text('HIO', style: TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.bold)),
-                      ),
+                      child: _caricandoLogo
+                          ? const Center(
+                              child: CircularProgressIndicator(
+                                  strokeWidth: 2, color: AppColors.accent))
+                          : _logoUrl == null
+                              ? const Center(
+                                  child: Text('HIO',
+                                      style: TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 28,
+                                          fontWeight: FontWeight.bold)),
+                                )
+                              : Padding(
+                                  padding: const EdgeInsets.all(10),
+                                  child: Image.network(
+                                    _logoUrl!,
+                                    fit: BoxFit.contain,
+                                    filterQuality: FilterQuality.high,
+                                    errorBuilder: (_, __, ___) => const Center(
+                                      child: Icon(Icons.broken_image_outlined,
+                                          color: AppColors.textMuted),
+                                    ),
+                                  ),
+                                ),
                     ),
                     const SizedBox(height: 8),
-                    TextButton.icon(
-                      onPressed: () {},
-                      icon: const Icon(Icons.camera_alt_outlined, size: 16),
-                      label: const Text('Cambia logo'),
-                      style: TextButton.styleFrom(foregroundColor: AppColors.textSecondary),
-                    ),
+                    Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                      TextButton.icon(
+                        onPressed: _caricandoLogo ? null : _cambiaLogo,
+                        icon: const Icon(Icons.camera_alt_outlined, size: 16),
+                        label: Text(_logoUrl == null ? 'Carica il logo' : 'Cambia logo'),
+                        style: TextButton.styleFrom(
+                            foregroundColor: AppColors.textSecondary),
+                      ),
+                      if (_logoUrl != null && !_caricandoLogo)
+                        TextButton.icon(
+                          onPressed: _togliLogo,
+                          icon: const Icon(Icons.delete_outline, size: 16),
+                          label: const Text('Togli'),
+                          style: TextButton.styleFrom(
+                              foregroundColor: AppColors.accent),
+                        ),
+                    ]),
                   ]),
                 ),
                 const SizedBox(height: 24),

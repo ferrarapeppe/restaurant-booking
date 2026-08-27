@@ -6,7 +6,8 @@ import 'package:restaurant_booking/shared/theme/app_theme.dart';
 import 'package:restaurant_booking/shared/widgets/contenuto_centrato.dart';
 import 'package:restaurant_booking/data/models/booking_model.dart';
 import 'package:restaurant_booking/core/providers/guest_providers.dart';
-import 'package:restaurant_booking/features/bookings/booking_detail_screen.dart';
+import 'package:restaurant_booking/features/bookings/bookings_screen.dart'
+    show BookingDetailSheet;
 import 'package:url_launcher/url_launcher.dart';
 import 'package:restaurant_booking/features/guests/esporta_rubrica.dart';
 import 'package:restaurant_booking/shared/widgets/pulsante_barra.dart';
@@ -490,10 +491,23 @@ class _GuestDetailScreenState extends ConsumerState<GuestDetailScreen> {
     _loadBookings();
   }
 
+  /// Le righe grezze, nello stesso ordine di `_bookings`.
+  ///
+  /// Servono ad aprire la scheda della prenotazione, che vuole la mappa.
+  List<Map<String, dynamic>> _righe = [];
+
   Future<void> _loadBookings() async {
     try {
-      final bookings = await ref.read(guestRepositoryProvider).getGuestBookings(widget.guest.id);
-      if (mounted) setState(() { _bookings = bookings; _loading = false; });
+      final righe = await ref
+          .read(guestRepositoryProvider)
+          .getGuestBookingsMappe(widget.guest.id);
+      if (mounted) {
+        setState(() {
+          _righe = righe;
+          _bookings = righe.map(BookingModel.fromJson).toList();
+          _loading = false;
+        });
+      }
     } catch (e) {
       if (mounted) setState(() { _loading = false; _loadError = e.toString(); });
     }
@@ -689,10 +703,28 @@ class _GuestDetailScreenState extends ConsumerState<GuestDetailScreen> {
                       ? [Padding(padding: const EdgeInsets.all(16), child: Text('Errore: $_loadError', style: const TextStyle(color: Colors.red)))]
                   : _bookings.isEmpty
                       ? [const Padding(padding: EdgeInsets.all(16), child: Text('Nessuna prenotazione', style: TextStyle(color: AppColors.textSecondary)))]
-                      : _bookings.map((b) => InkWell(
-                          onTap: () => Navigator.push(
-                            context,
-                            MaterialPageRoute(builder: (_) => BookingDetailScreen(booking: b)),
+                      // Si apre la stessa scheda di elenco e calendario: prima
+                      // da qui partiva una schermata diversa e piu' vecchia,
+                      // con la matita e altri due comandi che non facevano
+                      // niente. Stesso oggetto, due facce, una mezza rotta.
+                      : _bookings.asMap().entries.map((v) {
+                        final b = v.value;
+                        return InkWell(
+                          onTap: () => showModalBottomSheet(
+                            context: context,
+                            backgroundColor: AppColors.surface,
+                            isScrollControlled: true,
+                            useSafeArea: true,
+                            shape: const RoundedRectangleBorder(
+                                borderRadius:
+                                    BorderRadius.vertical(top: Radius.circular(16))),
+                            builder: (_) => BookingDetailSheet(
+                              booking: _righe[v.key],
+                              onSaved: () {
+                                Navigator.pop(context);
+                                _loadBookings();
+                              },
+                            ),
                           ),
                           child: Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -743,7 +775,8 @@ class _GuestDetailScreenState extends ConsumerState<GuestDetailScreen> {
                               ],
                             ),
                           ]),
-                        ))).toList(),
+                        ));
+                      }).toList(),
             ),
             const SizedBox(height: 24),
 

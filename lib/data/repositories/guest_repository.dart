@@ -152,4 +152,18 @@ class GuestRepository {
         .order('date', ascending: false);
     return (response as List).map((e) => BookingModel.fromJson(e)).toList();
   }
+
+  /// Le stesse prenotazioni, ma come righe grezze.
+  ///
+  /// `BookingDetailSheet` vuole la mappa e non il modello: le servono il
+  /// tavolo e i recapiti del cliente, che `BookingModel` non porta con sé.
+  /// Una query sola, poi la schermata ne ricava anche i modelli.
+  Future<List<Map<String, dynamic>>> getGuestBookingsMappe(String guestId) async {
+    final response = await _client
+        .from('bookings')
+        .select('*, guests(*), tables(id, name, capacity, area_id, areas(name))')
+        .eq('guest_id', guestId)
+        .order('date', ascending: false);
+    return [for (final r in response as List) Map<String, dynamic>.from(r as Map)];
+  }
 }
