@@ -8,6 +8,7 @@ import 'package:restaurant_booking/shared/widgets/azioni_barra.dart';
 import 'package:restaurant_booking/core/providers/booking_providers.dart';
 import 'package:restaurant_booking/features/bookings/bookings_screen.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' as supabase_flutter;
+import 'package:restaurant_booking/shared/widgets/pulsante_barra.dart';
 
 class ReservationsScreen extends ConsumerStatefulWidget {
   const ReservationsScreen({super.key});
@@ -25,12 +26,7 @@ class _ReservationsScreenState extends ConsumerState<ReservationsScreen> {
       drawer: const AppDrawer(),
       appBar: AppBar(
         backgroundColor: AppColors.nero,
-        leading: Builder(
-          builder: (ctx) => IconButton(
-            icon: const Icon(Icons.menu, color: Colors.white),
-            onPressed: () => Scaffold.of(ctx).openDrawer(),
-          ),
-        ),
+        leading: const PulsanteBarra(),
         title: Row(
           mainAxisSize: MainAxisSize.min,
           children: [

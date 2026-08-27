@@ -5,6 +5,7 @@ import 'package:restaurant_booking/shared/widgets/app_drawer.dart';
 import 'package:restaurant_booking/shared/theme/app_theme.dart';
 import 'package:restaurant_booking/shared/widgets/azioni_barra.dart';
 import 'package:restaurant_booking/shared/widgets/contenuto_centrato.dart';
+import 'package:restaurant_booking/shared/widgets/pulsante_barra.dart';
 
 // ── Settings Screen ───────────────────────────────────────────────────────────
 class SettingsScreen extends StatelessWidget {
@@ -17,10 +18,7 @@ class SettingsScreen extends StatelessWidget {
       drawer: const AppDrawer(),
       appBar: AppBar(
         backgroundColor: AppColors.nero,
-        leading: Builder(builder: (ctx) => IconButton(
-          icon: const Icon(Icons.menu, color: Colors.white),
-          onPressed: () => Scaffold.of(ctx).openDrawer(),
-        )),
+        leading: const PulsanteBarra(),
         title: const Text('Impostazioni', style: TextStyle(color: AppColors.gold)),
         actions: [
           ...azioniBarra(context),

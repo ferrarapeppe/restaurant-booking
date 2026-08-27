@@ -9,6 +9,7 @@ import 'package:restaurant_booking/core/providers/guest_providers.dart';
 import 'package:restaurant_booking/features/bookings/booking_detail_screen.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:restaurant_booking/features/guests/esporta_rubrica.dart';
+import 'package:restaurant_booking/shared/widgets/pulsante_barra.dart';
 
 /// Tag su cui filtrare l'elenco clienti. Vuoto = tutti.
 final guestTagProvider = StateProvider<String>((ref) => '');
@@ -33,12 +34,7 @@ class GuestsScreen extends ConsumerWidget {
       drawer: const AppDrawer(),
       appBar: AppBar(
         backgroundColor: AppColors.nero,
-        leading: Builder(
-          builder: (context) => IconButton(
-            icon: const Icon(Icons.menu, color: Colors.white),
-            onPressed: () => Scaffold.of(context).openDrawer(),
-          ),
-        ),
+        leading: const PulsanteBarra(),
         title: const Text('Clienti', style: TextStyle(color: AppColors.gold, fontWeight: FontWeight.bold)),
         actions: [
           IconButton(

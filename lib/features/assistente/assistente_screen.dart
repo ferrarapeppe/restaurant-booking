@@ -8,6 +8,7 @@ import 'package:restaurant_booking/shared/theme/app_theme.dart';
 // conferma e quella di rifiuto devono comportarsi identiche, non "quasi".
 import 'package:restaurant_booking/features/bookings/bookings_screen.dart'
     show sendBookingAcceptedEmail, RejectionScreen;
+import 'package:restaurant_booking/shared/widgets/pulsante_barra.dart';
 
 enum StatoProposta { attesa, eseguita, scartata }
 
@@ -181,12 +182,7 @@ class _AssistenteScreenState extends State<AssistenteScreen> {
       drawer: const AppDrawer(),
       appBar: AppBar(
         backgroundColor: AppColors.nero,
-        leading: Builder(
-          builder: (ctx) => IconButton(
-            icon: const Icon(Icons.menu, color: Colors.white),
-            onPressed: () => Scaffold.of(ctx).openDrawer(),
-          ),
-        ),
+        leading: const PulsanteBarra(),
         title: const Text('Assistente',
             style: TextStyle(color: AppColors.gold, fontWeight: FontWeight.bold)),
         actions: [

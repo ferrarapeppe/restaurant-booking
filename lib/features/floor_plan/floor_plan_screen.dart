@@ -6,6 +6,7 @@ import 'package:restaurant_booking/shared/widgets/azioni_barra.dart';
 import 'package:restaurant_booking/shared/widgets/app_drawer.dart';
 import 'package:restaurant_booking/features/bookings/bookings_screen.dart';
 import 'package:intl/intl.dart';
+import 'package:restaurant_booking/shared/widgets/pulsante_barra.dart';
 
 // Stato tavolo
 enum TableStatus { free, booked, occupied, unavailable }
@@ -212,10 +213,7 @@ class _FloorPlanScreenState extends State<FloorPlanScreen> {
       appBar: AppBar(
         backgroundColor: AppColors.nero,
         elevation: 0,
-        leading: Builder(builder: (ctx) => IconButton(
-          icon: const Icon(Icons.menu, color: Colors.white),
-          onPressed: () => Scaffold.of(ctx).openDrawer(),
-        )),
+        leading: const PulsanteBarra(),
         title: Row(
           mainAxisSize: MainAxisSize.min,
           children: [

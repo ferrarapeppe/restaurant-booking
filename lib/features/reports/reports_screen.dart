@@ -6,6 +6,7 @@ import 'package:restaurant_booking/shared/widgets/azioni_barra.dart';
 import 'package:restaurant_booking/shared/widgets/contenuto_centrato.dart';
 import 'package:restaurant_booking/shared/theme/app_theme.dart';
 import 'package:restaurant_booking/features/bookings/scelte_modulo.dart';
+import 'package:restaurant_booking/shared/widgets/pulsante_barra.dart';
 
 const _idRistorante = '2b126a92-24d5-4e83-b38c-dfc82035a0cf';
 
@@ -139,12 +140,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
       drawer: const AppDrawer(),
       appBar: AppBar(
         backgroundColor: AppColors.nero,
-        leading: Builder(
-          builder: (ctx) => IconButton(
-            icon: const Icon(Icons.menu, color: Colors.white),
-            onPressed: () => Scaffold.of(ctx).openDrawer(),
-          ),
-        ),
+        leading: const PulsanteBarra(),
         title: const Text('Rapporti',
             style: TextStyle(color: AppColors.gold, fontWeight: FontWeight.bold)),
         actions: azioniBarra(context),

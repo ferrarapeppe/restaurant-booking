@@ -11,6 +11,7 @@ import 'package:restaurant_booking/features/bookings/stato_giornata.dart';
 import 'package:restaurant_booking/features/bookings/bookings_screen.dart'
     show BookingDetailSheet;
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:restaurant_booking/shared/widgets/pulsante_barra.dart';
 
 // Provider per il mese focalizzato
 final focusedMonthProvider = StateProvider<DateTime>((ref) => DateTime(DateTime.now().year, DateTime.now().month));
@@ -88,10 +89,7 @@ class CalendarScreen extends ConsumerWidget {
       drawer: const AppDrawer(),
       appBar: AppBar(
         backgroundColor: AppColors.nero,
-        leading: Builder(builder: (context) => IconButton(
-          icon: const Icon(Icons.menu, color: Colors.white),
-          onPressed: () => Scaffold.of(context).openDrawer(),
-        )),
+        leading: const PulsanteBarra(),
         title: const Text('Calendario', style: TextStyle(color: AppColors.gold, fontWeight: FontWeight.bold)),
         actions: [
           ...azioniBarra(context),

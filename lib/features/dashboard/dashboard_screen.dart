@@ -8,6 +8,7 @@ import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:restaurant_booking/core/providers/booking_providers.dart';
 import 'package:restaurant_booking/shared/widgets/logo_hio.dart';
+import 'package:restaurant_booking/shared/widgets/pulsante_barra.dart';
 
 const _restaurantId = '2b126a92-24d5-4e83-b38c-dfc82035a0cf';
 
@@ -371,12 +372,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         // spazio con le tre icone: li' si appoggia a sinistra e rimpicciolisce.
         centerTitle: !stretto,
         titleSpacing: stretto ? 0 : null,
-        leading: Builder(
-          builder: (context) => IconButton(
-            icon: const Icon(Icons.menu, color: Colors.white, size: 28),
-            onPressed: () => Scaffold.of(context).openDrawer(),
-          ),
-        ),
+        leading: const PulsanteBarra(),
         // Lo stesso logo dell'avvio e della schermata di accesso, dove su nero
         // si legge bene. Il marchio ha tratti sottili: sotto una certa
         // dimensione svanisce, quindi la barra si alza per contenerlo intero
