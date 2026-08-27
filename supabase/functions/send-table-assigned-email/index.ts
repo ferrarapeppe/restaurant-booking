@@ -72,17 +72,17 @@ const corsHeaders = {
 // Georgia perche' nelle email i font web non si caricano (Gmail e Outlook
 // rimuovono <link>): e' la famiglia di sistema piu' vicina al Playfair Display.
 const C = {
-  nero:       '#0E0E0E',
-  neroSoft:   '#1A1A1A',
-  rosso:      '#B7182A',
+  nero:       '#160E0A',
+  neroSoft:   '#18130F',
+  rosso:      '#B9172A',
   verde:      '#2E7D52',
-  verdeChiaro:'#EAF5EF',
-  oro:        '#C9B06E',
-  oroChiaro:  '#FBF7EE',
-  testo:      '#1A1A1A',
-  testoSoft:  '#5A5A5A',
-  bordo:      '#E4E1DC',
-  sfondo:     '#F4F2EF',
+  verdeChiaro:'#E9F3EC',
+  oro:        '#CAB16F',
+  oroChiaro:  '#F8F1E1',
+  testo:      '#18130F',
+  testoSoft:  '#655D54',
+  bordo:      '#D9CCB7',
+  sfondo:     '#F5F0E7',
 };
 const FONT_TITOLO = `Georgia,'Times New Roman',serif`;
 const FONT_TESTO = `Helvetica,Arial,sans-serif`;
@@ -229,7 +229,7 @@ function buildHtml(d: D): string {
     <td style="background:${C.nero};padding:34px 24px 26px;text-align:center;border-radius:12px 12px 0 0;">
       <img src="${LOGO_URL}" width="240" alt="${d.restName}"
         style="display:block;width:240px;max-width:75%;height:auto;margin:0 auto;border:0;color:${C.oro};font-family:${FONT_TITOLO};font-size:22px;font-weight:bold;letter-spacing:2px;">
-      ${[d.restAddress, d.restCity].filter(Boolean).join(', ') ? `<p style="color:#B9B4AC;font-family:${FONT_TESTO};font-size:13px;letter-spacing:0.5px;margin:14px 0 0;">${[d.restAddress, d.restCity].filter(Boolean).join(', ')}</p>` : ''}
+      ${[d.restAddress, d.restCity].filter(Boolean).join(', ') ? `<p style="color:#A79E90;font-family:${FONT_TESTO};font-size:13px;letter-spacing:0.5px;margin:14px 0 0;">${[d.restAddress, d.restCity].filter(Boolean).join(', ')}</p>` : ''}
     </td>
   </tr>
 
@@ -294,7 +294,7 @@ function buildHtml(d: D): string {
     <td style="background:${C.nero};padding:24px 24px 28px;text-align:center;border-radius:0 0 12px 12px;">
       <p style="color:${C.oro};font-family:${FONT_TITOLO};font-size:14px;font-weight:bold;letter-spacing:3px;margin:0 0 12px;">${d.restName.toUpperCase()}</p>
       ${indirizzoPiede ? `<p style="margin:0 0 14px;">
-        <a href="${mapsUrl}" style="color:#B9B4AC;text-decoration:none;font-family:${FONT_TESTO};font-size:12px;line-height:1.7;">${indirizzoPiede}</a>
+        <a href="${mapsUrl}" style="color:#A79E90;text-decoration:none;font-family:${FONT_TESTO};font-size:12px;line-height:1.7;">${indirizzoPiede}</a>
       </p>` : ''}
       <p style="margin:0;font-family:${FONT_TESTO};font-size:12px;line-height:2;">${contattiPiede}</p>
     </td>

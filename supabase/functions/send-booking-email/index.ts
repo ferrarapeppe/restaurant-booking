@@ -72,16 +72,16 @@ const corsHeaders = {
 // Nelle email i font web non si caricano (Gmail e Outlook rimuovono <link>):
 // Georgia e' la famiglia di sistema piu' vicina al Playfair Display del sito.
 const C = {
-  nero:       '#0E0E0E',
-  neroSoft:   '#1A1A1A',
-  rosso:      '#B7182A',
-  oro:        '#C9B06E',
-  oroChiaro:  '#FBF7EE',
-  testo:      '#1A1A1A',
-  testoSoft:  '#5A5A5A',
-  testoTenue: '#9A948C',
-  bordo:      '#E4E1DC',
-  sfondo:     '#F4F2EF',
+  nero:       '#160E0A',
+  neroSoft:   '#18130F',
+  rosso:      '#B9172A',
+  oro:        '#CAB16F',
+  oroChiaro:  '#F8F1E1',
+  testo:      '#18130F',
+  testoSoft:  '#655D54',
+  testoTenue: '#8C8078',
+  bordo:      '#D9CCB7',
+  sfondo:     '#F5F0E7',
 };
 const FONT_TITOLO = `Georgia,'Times New Roman',serif`;
 const FONT_TESTO = `Helvetica,Arial,sans-serif`;
@@ -228,7 +228,7 @@ function header(restName: string, restAddress: string, restCity: string): string
     <td style="background:${C.nero};padding:34px 24px 26px;text-align:center;border-radius:12px 12px 0 0;">
       <img src="${LOGO_URL}" width="240" alt="${restName}"
         style="display:block;width:240px;max-width:75%;height:auto;margin:0 auto;border:0;color:${C.oro};font-family:${FONT_TITOLO};font-size:22px;font-weight:bold;letter-spacing:2px;">
-      ${indirizzo ? `<p style="color:#B9B4AC;font-family:${FONT_TESTO};font-size:13px;letter-spacing:0.5px;margin:14px 0 0;">${indirizzo}</p>` : ''}
+      ${indirizzo ? `<p style="color:#A79E90;font-family:${FONT_TESTO};font-size:13px;letter-spacing:0.5px;margin:14px 0 0;">${indirizzo}</p>` : ''}
     </td>
   </tr>`;
 }
@@ -256,7 +256,7 @@ function footer(d: EmailData): string {
       <!-- Link dichiarato esplicitamente: cosi' il client non lo riscrive in blu.
            Le righe assenti dal profilo vengono omesse, non lasciate a meta'. -->
       ${indirizzoPiede ? `<p style="margin:0 0 14px;">
-        <a href="${mapsUrl}" style="color:#B9B4AC;text-decoration:none;font-family:${FONT_TESTO};font-size:12px;line-height:1.7;">${indirizzoPiede}</a>
+        <a href="${mapsUrl}" style="color:#A79E90;text-decoration:none;font-family:${FONT_TESTO};font-size:12px;line-height:1.7;">${indirizzoPiede}</a>
       </p>` : ''}
       <!-- Una voce per riga: su schermo stretto i separatori restavano appesi a fine riga -->
       <p style="margin:0;font-family:${FONT_TESTO};font-size:12px;line-height:2;">${contattiPiede}</p>

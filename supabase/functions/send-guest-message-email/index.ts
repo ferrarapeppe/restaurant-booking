@@ -52,9 +52,9 @@ const corsHeaders = {
 };
 
 const C = {
-  nero: '#0E0E0E', neroSoft: '#1A1A1A', rosso: '#B7182A',
-  oro: '#C9B06E', oroChiaro: '#FBF7EE',
-  testo: '#1A1A1A', testoSoft: '#5A5A5A', bordo: '#E4E1DC', sfondo: '#F4F2EF',
+  nero: '#160E0A', neroSoft: '#18130F', rosso: '#B9172A',
+  oro: '#CAB16F', oroChiaro: '#F8F1E1',
+  testo: '#18130F', testoSoft: '#655D54', bordo: '#D9CCB7', sfondo: '#F5F0E7',
 };
 const FONT_TITOLO = `Georgia,'Times New Roman',serif`;
 const FONT_TESTO = `Helvetica,Arial,sans-serif`;
@@ -175,7 +175,7 @@ Deno.serve(async (req) => {
     <td style="background:${C.nero};padding:20px 24px 24px;text-align:center;border-radius:0 0 12px 12px;">
       <p style="color:${C.oro};font-family:${FONT_TITOLO};font-size:13px;font-weight:bold;letter-spacing:3px;margin:0;">${esc(restName.toUpperCase())}</p>
       ${[restaurantAddress, restaurantCity].filter(Boolean).length
-        ? `<p style="color:#B9B4AC;font-family:${FONT_TESTO};font-size:12px;line-height:1.6;margin:8px 0 0;">${esc([restaurantAddress, restaurantCity].filter(Boolean).join(', '))}</p>`
+        ? `<p style="color:#A79E90;font-family:${FONT_TESTO};font-size:12px;line-height:1.6;margin:8px 0 0;">${esc([restaurantAddress, restaurantCity].filter(Boolean).join(', '))}</p>`
         : ''}
     </td>
   </tr>
