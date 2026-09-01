@@ -1166,6 +1166,9 @@ class _BookingDetailSheetState extends State<BookingDetailSheet>
   late TabController _tabController;
   final _supabase = Supabase.instance.client;
   late TextEditingController _nomeCtrl, _cognomeCtrl, _phoneCtrl, _emailCtrl, _noteCtrl, _msgCtrl;
+
+  /// I campi del cliente che la schermata chiamante ha davvero caricato.
+  late Set<String> _campiCliente;
   late DateTime _editDate;
   late String _editTime;
   late int _editPartySize;
@@ -1192,6 +1195,11 @@ class _BookingDetailSheetState extends State<BookingDetailSheet>
     _editTableName = t?['name']?.toString() ?? '';
     _editTableCapacity = (t?['capacity'] as int?) ?? 0;
     final g = b['guests'];
+    // Quali dati del cliente sono davvero arrivati. Una schermata che li
+    // carica a meta' non deve poterli cancellare: e' successo col telefono,
+    // che il Programma di sala non caricava — il campo nasceva vuoto e il
+    // salvataggio scriveva la stringa vuota sopra il numero del cliente.
+    _campiCliente = g is Map ? g.keys.map((k) => k.toString()).toSet() : <String>{};
     _nomeCtrl = TextEditingController(text: (g?['first_name'] ?? '').toString());
     _cognomeCtrl = TextEditingController(text: (g?['surname'] ?? '').toString().toUpperCase());
     _phoneCtrl = TextEditingController(text: (g?['phone'] ?? '').toString());
@@ -1213,12 +1221,21 @@ class _BookingDetailSheetState extends State<BookingDetailSheet>
     try {
       final guestId = widget.booking['guest_id'];
       if (guestId != null) {
-        await _supabase.from('guests').update({
-          'first_name': _nomeCtrl.text.trim(),
-          'surname': _cognomeCtrl.text.trim(),
-          'phone': _phoneCtrl.text.trim(),
-          'email': _emailCtrl.text.trim(),
-        }).eq('id', guestId);
+        // Si scrive solo cio' che era stato caricato: un campo che non e'
+        // mai arrivato dal database non puo' cancellare quello che c'e'.
+        final datiCliente = <String, dynamic>{};
+        void aggiungi(String chiave, String valore) {
+          if (_campiCliente.contains(chiave) || valore.isNotEmpty) {
+            datiCliente[chiave] = valore;
+          }
+        }
+        aggiungi('first_name', _nomeCtrl.text.trim());
+        aggiungi('surname', _cognomeCtrl.text.trim());
+        aggiungi('phone', _phoneCtrl.text.trim());
+        aggiungi('email', _emailCtrl.text.trim());
+        if (datiCliente.isNotEmpty) {
+          await _supabase.from('guests').update(datiCliente).eq('id', guestId);
+        }
       }
       final dateStr = DateFormat('yyyy-MM-dd').format(_editDate);
       await _supabase.from('bookings').update({
@@ -1326,7 +1343,12 @@ class _BookingDetailSheetState extends State<BookingDetailSheet>
 
     return DraggableScrollableSheet(
       initialChildSize: 0.9, minChildSize: 0.5, maxChildSize: 0.95, expand: false,
-      builder: (_, sc) => Column(children: [
+      // Lo spazio della tastiera si toglie qui, una volta sola: cosi' salgono
+      // insieme le note, la casella dei messaggi e la barra col salvataggio.
+      // Correggerlo dentro i singoli pezzi lasciava il ✓ sotto i tasti.
+      builder: (_, sc) => Padding(
+        padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+        child: Column(children: [
         Container(margin: const EdgeInsets.symmetric(vertical: 8), width: 40, height: 4,
             decoration: BoxDecoration(color: AppColors.divider, borderRadius: BorderRadius.circular(2))),
         TabBar(
@@ -1562,6 +1584,7 @@ class _BookingDetailSheetState extends State<BookingDetailSheet>
           ]),
         ),
       ]),
+      ),
     );
   }
 }

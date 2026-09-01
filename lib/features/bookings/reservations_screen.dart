@@ -140,7 +140,10 @@ class _ScheduleBodyState extends ConsumerState<_ScheduleBody> {
           .order('name');
       final bookingsRes = await supabase
           .from('bookings')
-          .select('*, guests(first_name, surname, name, email), tables(name, areas(name))')
+          // `phone` non era nell'elenco, e la scheda che si apre da qui e'
+          // modificabile: il campo telefono nasceva vuoto perche' il dato non
+          // era stato caricato, e salvando cancellava il numero del cliente.
+          .select('*, guests(first_name, surname, name, phone, email), tables(name, areas(name))')
           .eq('restaurant_id', _restaurantId)
           .eq('date', dateStr)
           .inFilter('status', ['approved', 'pending', 'seated', 'walkin'])
