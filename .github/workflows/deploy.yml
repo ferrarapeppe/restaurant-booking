@@ -42,6 +42,10 @@ jobs:
           cp web/booking-status.html site/booking-status.html
           cp web/logo.png site/logo.png
           cp web/favicon.png site/favicon.png
+          # Le icone servono anche alla radice: il modulo clienti ci punta per
+          # l'icona di iPhone, e senza questa copia resterebbe quella vecchia
+          # rimasta da una pubblicazione precedente.
+          cp -r web/icons site/icons
 
       - name: Deploy su GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
