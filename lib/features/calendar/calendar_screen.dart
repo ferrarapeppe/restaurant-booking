@@ -349,6 +349,13 @@ class _VistaSettimana extends ConsumerWidget {
 
   static const double _colonnaOre = 68;
 
+  /// Sotto questa larghezza un giorno diventa illeggibile.
+  ///
+  /// Sette colonne in 390 punti fanno 62 punti l'una: dei nomi restava una
+  /// lettera ("k…", "A…"), e la testata diceva "non …" e "12 c…". Meglio
+  /// scorrere di lato, come fa l'elenco, che avere sette colonne inutili.
+  static const double _giornoMinimo = 104;
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final da = inizioSettimana(giorno);
@@ -391,29 +398,155 @@ class _VistaSettimana extends ConsumerWidget {
                 (copertiGiorno[d] ?? 0) + ((b['party_size'] as int?) ?? 0);
           }
 
-          return Column(children: [
-            _testata(giorni, copertiGiorno, f),
-            Expanded(
-              child: orari.isEmpty
-                  ? const Center(
-                      child: Text('Nessuna prenotazione questa settimana.',
-                          style: TextStyle(
-                              color: AppColors.textSecondary, fontSize: 15)),
-                    )
-                  : ListView.builder(
-                      itemCount: orari.length,
-                      itemBuilder: (_, i) => _rigaOrario(
-                          context, ref, orari[i], giorni, perCella, f),
-                    ),
-            ),
-          ]);
+          return LayoutBuilder(builder: (context, vincoli) {
+            // Testata e righe devono scorrere insieme, quindi la larghezza si
+            // decide qui una volta sola e vale per tutte e due.
+            final stretta =
+                vincoli.maxWidth < _colonnaOre + _giornoMinimo * 7;
+            // Su uno schermo da telefono la griglia non ha rimedio: sette
+            // colonne o si schiacciano o si scorrono di lato perdendo la
+            // settimana. Diventa un elenco: un giorno sotto l'altro.
+            if (stretta) {
+              return _agenda(context, ref, giorni, perCella, copertiGiorno,
+                  orari, f);
+            }
+            const colonnaOre = _colonnaOre;
+            const minima = colonnaOre + _giornoMinimo * 7;
+            final larghezza =
+                vincoli.maxWidth < minima ? minima : vincoli.maxWidth;
+            return SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: SizedBox(
+                width: larghezza,
+                height: vincoli.maxHeight,
+                child: Column(children: [
+                  _testata(giorni, copertiGiorno, f, colonnaOre),
+                  Expanded(
+                    child: orari.isEmpty
+                        ? const Center(
+                            child: Text('Nessuna prenotazione questa settimana.',
+                                style: TextStyle(
+                                    color: AppColors.textSecondary, fontSize: 15)),
+                          )
+                        : ListView.builder(
+                            itemCount: orari.length,
+                            itemBuilder: (_, i) => _rigaOrario(context, ref,
+                                orari[i], giorni, perCella, f, colonnaOre),
+                          ),
+                  ),
+                ]),
+              ),
+            );
+          });
         },
       ),
     );
   }
 
-  Widget _testata(
-      List<DateTime> giorni, Map<String, int> coperti, DateFormat f) {
+  /// La settimana come elenco, per lo schermo stretto.
+  ///
+  /// Stesse pastiglie e stessi colori della griglia: cambia solo come sono
+  /// disposte. Ci sono tutti e sette i giorni anche se vuoti, altrimenti non
+  /// si capirebbe che si sta guardando una settimana.
+  Widget _agenda(
+      BuildContext context,
+      WidgetRef ref,
+      List<DateTime> giorni,
+      Map<String, List<Map<String, dynamic>>> perCella,
+      Map<String, int> coperti,
+      List<String> orari,
+      DateFormat f) {
+    return ListView.builder(
+      padding: const EdgeInsets.only(bottom: 16),
+      itemCount: giorni.length,
+      itemBuilder: (_, i) {
+        final g = giorni[i];
+        final data = f.format(g);
+        final ore = [
+          for (final o in orari)
+            if ((perCella['$data|$o'] ?? const []).isNotEmpty) o
+        ];
+        return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          _testataAgenda(g, coperti[data] ?? 0),
+          if (ore.isEmpty)
+            const Padding(
+              padding: EdgeInsets.fromLTRB(16, 10, 16, 12),
+              child: Text('Nessuna prenotazione',
+                  style: TextStyle(
+                      color: AppColors.textMuted, fontSize: 13)),
+            )
+          else
+            for (final o in ore)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(12, 10, 12, 0),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    SizedBox(
+                      width: 52,
+                      child: Text(o,
+                          style: const TextStyle(
+                              color: AppColors.textPrimary,
+                              fontSize: 15,
+                              fontWeight: FontWeight.bold)),
+                    ),
+                    Expanded(
+                      child: Column(children: [
+                        for (final b in perCella['$data|$o']!)
+                          _pastiglia(context, ref, b),
+                      ]),
+                    ),
+                  ],
+                ),
+              ),
+          const SizedBox(height: 8),
+        ]);
+      },
+    );
+  }
+
+  /// La barra scura di un giorno nell'elenco.
+  Widget _testataAgenda(DateTime g, int coperti) {
+    final stato = regole?.stato(g) ?? StatoGiornata.inCaricamento;
+    final spenta = stato == StatoGiornata.chiuse ||
+        stato == StatoGiornata.chiusuraSettimanale ||
+        stato == StatoGiornata.nonAncoraAperte;
+    final oggi = _stessoGiorno(g, DateTime.now());
+    final nome = DateFormat('EEEE d MMMM', 'it_IT').format(g);
+
+    return InkWell(
+      onTap: () => onGiorno(g),
+      child: Container(
+        color: oggi ? AppColors.accent : AppColors.nero,
+        padding: const EdgeInsets.fromLTRB(14, 10, 8, 10),
+        child: Row(children: [
+          Expanded(
+            child: Text(nome[0].toUpperCase() + nome.substring(1),
+                style: TextStyle(
+                    color: oggi ? Colors.white : AppColors.gold,
+                    fontSize: 15,
+                    fontWeight: FontWeight.bold)),
+          ),
+          Text(
+              spenta
+                  ? AspettoStato.di(stato).breve.toLowerCase()
+                  : (coperti == 0 ? 'libero' : '$coperti coperti'),
+              style: TextStyle(
+                  color: oggi
+                      ? Colors.white70
+                      : (spenta ? const Color(0xFF8C8078) : Colors.white),
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600)),
+          const SizedBox(width: 6),
+          BottoneElenco(
+              giorno: g, colore: oggi ? Colors.white : AppColors.gold),
+        ]),
+      ),
+    );
+  }
+
+  Widget _testata(List<DateTime> giorni, Map<String, int> coperti,
+      DateFormat f, double colonnaOre) {
     // `IntrinsicHeight` e' necessario: dentro una colonna la riga non ha
     // un'altezza da cui partire, e con lo stretch si schiaccia a zero
     // portandosi via l'intestazione.
@@ -421,7 +554,7 @@ class _VistaSettimana extends ConsumerWidget {
       color: AppColors.nero,
       child: IntrinsicHeight(
         child: Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-          const SizedBox(width: _colonnaOre),
+          SizedBox(width: colonnaOre),
           for (final g in giorni)
             Expanded(child: _testataGiorno(g, coperti[f.format(g)] ?? 0)),
         ]),
@@ -482,13 +615,18 @@ class _VistaSettimana extends ConsumerWidget {
     );
   }
 
-  Widget _rigaOrario(BuildContext context, WidgetRef ref, String orario,
+  Widget _rigaOrario(
+      BuildContext context,
+      WidgetRef ref,
+      String orario,
       List<DateTime> giorni,
-      Map<String, List<Map<String, dynamic>>> perCella, DateFormat f) {
+      Map<String, List<Map<String, dynamic>>> perCella,
+      DateFormat f,
+      double colonnaOre) {
     return IntrinsicHeight(
       child: Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
         Container(
-          width: _colonnaOre,
+          width: colonnaOre,
           color: AppColors.cardLight,
           padding: const EdgeInsets.symmetric(vertical: 10),
           alignment: Alignment.topCenter,
