@@ -895,6 +895,10 @@ Future<bool> confermaCancellazione(BuildContext context) async {
 /// scende a 540 e il grosso della riga si vede senza spostare niente.
 class MisureElenco {
   final double ora, persone, turno, tavolo, stato, minima;
+
+  /// Vero quando lo schermo e' stretto: la riga accorcia quel che puo'.
+  final bool compatta;
+
   const MisureElenco._({
     required this.ora,
     required this.persone,
@@ -902,12 +906,33 @@ class MisureElenco {
     required this.tavolo,
     required this.stato,
     required this.minima,
+    required this.compatta,
   });
 
   static const larga = MisureElenco._(
-      ora: 72, persone: 78, turno: 160, tavolo: 86, stato: 70, minima: 720);
+      ora: 72, persone: 78, turno: 160, tavolo: 86, stato: 70,
+      minima: 720, compatta: false);
   static const stretta = MisureElenco._(
-      ora: 62, persone: 62, turno: 104, tavolo: 68, stato: 58, minima: 540);
+      ora: 62, persone: 62, turno: 104, tavolo: 68, stato: 58,
+      minima: 540, compatta: true);
+}
+
+/// "DINNER/CENA 1º TURNO 20:00" -> "1º TURNO 20:00".
+///
+/// Il turno arriva dal modulo pubblico, che lo scrive in due lingue per il
+/// cliente. In 104 punti quella riga va a capo tre volte e alza la riga
+/// intera: al personale bastano il turno e l'ora.
+String turnoBreve(String turno) {
+  final t = turno.toUpperCase();
+  final ora = RegExp(r'\d{1,2}[:.]\d{2}').firstMatch(t)?.group(0) ?? '';
+  String composto(String testa) =>
+      [testa, ora].where((x) => x.isNotEmpty).join(' ');
+  if (t.contains('APERITIF') || t.contains('APERITIVO')) {
+    return composto('APERITIVO');
+  }
+  final numero = RegExp(r'([12])\s*[°º]').firstMatch(t)?.group(1);
+  if (numero != null) return composto('${numero}º TURNO');
+  return turno;
 }
 
 // ── Status menu items ─────────────────────────────────────────────────────────
@@ -1239,7 +1264,10 @@ class _BookingRow extends StatelessWidget {
                     child: scelte.turno.isEmpty
                         ? const Text('—',
                             style: TextStyle(color: AppColors.textMuted, fontSize: 14))
-                        : Text(scelte.turno,
+                        : Text(
+                            misure.compatta
+                                ? turnoBreve(scelte.turno)
+                                : scelte.turno,
                             softWrap: true,
                             style: const TextStyle(
                                 color: AppColors.textSecondary,
