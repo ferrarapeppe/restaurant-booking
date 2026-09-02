@@ -10,6 +10,7 @@
 // direttamente non deve poter inserire quello che vuole.
 
 import { createClient } from 'npm:@supabase/supabase-js@2';
+import { proponiTavoli, assegna } from '../_shared/tavoli.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -188,22 +189,27 @@ Deno.serve(async (req) => {
       }
       const idPrenotazione = prenotazione.id as string;
 
-      // Primo tavolo libero della zona scelta, se c'e'.
+      // Pre-assegnazione dei tavoli, che possono essere piu' d'uno.
+      //
+      // Prima cercava un tavolo solo abbastanza grande: sei persone nel
+      // dehors, dove i tavoli sono tutti da due, non entravano da nessuna
+      // parte e la prenotazione restava senza niente. Ora si combinano.
+      //
+      // E' una proposta, non l'ultima parola: il proprietario la rivede in
+      // sala. Per questo un errore qui non blocca la prenotazione.
       try {
-        const { data: tavoli } = await db.from('tables')
-          .select('id, capacity').eq('area_id', area.id).gte('capacity', persone).order('capacity');
-        for (const tavolo of tavoli ?? []) {
-          const { data: occupati } = await db.from('bookings')
-            .select('id').eq('table_id', tavolo.id).eq('date', data)
-            .not('status', 'in', '(canceled,no_show)')
-            .lt('time_start', fine).gt('time_end', inizio).limit(1);
-          if (!occupati || occupati.length === 0) {
-            await db.from('bookings').update({ table_id: tavolo.id }).eq('id', idPrenotazione);
-            break;
-          }
-        }
+        const scelta = await proponiTavoli(db, {
+          idRistorante: ID_RISTORANTE,
+          areaId: area.id as string,
+          persone,
+          data,
+          inizio,
+          fine,
+          escludiPrenotazione: idPrenotazione,
+        });
+        if (scelta) await assegna(db, idPrenotazione, scelta.tavoli);
       } catch (e) {
-        console.warn('assegnazione tavolo non riuscita:', e);
+        console.warn('assegnazione tavoli non riuscita:', e);
       }
 
       await chiamaFunzione('send-booking-email', {

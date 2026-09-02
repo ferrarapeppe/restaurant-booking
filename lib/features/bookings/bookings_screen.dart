@@ -1342,6 +1342,10 @@ class _BookingDetailSheetState extends State<BookingDetailSheet>
         for (final t in (proposta['tavoli'] as List? ?? const []))
           {'id': t['id'], 'name': t['nome'], 'capacity': t['posti'] ?? 0},
       ];
+      // In ordine di numero: il motore li restituisce come li ha combinati,
+      // e leggere "12 11 10" invece di "10 11 12" fa sembrare sparsi tre
+      // tavoli che sono in fila.
+      scelti.sort((a, b) => _numero(a).compareTo(_numero(b)));
       setState(() => _tavoli = scelti);
       final spreco = (proposta['spreco'] as int?) ?? 0;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
