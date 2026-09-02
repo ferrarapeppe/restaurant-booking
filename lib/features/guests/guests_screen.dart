@@ -720,10 +720,7 @@ class _GuestDetailScreenState extends ConsumerState<GuestDetailScreen> {
                                     BorderRadius.vertical(top: Radius.circular(16))),
                             builder: (_) => BookingDetailSheet(
                               booking: _righe[v.key],
-                              onSaved: () {
-                                Navigator.pop(context);
-                                _loadBookings();
-                              },
+                              onSaved: _loadBookings,
                             ),
                           ),
                           child: Padding(

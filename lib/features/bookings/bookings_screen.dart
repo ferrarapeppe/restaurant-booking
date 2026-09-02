@@ -795,7 +795,7 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
       builder: (_) => BookingDetailSheet(
         booking: booking,
-        onSaved: () { Navigator.pop(context); _loadBookings(); },
+        onSaved: _loadBookings,
       ),
     );
   }
@@ -1384,31 +1384,12 @@ class _BookingDetailSheetState extends State<BookingDetailSheet>
   }
 
   Future<void> _save() async {
+    // Chi scrive un tag e tocca subito il segno di spunta si aspetta che
+    // valga: senza questo il testo restava nella casella e si perdeva.
+    if (_tagCtrl.text.trim().isNotEmpty) _aggiungiTag(_tagCtrl.text);
     setState(() => _saving = true);
     try {
-      final guestId = widget.booking['guest_id'];
-      if (guestId != null) {
-        // Si scrive solo cio' che era stato caricato: un campo che non e'
-        // mai arrivato dal database non puo' cancellare quello che c'e'.
-        final datiCliente = <String, dynamic>{};
-        void aggiungi(String chiave, String valore) {
-          if (_campiCliente.contains(chiave) || valore.isNotEmpty) {
-            datiCliente[chiave] = valore;
-          }
-        }
-        aggiungi('first_name', _nomeCtrl.text.trim());
-        aggiungi('surname', _cognomeCtrl.text.trim());
-        aggiungi('phone', _phoneCtrl.text.trim());
-        aggiungi('email', _emailCtrl.text.trim());
-        // I tag si scrivono solo se sono cambiati davvero: una schermata che
-        // non li avesse caricati manderebbe una lista vuota e li cancellerebbe.
-        if (!_setUguali(_tags, _tagIniziali)) {
-          datiCliente['tags'] = _tags.toList()..sort();
-        }
-        if (datiCliente.isNotEmpty) {
-          await _supabase.from('guests').update(datiCliente).eq('id', guestId);
-        }
-      }
+      await _salvaCliente();
       await TavoliPrenotazione.salva(
         widget.booking['id'].toString(),
         [for (final t in _tavoli) t['id'].toString()],
@@ -1441,8 +1422,6 @@ class _BookingDetailSheetState extends State<BookingDetailSheet>
           },
         });
       }
-      // Salvati: il "da salvare" accanto ai tag deve sparire.
-      _tagIniziali = {..._tags};
       widget.onSaved();
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Prenotazione salvata'), backgroundColor: AppColors.badgeGreen),
@@ -1454,6 +1433,36 @@ class _BookingDetailSheetState extends State<BookingDetailSheet>
     } finally {
       if (mounted) setState(() => _saving = false);
     }
+  }
+
+  /// Scrive nome, recapiti e tag del cliente.
+  ///
+  /// Sta fuori da `_save` perche' la servono anche Accetta e Rifiuta: quei
+  /// due chiudono la scheda, e i tag appena scritti si perdevano.
+  Future<void> _salvaCliente() async {
+    if (_tagCtrl.text.trim().isNotEmpty) _aggiungiTag(_tagCtrl.text);
+    final guestId = widget.booking['guest_id'];
+    if (guestId == null) return;
+    // Si scrive solo cio' che era stato caricato: un campo che non e' mai
+    // arrivato dal database non puo' cancellare quello che c'e'.
+    final datiCliente = <String, dynamic>{};
+    void aggiungi(String chiave, String valore) {
+      if (_campiCliente.contains(chiave) || valore.isNotEmpty) {
+        datiCliente[chiave] = valore;
+      }
+    }
+    aggiungi('first_name', _nomeCtrl.text.trim());
+    aggiungi('surname', _cognomeCtrl.text.trim());
+    aggiungi('phone', _phoneCtrl.text.trim());
+    aggiungi('email', _emailCtrl.text.trim());
+    // I tag si scrivono solo se sono cambiati davvero: una schermata che non
+    // li avesse caricati manderebbe una lista vuota e li cancellerebbe.
+    if (!_setUguali(_tags, _tagIniziali)) {
+      datiCliente['tags'] = _tags.toList()..sort();
+    }
+    if (datiCliente.isEmpty) return;
+    await _supabase.from('guests').update(datiCliente).eq('id', guestId);
+    _tagIniziali = {..._tags};
   }
 
   static bool _setUguali(Set<String> a, Set<String> b) =>
@@ -1854,18 +1863,38 @@ class _BookingDetailSheetState extends State<BookingDetailSheet>
                 controller: _tagCtrl,
                 textInputAction: TextInputAction.done,
                 onSubmitted: _aggiungiTag,
+                // Serve solo a ridisegnare la riga qui sotto, che dice cosa
+                // succede al testo appena scritto.
+                onChanged: (_) => setState(() {}),
                 style: const TextStyle(color: AppColors.textPrimary, fontSize: 14),
                 decoration: InputDecoration(
                   isDense: true,
-                  hintText: 'Un altro tag e invio',
+                  hintText: 'Scrivi un tag',
                   hintStyle: const TextStyle(color: AppColors.textMuted, fontSize: 13),
                   prefixIcon: const Icon(Icons.label_outline,
                       color: AppColors.textSecondary, size: 18),
-                  suffixIcon: IconButton(
-                    icon: const Icon(Icons.add, size: 18, color: AppColors.accent),
-                    onPressed: () => _aggiungiTag(_tagCtrl.text),
-                    tooltip: 'Aggiungi',
+                  // Un "+" piccolo, a due centimetri dal segno di spunta e dal
+                  // pollice, non si capiva a cosa servisse: qui c'e' scritto.
+                  suffixIcon: Padding(
+                    padding: const EdgeInsets.only(right: 4),
+                    child: TextButton(
+                      onPressed: _tagCtrl.text.trim().isEmpty
+                          ? null
+                          : () => _aggiungiTag(_tagCtrl.text),
+                      style: TextButton.styleFrom(
+                        foregroundColor: AppColors.accent,
+                        disabledForegroundColor: AppColors.textMuted,
+                        padding: const EdgeInsets.symmetric(horizontal: 10),
+                        minimumSize: Size.zero,
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
+                      child: const Text('Aggiungi',
+                          style: TextStyle(
+                              fontSize: 13, fontWeight: FontWeight.w700)),
+                    ),
                   ),
+                  suffixIconConstraints:
+                      const BoxConstraints(minWidth: 0, minHeight: 0),
                   contentPadding: const EdgeInsets.symmetric(vertical: 10),
                   filled: true,
                   fillColor: AppColors.background,
@@ -1880,6 +1909,25 @@ class _BookingDetailSheetState extends State<BookingDetailSheet>
                       borderSide: const BorderSide(color: AppColors.accent, width: 2)),
                 ),
               ),
+              // Toglie il dubbio invece di chiedere di ricordarselo: quello
+              // che si sta scrivendo non si perde nemmeno andando dritti al
+              // segno di spunta.
+              if (_tagCtrl.text.trim().isNotEmpty) ...[
+                const SizedBox(height: 6),
+                Row(children: [
+                  const Icon(Icons.check_circle_outline,
+                      size: 13, color: AppColors.goldDark),
+                  const SizedBox(width: 5),
+                  Expanded(
+                    child: Text(
+                      '«${_tagCtrl.text.trim().toLowerCase()}» viene aggiunto '
+                      'anche senza toccare Aggiungi.',
+                      style: const TextStyle(
+                          color: AppColors.goldDark, fontSize: 11, height: 1.3),
+                    ),
+                  ),
+                ]),
+              ],
               const SizedBox(height: 16),
               const Divider(color: AppColors.divider),
               _DetailRow(label: 'Stato', child: DropdownButton<String>(
@@ -1936,12 +1984,16 @@ class _BookingDetailSheetState extends State<BookingDetailSheet>
                   child: ElevatedButton.icon(
                     onPressed: () async {
                       try {
+                        // Prima il cliente: un tag appena scritto andrebbe
+                        // perso, perche' qui la scheda si chiude.
+                        await _salvaCliente();
                         await _supabase.from('bookings')
                             .update({'status': 'approved'})
                             .eq('id', widget.booking['id']);
                         sendBookingAcceptedEmail(widget.booking);
                         if (!context.mounted) return;
                         widget.onSaved();
+                        Navigator.pop(context);
                       } catch (e) {
                         if (mounted) ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(content: Text('Errore: $e'), backgroundColor: AppColors.accent),
@@ -1963,7 +2015,11 @@ class _BookingDetailSheetState extends State<BookingDetailSheet>
                 const SizedBox(width: 8),
                 Expanded(
                   child: ElevatedButton.icon(
-                    onPressed: () {
+                    onPressed: () async {
+                      // Anche qui la scheda sparisce: quello che c'e' scritto
+                      // sul cliente va messo al sicuro prima.
+                      await _salvaCliente();
+                      if (!context.mounted) return;
                       Navigator.pop(context);
                       Navigator.push(context, MaterialPageRoute(
                         builder: (_) => RejectionScreen(
@@ -2001,8 +2057,13 @@ class _BookingDetailSheetState extends State<BookingDetailSheet>
               ]),
               const SizedBox(height: 8),
             ],
+            // Due tondi senza scritte, uno accanto all'altro: sul telefono
+            // non si capiva quale salvasse. Una parola sotto ciascuno costa
+            // dodici pixel e toglie il dubbio.
             Row(mainAxisAlignment: MainAxisAlignment.end, children: [
-              _BottoneStato(
+              _SottoEtichetta(
+                testo: 'Stato',
+                child: _BottoneStato(
                 stato: _editStatus,
                 cambiato: _editStatus != (widget.booking['status'] ?? ''),
                 onScelto: (v) async {
@@ -2014,14 +2075,22 @@ class _BookingDetailSheetState extends State<BookingDetailSheet>
                 },
                 // Non passa dal salvataggio: la schermata di rifiuto annulla
                 // la prenotazione e manda il messaggio per conto suo.
-                onRifiuta: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => RejectionScreen(
-                      booking: widget.booking,
-                      onRejected: widget.onSaved,
+                onRifiuta: () async {
+                  await _salvaCliente();
+                  if (!context.mounted) return;
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => RejectionScreen(
+                        booking: widget.booking,
+                        onRejected: () {
+                          widget.onSaved();
+                          if (mounted) Navigator.pop(context);
+                        },
+                      ),
                     ),
-                  ),
+                  );
+                },
                 ),
               ),
               // Niente pulsante di chiusura: si esce trascinando giu' la
@@ -2029,8 +2098,17 @@ class _BookingDetailSheetState extends State<BookingDetailSheet>
               // salvataggio, a tre centimetri di distanza, si sbaglia.
               const SizedBox(width: 12),
               _saving
-                  ? const CircularProgressIndicator(color: AppColors.accent)
-                  : _ActionBtn(icon: Icons.check, color: AppColors.accent, onTap: _save),
+                  ? const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 12),
+                      child: CircularProgressIndicator(color: AppColors.accent),
+                    )
+                  : _SottoEtichetta(
+                      testo: 'Salva',
+                      child: _ActionBtn(
+                          icon: Icons.check,
+                          color: AppColors.accent,
+                          onTap: _save),
+                    ),
             ]),
           ]),
         ),
@@ -2038,6 +2116,27 @@ class _BookingDetailSheetState extends State<BookingDetailSheet>
       ),
     );
   }
+}
+
+/// Un tondo con la sua parola sotto.
+class _SottoEtichetta extends StatelessWidget {
+  final String testo;
+  final Widget child;
+  const _SottoEtichetta({required this.testo, required this.child});
+
+  @override
+  Widget build(BuildContext context) => Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          child,
+          const SizedBox(height: 3),
+          Text(testo,
+              style: const TextStyle(
+                  color: AppColors.textSecondary,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600)),
+        ],
+      );
 }
 
 class _DetailRow extends StatelessWidget {

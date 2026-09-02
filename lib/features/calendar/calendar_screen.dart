@@ -640,8 +640,8 @@ Future<void> apriDettaglio(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
     builder: (_) => BookingDetailSheet(
       booking: b,
+      // Solo ricarica: la scheda resta aperta finche' non la si chiude.
       onSaved: () {
-        Navigator.pop(context);
         ref.invalidate(prenotazioniIntervalloProvider);
         ref.invalidate(monthBookingCountsProvider);
       },

@@ -739,10 +739,8 @@ class _ScheduleBodyState extends ConsumerState<_ScheduleBody> {
       useSafeArea: true,
       builder: (_) => BookingDetailSheet(
         booking: b,
-        onSaved: () {
-          Navigator.pop(context);
-          _load();
-        },
+        // Solo ricarica: la scheda la chiude chi la sta usando.
+        onSaved: _load,
       ),
     );
   }
