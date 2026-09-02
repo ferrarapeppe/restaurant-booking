@@ -238,6 +238,10 @@ Deno.serve(async (req) => {
         .select('id, date, time_start, time_end, party_size, status, notes, internal_notes, created_at, restaurant_id, guests(first_name, surname)')
         .eq('id', id).maybeSingle();
       if (!prenotazione) return risposta({ error: 'Prenotazione non trovata.' }, 404);
+      // La cancellazione decisa dal locale nell'app e' interna: al cliente la
+      // sua pagina deve dire "annullata", non uno stato che non conosce e che
+      // mostrerebbe come sconosciuto.
+      if (prenotazione.status === 'canceled_by_venue') prenotazione.status = 'canceled';
 
       const [ristorante, messaggi] = await Promise.all([
         db.from('restaurants').select('name, address, city, phone, email')

@@ -208,6 +208,9 @@ async function esegui(
       .select('id, date, time_start, party_size, status, source, notes, internal_notes, '
         + 'guests(first_name, surname, name, phone), tables!bookings_table_id_fkey(name, areas(name))')
       .eq('restaurant_id', ID_RISTORANTE)
+      // Cancellata dal locale vale come eliminata: non esiste piu' per
+      // nessuno, assistente compreso.
+      .neq('status', 'canceled_by_venue')
       .gte('date', da)
       .lte('date', a)
       .order('date')
@@ -251,6 +254,9 @@ async function esegui(
       .from('bookings')
       .select('date, party_size, status, time_start, internal_notes, tables!bookings_table_id_fkey(areas(name))')
       .eq('restaurant_id', ID_RISTORANTE)
+      // Cancellata dal locale vale come eliminata: non esiste piu' per
+      // nessuno, assistente compreso.
+      .neq('status', 'canceled_by_venue')
       .gte('date', String(arg.da ?? ''))
       .lte('date', String(arg.a ?? ''));
     if (error) return { errore: `lettura fallita: ${error.message}` };
@@ -299,6 +305,9 @@ async function esegui(
         + 'table_id, guest_id, guests(id, first_name, surname, name, phone, email), '
         + 'tables!bookings_table_id_fkey(name, capacity)')
       .eq('restaurant_id', ID_RISTORANTE)
+      // Cancellata dal locale vale come eliminata: non esiste piu' per
+      // nessuno, assistente compreso.
+      .neq('status', 'canceled_by_venue')
       .eq('id', id)
       .maybeSingle();
     if (error) return { errore: `lettura fallita: ${error.message}` };
@@ -416,6 +425,9 @@ async function esegui(
         .from('bookings')
         .select('guest_id, date, time_start, party_size, status')
         .in('guest_id', id)
+        // Cancellata dal locale vale come eliminata: non esiste piu' per
+        // nessuno, assistente compreso.
+        .neq('status', 'canceled_by_venue')
         .order('date', { ascending: false })
         .limit(40)
       : { data: [] };

@@ -47,6 +47,9 @@ class _ReportsScreenState extends State<ReportsScreen> {
           .select('id, date, time_start, party_size, status, source, created_at, '
               'internal_notes, guest_id, tables!bookings_table_id_fkey(areas(name))')
           .eq('restaurant_id', _idRistorante)
+          // Le cancellate dal locale valgono come eliminate: fuori anche
+          // dai conti, altrimenti rispunterebbero nelle statistiche.
+          .neq('status', 'canceled_by_venue')
           .order('date');
       if (!mounted) return;
       setState(() {
@@ -339,7 +342,6 @@ class _ReportsScreenState extends State<ReportsScreen> {
         'completed' => 'Concluse',
         'canceled' => 'Annullate dal cliente',
         'rejected' => 'Rifiutate',
-        'canceled_by_venue' => 'Cancellate dal locale',
         'no_show' => 'Non presentati',
         _ => 'Altro',
       };

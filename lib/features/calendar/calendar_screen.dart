@@ -49,6 +49,9 @@ final prenotazioniIntervalloProvider = FutureProvider.autoDispose
           'tables!bookings_table_id_fkey(id, name, capacity, area_id, areas(name)), '
           'booking_tables(tables(name))')
       .eq('restaurant_id', _idRistorante)
+      // Cancellata dal locale vale come eliminata: resta nel database ma
+      // non si mostra da nessuna parte.
+      .neq('status', 'canceled_by_venue')
       .gte('date', periodo.$1)
       .lte('date', periodo.$2)
       .order('date')

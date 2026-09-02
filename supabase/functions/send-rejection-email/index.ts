@@ -95,7 +95,7 @@ Deno.serve(async (req) => {
   }
   try {
     const {
-      email, nome, cognome, motivo, messaggio, tipo,
+      email, nome, cognome, motivo, messaggio,
       date, time, persons,
       restaurantName, restaurantAddress, restaurantCity, restaurantPhone, restaurantEmail,
     } = await req.json();
@@ -105,11 +105,6 @@ Deno.serve(async (req) => {
         status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
-
-    // Due lettere diverse dalla stessa funzione. Rifiutare una richiesta e
-    // cancellare una prenotazione gia' confermata non sono la stessa cosa: la
-    // seconda e' una parola data e poi ritirata, e il testo deve dirlo.
-    const cancellazione = tipo === 'cancellazione';
 
     const smtpUser = Deno.env.get('SMTP_USER') ?? '';
     const transporter = nodemailer.createTransport({
@@ -188,13 +183,12 @@ Deno.serve(async (req) => {
   <tr>
     <td style="background:white;padding:34px 32px 26px;">
       <h2 style="color:${C.neroSoft};font-family:${FONT_TITOLO};font-size:21px;font-weight:bold;line-height:1.35;margin:0 0 16px;">
-        ${cancellazione ? 'Dobbiamo annullare la tua prenotazione.' : 'Non possiamo confermare la tua prenotazione.'}
+        Non possiamo confermare la tua prenotazione.
       </h2>
 
       <p style="color:${C.testo};font-family:${FONT_TESTO};font-size:15px;line-height:1.7;margin:0 0 18px;">
-        ${cancellazione
-          ? `${guestName ? `Gentile ${guestName}, ci dispiace` : 'Ci dispiace'} doverti comunicare che la tua prenotazione${quandoEsteso ? ` per <strong>${quandoEsteso}</strong>` : ''}${persons ? ` per ${persons} ${Number(persons) === 1 ? 'persona' : 'persone'}` : ''}, che avevamo confermato, non potrà essere mantenuta.`
-          : `${guestName ? `Gentile ${guestName}, purtroppo` : 'Purtroppo'} non ci è possibile accogliere la tua richiesta${quandoEsteso ? ` per <strong>${quandoEsteso}</strong>` : ''}${persons ? ` per ${persons} ${Number(persons) === 1 ? 'persona' : 'persone'}` : ''}.`}
+        ${guestName ? `Gentile ${guestName}, purtroppo` : 'Purtroppo'} non ci è possibile accogliere
+        la tua richiesta${quandoEsteso ? ` per <strong>${quandoEsteso}</strong>` : ''}${persons ? ` per ${persons} ${Number(persons) === 1 ? 'persona' : 'persone'}` : ''}.
       </p>
 
       ${messaggio ? `<table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 24px;">
@@ -206,7 +200,7 @@ Deno.serve(async (req) => {
       </table>` : ''}
 
       <p style="color:${C.testo};font-family:${FONT_TESTO};font-size:15px;line-height:1.7;margin:0 0 26px;">
-        ${cancellazione ? 'Ci scusiamo per il disagio.' : 'Ci dispiace davvero.'} Se vuoi provare con un'altra data o un altro orario, siamo a disposizione:
+        Ci dispiace davvero. Se vuoi provare con un'altra data o un altro orario, siamo a disposizione:
         scrivici a <a href="mailto:${restContactEmail}" style="color:${C.rosso};font-weight:bold;text-decoration:none;">${restContactEmail}</a>
         oppure chiamaci al <a href="tel:${restPhone.replace(/\s/g, '')}" style="color:${C.rosso};font-weight:bold;text-decoration:none;">${restPhone}</a>.
       </p>
@@ -215,7 +209,7 @@ Deno.serve(async (req) => {
         <tr>
           <td align="center">
             <a href="${siteUrl}" style="background:${C.rosso};color:#ffffff;text-decoration:none;padding:15px 34px;border-radius:8px;font-family:${FONT_TESTO};font-size:15px;font-weight:bold;display:inline-block;">
-              ${cancellazione ? 'Prenota un altro giorno' : "Prova un'altra data"}
+              Prova un'altra data
             </a>
           </td>
         </tr>
@@ -250,7 +244,7 @@ Deno.serve(async (req) => {
 </body>
 </html>`;
 
-    const subject = `${cancellazione ? 'Prenotazione annullata' : 'Prenotazione non confermata'}${guestName ? ` per ${guestName}` : ''}`
+    const subject = `Prenotazione non confermata${guestName ? ` per ${guestName}` : ''}`
       + (quandoBreve ? ` (${quandoBreve})` : '');
 
     await inviaEmail(transporter, {

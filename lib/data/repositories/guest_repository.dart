@@ -149,6 +149,8 @@ class GuestRepository {
         .from('bookings')
         .select('*, guests(*)')
         .eq('guest_id', guestId)
+        // Fuori dallo storico del cliente come da ogni altra schermata.
+        .neq('status', 'canceled_by_venue')
         .order('date', ascending: false);
     return (response as List).map((e) => BookingModel.fromJson(e)).toList();
   }
@@ -163,6 +165,8 @@ class GuestRepository {
         .from('bookings')
         .select('*, guests(*), tables!bookings_table_id_fkey(id, name, capacity, area_id, areas(name))')
         .eq('guest_id', guestId)
+        // Fuori dallo storico del cliente come da ogni altra schermata.
+        .neq('status', 'canceled_by_venue')
         .order('date', ascending: false);
     return [for (final r in response as List) Map<String, dynamic>.from(r as Map)];
   }

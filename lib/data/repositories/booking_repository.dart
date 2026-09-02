@@ -26,7 +26,9 @@ class BookingRepository {
         .select('date, party_size, status')
         .eq('restaurant_id', _restaurantId)
         .gte('date', startDate)
-        .lte('date', endDate);
+        .lte('date', endDate)
+        // Cancellata dal locale vale come eliminata.
+        .neq('status', 'canceled_by_venue');
 
     // Il calendario mostra solo le prenotazioni vive. Prima sommava tutto,
     // annullate comprese, mentre l'elenco di default mostra solo le attive:

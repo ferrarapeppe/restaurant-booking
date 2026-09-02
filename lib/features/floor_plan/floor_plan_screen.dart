@@ -1304,7 +1304,6 @@ class _TableDetailSheetState extends State<_TableDetailSheet>
                             DropdownMenuItem(value: 'seated', child: Text('🍽️ Al tavolo', style: TextStyle(color: AppColors.textSecondary))),
                             DropdownMenuItem(value: 'pending', child: Text('⏳ In attesa', style: TextStyle(color: AppColors.textSecondary))),
                             DropdownMenuItem(value: 'canceled', child: Text('❌ Annullata dal cliente', style: TextStyle(color: AppColors.textSecondary))),
-                            DropdownMenuItem(value: 'canceled_by_venue', child: Text('❌ Cancellata dal locale', style: TextStyle(color: AppColors.textSecondary))),
                             DropdownMenuItem(value: 'no_show', child: Text('🚫 No show', style: TextStyle(color: AppColors.textSecondary))),
                           ],
                           onChanged: (v) => setState(() => _editStatus = v!),
