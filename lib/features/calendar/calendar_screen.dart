@@ -1254,15 +1254,20 @@ class _VistaMese extends ConsumerWidget {
                     .putIfAbsent((b['date'] ?? '').toString(), () => [])
                     .add(b);
               }
-              return GridView.builder(
+              return LayoutBuilder(builder: (context, vincoli) {
+                // Sotto i 78 punti di cella l'ora e il nome non entrano: la
+                // cella dice quanti sono e in che stato, non chi sono.
+                final compatta = vincoli.maxWidth / 7 < 78;
+                return GridView.builder(
                 padding: EdgeInsets.zero,
-                gridDelegate:
-                    const SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 7, childAspectRatio: 0.78),
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 7,
+                    childAspectRatio: compatta ? 0.86 : 0.78),
                 itemCount: giorni.length,
                 itemBuilder: (context, i) {
                   final g = giorni[i];
                   return _CellaMese(
+                    compatta: compatta,
                     giorno: g,
                     delMese: g.month == mese.month,
                     selezionato: _stessoGiorno(g, selezionato),
@@ -1274,6 +1279,7 @@ class _VistaMese extends ConsumerWidget {
                   );
                 },
               );
+              });
             },
           ),
         ),
@@ -1291,7 +1297,11 @@ class _CellaMese extends StatelessWidget {
   final void Function(DateTime) onGiorno;
   final void Function(Map<String, dynamic>) onPrenotazione;
 
+  /// Cella da telefono: niente ora e nome, che non ci starebbero.
+  final bool compatta;
+
   const _CellaMese({
+    required this.compatta,
     required this.giorno,
     required this.delMese,
     required this.selezionato,
@@ -1364,19 +1374,24 @@ class _CellaMese extends StatelessWidget {
                     fontWeight: _oggi ? FontWeight.bold : FontWeight.w600,
                   )),
               const Spacer(),
-              if (delMese && coperti > 0) ...[
-                Text('$coperti',
-                    style: const TextStyle(
-                        color: AppColors.goldDark,
-                        fontSize: 13,
-                        fontWeight: FontWeight.bold)),
-                const SizedBox(width: 4),
+              // Sul telefono il numero dei coperti finiva attaccato a quello
+              // del giorno — "212" per il 2 con 12 coperti — e il pulsante
+              // dell'elenco si mangiava meta' cella. Vanno sotto.
+              if (!compatta) ...[
+                if (delMese && coperti > 0) ...[
+                  Text('$coperti',
+                      style: const TextStyle(
+                          color: AppColors.goldDark,
+                          fontSize: 13,
+                          fontWeight: FontWeight.bold)),
+                  const SizedBox(width: 4),
+                ],
+                if (delMese)
+                  BottoneElenco(
+                      giorno: giorno,
+                      colore: AppColors.textMuted,
+                      misura: 14),
               ],
-              if (delMese)
-                BottoneElenco(
-                    giorno: giorno,
-                    colore: AppColors.textMuted,
-                    misura: 14),
             ]),
           ),
           if (delMese && _chiusa)
@@ -1388,7 +1403,40 @@ class _CellaMese extends StatelessWidget {
                   style: const TextStyle(
                       color: AppColors.textMuted, fontSize: 11)),
             ),
-          if (delMese)
+          if (delMese && compatta && righe.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(6, 1, 4, 0),
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('$coperti cop.',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                          color: AppColors.goldDark,
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 4),
+                  // Un pallino per prenotazione, del colore del suo stato:
+                  // quante sono e come stanno, senza leggere niente.
+                  Wrap(spacing: 3, runSpacing: 3, children: [
+                    for (final b in righe.take(6))
+                      Container(
+                        width: 7,
+                        height: 7,
+                        decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: coloriStato(b['status']).$1),
+                      ),
+                    if (righe.length > 6)
+                      Text('+${righe.length - 6}',
+                          style: const TextStyle(
+                              color: AppColors.textSecondary,
+                              fontSize: 9,
+                              fontWeight: FontWeight.bold)),
+                  ]),
+                ]),
+            ),
+          if (delMese && !compatta)
             Expanded(
               child: ListView(
                 padding: const EdgeInsets.fromLTRB(4, 2, 4, 4),

@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -48,6 +50,40 @@ class _FloorPlanScreenState extends State<FloorPlanScreen> {
   /// erano due bottoni senza alcun effetto.
   final _zoom = TransformationController();
 
+  /// La planimetria e' disegnata su una tela di 800x700.
+  ///
+  /// Su un telefono da 390 punti se ne vedeva meno di meta', e per capire dove
+  /// fossero i tavoli bisognava trascinare a tentoni. Alla prima apertura la
+  /// tela si adatta allo spazio disponibile.
+  static const double telaLarghezza = 800, telaAltezza = 700;
+  static const double _zoomMinimo = 0.25;
+  bool _adattata = false;
+
+  /// Lo spazio in cui sta la tela, per il pulsante che la rimette a posto.
+  Size _spazioTela = Size.zero;
+
+  /// Il fattore che fa entrare tutta la sala nello spazio dato.
+  double _fattoreAdatto(Size spazio) {
+    if (spazio.width <= 0 || spazio.height <= 0) return 1;
+    final f = math.min(spazio.width / telaLarghezza, spazio.height / telaAltezza);
+    // Non si ingrandisce oltre il naturale: su un monitor largo i tavoli
+    // diventerebbero enormi senza dire niente di piu'.
+    return f.clamp(_zoomMinimo, 1.0);
+  }
+
+  void _adatta(Size spazio) {
+    final f = _fattoreAdatto(spazio);
+    // Centrata: con la sala piu' stretta dello schermo, incollarla a sinistra
+    // sembra un errore di disegno.
+    final dx = (spazio.width - telaLarghezza * f) / 2;
+    final dy = (spazio.height - telaAltezza * f) / 2;
+    setState(() {
+      _zoom.value = Matrix4.identity()
+        ..translate(dx > 0 ? dx : 0.0, dy > 0 ? dy : 0.0)
+        ..scale(f);
+    });
+  }
+
   @override
   void dispose() {
     _zoom.dispose();
@@ -56,7 +92,7 @@ class _FloorPlanScreenState extends State<FloorPlanScreen> {
 
   void _ingrandisci(double fattore) {
     final attuale = _zoom.value.getMaxScaleOnAxis();
-    final nuovo = (attuale * fattore).clamp(0.5, 3.0);
+    final nuovo = (attuale * fattore).clamp(_zoomMinimo, 3.0);
     if ((nuovo - attuale).abs() < 0.001) return;
     setState(() => _zoom.value = Matrix4.identity()..scale(nuovo));
   }
@@ -406,10 +442,28 @@ class _FloorPlanScreenState extends State<FloorPlanScreen> {
                 Expanded(
                   child: Stack(
                     children: [
-                      InteractiveViewer(
+                      LayoutBuilder(builder: (context, vincoli) {
+                        // Una volta sola, e solo quando i tavoli ci sono:
+                        // rifarlo a ogni ridisegno annullerebbe lo zoom
+                        // scelto a mano.
+                        _spazioTela = Size(vincoli.maxWidth, vincoli.maxHeight);
+                        if (!_adattata && _tables.isNotEmpty) {
+                          _adattata = true;
+                          WidgetsBinding.instance.addPostFrameCallback((_) {
+                            if (mounted) {
+                              _adatta(Size(vincoli.maxWidth, vincoli.maxHeight));
+                            }
+                          });
+                        }
+                        return InteractiveViewer(
                         transformationController: _zoom,
-                        minScale: 0.5,
+                        minScale: _zoomMinimo,
                         maxScale: 3.0,
+                        // Senza questo la tela riceve i vincoli della finestra
+                        // e su un telefono si stringe a 390 punti: i tavoli
+                        // oltre quella misura finivano tagliati fuori, e non
+                        // c'era modo di raggiungerli trascinando.
+                        constrained: _tables.isEmpty,
                         child: _tables.isEmpty
                             ? Center(
                                 child: Column(
@@ -427,7 +481,8 @@ class _FloorPlanScreenState extends State<FloorPlanScreen> {
                                 ),
                               )
                             : _buildFloorGrid(),
-                      ),
+                        );
+                      }),
                       // Zoom controls
                       Positioned(
                         right: 16,
@@ -437,6 +492,12 @@ class _FloorPlanScreenState extends State<FloorPlanScreen> {
                             _ZoomButton(icon: Icons.add, onTap: () => _ingrandisci(1.25)),
                             const SizedBox(height: 4),
                             _ZoomButton(icon: Icons.remove, onTap: () => _ingrandisci(0.8)),
+                            const SizedBox(height: 4),
+                            // Dopo aver trascinato non si ritrova piu' la
+                            // sala: questo la rimette dov'era.
+                            _ZoomButton(
+                                icon: Icons.fit_screen_outlined,
+                                onTap: () => _adatta(_spazioTela)),
                           ],
                         ),
                       ),
