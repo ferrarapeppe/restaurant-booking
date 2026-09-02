@@ -46,7 +46,8 @@ final prenotazioniIntervalloProvider = FutureProvider.autoDispose
       .select('id, date, time_start, party_size, status, source, notes, '
           'internal_notes, table_id, guest_id, '
           'guests(id, first_name, surname, name, phone, email), '
-          'tables!bookings_table_id_fkey(id, name, capacity, area_id, areas(name))')
+          'tables!bookings_table_id_fkey(id, name, capacity, area_id, areas(name)), '
+          'booking_tables(tables(name))')
       .eq('restaurant_id', _idRistorante)
       .gte('date', periodo.$1)
       .lte('date', periodo.$2)
@@ -558,13 +559,13 @@ class _VistaSettimana extends ConsumerWidget {
           Text('${b['party_size'] ?? 0}',
               style: TextStyle(
                   color: tinta, fontSize: 12, fontWeight: FontWeight.w600)),
-          if ((b['tables'] as Map?)?['name'] != null) ...[
+          if (tavoliDi(b).isNotEmpty) ...[
             const SizedBox(width: 6),
             Icon(Icons.table_restaurant_outlined,
                 size: 12, color: AppColors.textSecondary),
             const SizedBox(width: 2),
             Flexible(
-              child: Text('${(b['tables'] as Map)['name']}',
+              child: Text(tavoliDi(b),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
@@ -645,6 +646,23 @@ Future<void> apriDettaglio(
   );
 }
 
+/// I tavoli di una prenotazione, in ordine: "10+11+12".
+///
+/// Prima si leggeva il solo `tables`, cioe' il primo tavolo, e una tavolata
+/// su tre tavoli ne mostrava uno.
+String tavoliDi(Map b) {
+  final nomi = <String>[
+    for (final r in (b['booking_tables'] as List? ?? const []))
+      ((r as Map)['tables'] as Map?)?['name']?.toString() ?? '',
+  ].where((n) => n.isNotEmpty).toList()
+    ..sort((x, y) => (int.tryParse(x) ?? 9999).compareTo(int.tryParse(y) ?? 9999));
+  if (nomi.isEmpty) {
+    final uno = (b['tables'] as Map?)?['name']?.toString() ?? '';
+    if (uno.isNotEmpty) nomi.add(uno);
+  }
+  return nomi.join('+');
+}
+
 /// "20:00:00" -> "20:00". Gli orari sono le righe della griglia, quindi
 /// devono coincidere esattamente fra prenotazioni diverse.
 String oraBreve(Map b) {
@@ -657,7 +675,10 @@ bool _stessoGiorno(DateTime a, DateTime b) =>
 
 /// Le prenotazioni annullate non si mostrano nel calendario.
 bool statoSpento(dynamic stato) =>
-    stato == 'canceled' || stato == 'rejected' || stato == 'no_show';
+    stato == 'canceled' ||
+    stato == 'canceled_by_venue' ||
+    stato == 'rejected' ||
+    stato == 'no_show';
 
 String nomeBreve(Map? guests) {
   if (guests == null) return 'senza scheda';
@@ -829,7 +850,7 @@ class _VistaGiorno extends ConsumerWidget {
 
   Widget _riga(BuildContext context, WidgetRef ref, Map<String, dynamic> b) {
     final (tinta, sfondo) = coloriStato(b['status']);
-    final tavolo = (b['tables'] as Map?)?['name'];
+    final tavolo = tavoliDi(b);
     final note = (b['notes'] ?? '').toString().trim();
 
     return InkWell(
@@ -860,7 +881,7 @@ class _VistaGiorno extends ConsumerWidget {
             Text('${b['party_size'] ?? 0}',
                 style: TextStyle(
                     color: tinta, fontSize: 14, fontWeight: FontWeight.bold)),
-            if (tavolo != null) ...[
+            if (tavolo.isNotEmpty) ...[
               const SizedBox(width: 12),
               const Icon(Icons.table_restaurant_outlined,
                   size: 15, color: AppColors.textSecondary),

@@ -337,8 +337,9 @@ class _ReportsScreenState extends State<ReportsScreen> {
         'pending' => 'In attesa',
         'seated' => 'Arrivate',
         'completed' => 'Concluse',
-        'canceled' => 'Annullate',
+        'canceled' => 'Annullate dal cliente',
         'rejected' => 'Rifiutate',
+        'canceled_by_venue' => 'Cancellate dal locale',
         'no_show' => 'Non presentati',
         _ => 'Altro',
       };

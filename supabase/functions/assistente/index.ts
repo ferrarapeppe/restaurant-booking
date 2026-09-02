@@ -185,7 +185,8 @@ function nomeOspite(g: Record<string, unknown> | null): string {
 
 const STATI: Record<string, string> = {
   approved: 'accettata', pending: 'in attesa', seated: 'arrivata',
-  completed: 'conclusa', canceled: 'annullata', rejected: 'rifiutata',
+  completed: 'conclusa', canceled: 'annullata dal cliente',
+  canceled_by_venue: 'cancellata dal locale', rejected: 'rifiutata',
   no_show: 'non presentato',
 };
 
@@ -350,7 +351,8 @@ async function esegui(
         ? `Attenzione: il tavolo ${t.name} ha ${t.capacity} posti e loro sono ${b.party_size}.`
         : 'Operazione interna: al cliente non arriva nessuna mail.';
     } else if (tipo === 'annulla') {
-      if (b.status === 'canceled' || b.status === 'rejected') {
+      if (b.status === 'canceled' || b.status === 'rejected' ||
+          b.status === 'canceled_by_venue') {
         return { errore: `La prenotazione di ${chi} è già annullata.` };
       }
       proposta.titolo = 'Annullare la prenotazione';

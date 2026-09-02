@@ -1096,7 +1096,8 @@ class _TableDetailSheetState extends State<_TableDetailSheet>
       case 'approved': return '👍 Accettato';
       case 'seated': return '🍽️ Al tavolo';
       case 'pending': return '⏳ In attesa';
-      case 'canceled': return '❌ Cancellato';
+      case 'canceled': return '❌ Annullata dal cliente';
+      case 'canceled_by_venue': return '❌ Cancellata dal locale';
       case 'no_show': return '🚫 No show';
       default: return _editStatus;
     }
@@ -1302,7 +1303,8 @@ class _TableDetailSheetState extends State<_TableDetailSheet>
                             DropdownMenuItem(value: 'approved', child: Text('👍 Accettato', style: TextStyle(color: AppColors.textSecondary))),
                             DropdownMenuItem(value: 'seated', child: Text('🍽️ Al tavolo', style: TextStyle(color: AppColors.textSecondary))),
                             DropdownMenuItem(value: 'pending', child: Text('⏳ In attesa', style: TextStyle(color: AppColors.textSecondary))),
-                            DropdownMenuItem(value: 'canceled', child: Text('❌ Cancellato', style: TextStyle(color: AppColors.textSecondary))),
+                            DropdownMenuItem(value: 'canceled', child: Text('❌ Annullata dal cliente', style: TextStyle(color: AppColors.textSecondary))),
+                            DropdownMenuItem(value: 'canceled_by_venue', child: Text('❌ Cancellata dal locale', style: TextStyle(color: AppColors.textSecondary))),
                             DropdownMenuItem(value: 'no_show', child: Text('🚫 No show', style: TextStyle(color: AppColors.textSecondary))),
                           ],
                           onChanged: (v) => setState(() => _editStatus = v!),

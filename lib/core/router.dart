@@ -58,7 +58,10 @@ final router = GoRouter(
           // La chiave lega la schermata al periodo: senza, tornando dal
           // pannello con un periodo diverso go_router riuserebbe la stessa
           // schermata e i dati resterebbero quelli di prima.
-          key: ValueKey('bookings-${periodo ?? dateStr ?? filter ?? ''}'),
+          // Data e filtro insieme: dalle pastiglie di stasera cambia solo il
+          // filtro, e con la sola data la schermata sarebbe stata riusata
+          // com'era.
+          key: ValueKey('bookings-${periodo ?? ''}-${dateStr ?? ''}-${filter ?? ''}'),
           initialDate: date,
           initialFilter: filter,
           initialPeriodo: periodo,

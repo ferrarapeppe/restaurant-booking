@@ -48,7 +48,9 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
     {'value': 'approved', 'label': 'Accettato', 'icon': Icons.thumb_up_outlined},
     {'value': 'pending', 'label': 'In attesa di conferma', 'icon': Icons.help_outline},
     {'value': 'seated', 'label': 'Accomodato', 'icon': Icons.chair_outlined},
-    {'value': 'canceled', 'label': 'Annullato', 'icon': Icons.close},
+    {'value': 'canceled', 'label': 'Annullata dal cliente', 'icon': Icons.close},
+    {'value': 'canceled_by_venue', 'label': 'Cancellata dal locale', 'icon': Icons.event_busy_outlined},
+    {'value': 'rejected', 'label': 'Rifiutata', 'icon': Icons.thumb_down_outlined},
     {'value': 'no_show', 'label': 'No-show', 'icon': Icons.block_outlined},
   ];
 
@@ -75,6 +77,12 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
           widget.initialFilter == 'da_approvare') {
         _filtroSpeciale = widget.initialFilter;
         _statusFilter = 'tutti';
+      }
+      // I tagli della giornata dal pannello: restano sulla data mostrata.
+      if (widget.initialFilter == 'con_note' ||
+          widget.initialFilter == 'abituali' ||
+          widget.initialFilter == 'prima_volta') {
+        _filtroSpeciale = widget.initialFilter;
       }
       _periodo = widget.initialPeriodo;
       _loadBookings();
@@ -118,11 +126,34 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
   /// Stati che contano come prenotazione viva.
   static const _statiAttivi = {'approved', 'pending', 'seated', 'completed'};
 
+  /// Stati che tolgono la prenotazione dalla sala: si mostrano in grigio.
+  static const _statiSpenti = {
+    'canceled', 'canceled_by_venue', 'no_show', 'rejected'
+  };
+
   /// Le righe del periodo dopo il solo filtro sul turno: la base su cui si
   /// contano gli stati, perche' i numeri devono seguire il turno scelto.
-  List<Map<String, dynamic>> get _delTurno => _turnoFiltro == 'tutti'
-      ? _bookingsWithDetails
-      : _bookingsWithDetails.where((b) => _turnoDi(b) == _turnoFiltro).toList();
+  List<Map<String, dynamic>> get _delTurno {
+    var righe = _turnoFiltro == 'tutti'
+        ? _bookingsWithDetails
+        : _bookingsWithDetails.where((b) => _turnoDi(b) == _turnoFiltro).toList();
+    // Tagli che il database non sa fare (le note stanno su piu' campi, le
+    // visite sul cliente): si filtrano qui, sulle righe gia' caricate.
+    if (_filtroSpeciale == 'con_note') {
+      righe = righe.where(_haNote).toList();
+    } else if (_filtroSpeciale == 'abituali') {
+      righe = righe.where((b) => _visiteDi(b) > 1).toList();
+    } else if (_filtroSpeciale == 'prima_volta') {
+      righe = righe.where((b) => _visiteDi(b) <= 1).toList();
+    }
+    return righe;
+  }
+
+  static int _visiteDi(Map<String, dynamic> b) =>
+      ((b['guests'] as Map?)?['visits_count'] as int?) ?? 0;
+
+  static bool _haNote(Map<String, dynamic> b) =>
+      (b['notes'] ?? '').toString().trim().isNotEmpty;
 
   bool _passaStato(Map<String, dynamic> b) {
     final s = (b['status'] ?? '').toString();
@@ -196,6 +227,9 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
         'senza_tavolo' => 'Senza tavolo assegnato',
         'da_approvare' => 'Da approvare',
         'da_assegnare' => 'Arrivate dal sito',
+        'con_note' => 'Con note',
+        'abituali' => 'Clienti già stati qui',
+        'prima_volta' => 'Alla prima volta',
         _ => '',
       };
 
@@ -230,7 +264,9 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
       debugPrint('BOOKINGS LOAD date=$dateStr status=$_statusFilter periodo=$_periodo');
       var query = _supabase
           .from('bookings')
-          .select('*, guests(first_name, surname, name, phone, email, tags), tables!bookings_table_id_fkey(name, capacity, area_id, areas(name))')
+          .select('*, guests(first_name, surname, name, phone, email, tags, visits_count), '
+              'tables!bookings_table_id_fkey(name, capacity, area_id, areas(name)), '
+              'booking_tables(tables(name))')
           .eq('restaurant_id', _restaurantId);
       final estremi = _estremiPeriodo;
       if (_filtroSpeciale == 'da_assegnare') {
@@ -592,7 +628,9 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
               final voci = <(String, String)>[
                 ('attivo', 'Attive'),
                 if ((c['pending'] ?? 0) > 0) ('pending', 'In attesa'),
-                if ((c['canceled'] ?? 0) > 0) ('canceled', 'Annullate'),
+                if ((c['canceled'] ?? 0) > 0) ('canceled', 'Annullate dal cliente'),
+                if ((c['canceled_by_venue'] ?? 0) > 0)
+                  ('canceled_by_venue', 'Cancellate da noi'),
                 if ((c['no_show'] ?? 0) > 0) ('no_show', 'No-show'),
                 if ((c['rejected'] ?? 0) > 0) ('rejected', 'Rifiutate'),
                 if ((c['tutti'] ?? 0) != (c['attivo'] ?? 0)) ('tutti', 'Tutte'),
@@ -603,7 +641,7 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
                     etichetta: v.$2,
                     numero: c[v.$1] ?? 0,
                     scelta: _statusFilter == v.$1,
-                    spenta: v.$1 == 'canceled' || v.$1 == 'no_show' || v.$1 == 'rejected',
+                    spenta: _statiSpenti.contains(v.$1),
                     // Le righe sono gia' in memoria: cambiare stato non
                     // richiede di tornare al database.
                     onTap: () => setState(() => _statusFilter = v.$1),
@@ -702,6 +740,13 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
                             builder: (_) => RejectionScreen(
                               booking: b,
                               onRejected: _loadBookings,
+                            ),
+                          )),
+                          onCancella: () => Navigator.push(context, MaterialPageRoute(
+                            builder: (_) => RejectionScreen(
+                              booking: b,
+                              onRejected: _loadBookings,
+                              cancellazione: true,
                             ),
                           )),
                         );
@@ -808,7 +853,8 @@ const _kStatusChoices = [
   ('seated',    'Accomodato',         Icons.chair_outlined),
   ('left',      'Se ne è andato',     Icons.done_all),
   ('no_show',   'No-show',            Icons.block_outlined),
-  ('canceled',  'Annullato',          Icons.close),
+  ('canceled',  'Annullata dal cliente', Icons.close),
+  ('canceled_by_venue', 'Cancella (con email)', Icons.event_busy_outlined),
   ('rejected',  'Rifiuta (con email)',Icons.thumb_down_outlined),
 ];
 
@@ -818,6 +864,8 @@ Color _statusDotColor(String status) {
     case 'seated':   return AppColors.statoConfermato;
     case 'left':     return Colors.grey;
     case 'canceled':
+    case 'canceled_by_venue':
+    case 'rejected':
     case 'no_show':  return AppColors.accent;
     case 'pending':  return AppColors.statoAttesa;
     default:         return AppColors.textMuted;
@@ -832,6 +880,10 @@ class _BookingRow extends StatelessWidget {
   final Future<void> Function(String)? onStatusChange;
   final VoidCallback? onReject;
 
+  /// Cancellare una prenotazione gia' confermata: apre la stessa schermata
+  /// del rifiuto, ma con l'altro testo e l'altro stato.
+  final VoidCallback? onCancella;
+
   final bool mostraData;
 
   /// Quando guardiamo gli arrivi serve sapere quando la richiesta e' entrata,
@@ -845,6 +897,7 @@ class _BookingRow extends StatelessWidget {
     required this.onTap,
     this.onStatusChange,
     this.onReject,
+    this.onCancella,
     this.mostraData = false,
     this.mostraArrivo = false,
   });
@@ -858,7 +911,17 @@ class _BookingRow extends StatelessWidget {
     final partySize = booking['party_size'] as int? ?? 0;
     final status = booking['status'] as String? ?? '';
     final table = booking['tables'] as Map<String, dynamic>?;
-    final tableName = table?['name']?.toString() ?? '';
+    // Tutti i tavoli, non solo il primo: una prenotazione da sei nel dehors
+    // ne occupa tre, e mostrarne uno faceva sembrare gli altri liberi.
+    final nomiTavoli = <String>[
+      for (final r in (booking['booking_tables'] as List? ?? const []))
+        ((r as Map)['tables'] as Map?)?['name']?.toString() ?? '',
+    ].where((n) => n.isNotEmpty).toList()
+      ..sort((a, b) => (int.tryParse(a) ?? 9999).compareTo(int.tryParse(b) ?? 9999));
+    if (nomiTavoli.isEmpty && (table?['name'] ?? '').toString().isNotEmpty) {
+      nomiTavoli.add(table!['name'].toString());
+    }
+    final tableName = nomiTavoli.join('+');
     final areaName =
         (table?['areas'] as Map<String, dynamic>?)?['name']?.toString() ?? '';
     final isPending = status == 'pending';
@@ -910,6 +973,8 @@ class _BookingRow extends StatelessWidget {
               onSelected: (value) {
                 if (value == 'rejected') {
                   onReject?.call();
+                } else if (value == 'canceled_by_venue') {
+                  onCancella?.call();
                 } else {
                   onStatusChange?.call(value);
                 }
@@ -917,7 +982,7 @@ class _BookingRow extends StatelessWidget {
               itemBuilder: (_) => _kStatusChoices.map((choice) {
                 final isCurrent = choice.$1 == status;
                 return PopupMenuItem<String>(
-                  value: choice.$1 == 'rejected' ? 'rejected' : choice.$1,
+                  value: choice.$1,
                   child: Container(
                     color: isCurrent
                         ? AppColors.accent.withValues(alpha: 0.15)
@@ -1065,6 +1130,28 @@ class _BookingRow extends StatelessWidget {
                       ]),
                       // Quando e' entrata la richiesta: guardando l'elenco per
                       // ordine di arrivo e' il dato che conta.
+                      // La nota del cliente, in riga: cercandola dal pannello
+                      // si finiva nell'elenco senza vederla da nessuna parte.
+                      if ((booking['notes'] ?? '').toString().trim().isNotEmpty) ...[
+                        const SizedBox(height: 3),
+                        Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                          const Icon(Icons.sticky_note_2_outlined,
+                              size: 13, color: AppColors.accentDark),
+                          const SizedBox(width: 4),
+                          Expanded(
+                            child: Text(
+                              booking['notes'].toString().trim(),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                  color: AppColors.accentDark,
+                                  fontSize: 11,
+                                  height: 1.3,
+                                  fontWeight: FontWeight.w600),
+                            ),
+                          ),
+                        ]),
+                      ],
                       if (mostraArrivo && arrivata != null) ...[
                         const SizedBox(height: 2),
                         Text(
@@ -1120,19 +1207,34 @@ class _BookingRow extends StatelessWidget {
                                       letterSpacing: 0.3,
                                       fontWeight: FontWeight.w700)),
                             const SizedBox(height: 3),
-                            if (tableName.isNotEmpty)
+                            if (nomiTavoli.length == 1)
                               Container(
                                 width: 32, height: 32,
                                 decoration: const BoxDecoration(
                                     shape: BoxShape.circle,
                                     color: AppColors.textPrimary),
                                 child: Center(
-                                  child: Text(tableName,
+                                  child: Text(nomiTavoli.first,
                                       style: const TextStyle(
                                           color: Colors.white,
                                           fontSize: 13,
                                           fontWeight: FontWeight.bold)),
                                 ),
+                              )
+                            else if (nomiTavoli.length > 1)
+                              // Piu' tavoli: una pastiglia sola. Tre cerchi
+                              // non entrerebbero nella colonna.
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 8, vertical: 5),
+                                decoration: BoxDecoration(
+                                    color: AppColors.textPrimary,
+                                    borderRadius: BorderRadius.circular(14)),
+                                child: Text(tableName,
+                                    style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.bold)),
                               )
                             else
                               // Area richiesta, tavolo ancora da assegnare
@@ -1740,7 +1842,7 @@ class _BookingDetailSheetState extends State<BookingDetailSheet>
                 Expanded(
                   child: Text(
                     'Stato: ${_etichettaStato(_editStatus)} — tocca ✓ per salvare.'
-                    '${_editStatus == 'canceled' || _editStatus == 'no_show' ? ' Al cliente non parte nessun avviso.' : ''}',
+                    '${const {'canceled', 'no_show', 'canceled_by_venue', 'rejected'}.contains(_editStatus) ? ' Al cliente non parte nessun avviso.' : ''}',
                     style: const TextStyle(
                         color: AppColors.goldDark, fontSize: 12, height: 1.35),
                   ),
@@ -1761,6 +1863,16 @@ class _BookingDetailSheetState extends State<BookingDetailSheet>
                     builder: (_) => RejectionScreen(
                       booking: widget.booking,
                       onRejected: widget.onSaved,
+                    ),
+                  ),
+                ),
+                onCancella: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => RejectionScreen(
+                      booking: widget.booking,
+                      onRejected: widget.onSaved,
+                      cancellazione: true,
                     ),
                   ),
                 ),
@@ -1827,7 +1939,9 @@ const _statiPrenotazione = <(String, String, IconData)>[
   ('approved', 'Accettato', Icons.thumb_up_outlined),
   ('seated', 'Al tavolo', Icons.restaurant_outlined),
   ('pending', 'In attesa', Icons.help_outline),
-  ('canceled', 'Annullato', Icons.close),
+  ('canceled', 'Annullata dal cliente', Icons.close),
+  ('canceled_by_venue', 'Cancellata dal locale', Icons.event_busy_outlined),
+  ('rejected', 'Rifiutata', Icons.thumb_down_outlined),
   ('no_show', 'No-show', Icons.block_outlined),
 ];
 
@@ -1855,13 +1969,18 @@ class _BottoneStato extends StatelessWidget {
   /// quello che promette il nome.
   final VoidCallback onRifiuta;
 
+  /// Stessa cosa per la cancellazione di una prenotazione gia' accettata.
+  final VoidCallback onCancella;
+
   static const _vociRifiuta = '__rifiuta';
+  static const _vociCancella = '__cancella';
 
   const _BottoneStato({
     required this.stato,
     required this.cambiato,
     required this.onScelto,
     required this.onRifiuta,
+    required this.onCancella,
   });
 
   @override
@@ -1870,7 +1989,11 @@ class _BottoneStato extends StatelessWidget {
       tooltip: 'Stato della prenotazione',
       color: AppColors.surface,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      onSelected: (v) => v == _vociRifiuta ? onRifiuta() : onScelto(v),
+      onSelected: (v) => switch (v) {
+        _vociRifiuta => onRifiuta(),
+        _vociCancella => onCancella(),
+        _ => onScelto(v),
+      },
       itemBuilder: (_) => [
         for (final s in _statiPrenotazione)
           PopupMenuItem<String>(
@@ -1899,6 +2022,17 @@ class _BottoneStato extends StatelessWidget {
             SizedBox(width: 10),
             Expanded(
               child: Text('Rifiuta e avvisa il cliente',
+                  style: TextStyle(color: AppColors.accent)),
+            ),
+          ]),
+        ),
+        const PopupMenuItem<String>(
+          value: _vociCancella,
+          child: Row(children: [
+            Icon(Icons.event_busy_outlined, size: 18, color: AppColors.accent),
+            SizedBox(width: 10),
+            Expanded(
+              child: Text('Cancella e avvisa il cliente',
                   style: TextStyle(color: AppColors.accent)),
             ),
           ]),
@@ -2077,25 +2211,49 @@ Future<void> sendBookingAcceptedEmail(Map<String, dynamic> booking) async {
 class RejectionScreen extends StatefulWidget {
   final Map<String, dynamic> booking;
   final VoidCallback onRejected;
-  const RejectionScreen({super.key, required this.booking, required this.onRejected});
+
+  /// `false` rifiuta una richiesta, `true` cancella una prenotazione gia'
+  /// confermata: due gesti diversi, con stato ed email diversi.
+  final bool cancellazione;
+
+  const RejectionScreen({
+    super.key,
+    required this.booking,
+    required this.onRejected,
+    this.cancellazione = false,
+  });
   @override
   State<RejectionScreen> createState() => _RejectionScreenState();
 }
 
 class _RejectionScreenState extends State<RejectionScreen> {
-  static const _motivi = [
+  static const _motiviRifiuto = [
     ('Al completo', 'Siamo al completo. Possiamo proporti un giorno o un orario diverso?'),
     ('Chiuso', 'Quel giorno saremo chiusi. Possiamo proporti un giorno diverso?'),
     ('Altro', 'Purtroppo non possiamo accettare la tua prenotazione perché'),
   ];
 
-  String _selectedMotivo = 'Al completo';
+  /// Cancellare una prenotazione confermata ha motivi suoi: la richiesta era
+  /// stata accolta, quindi e' successo qualcosa dopo.
+  static const _motiviCancellazione = [
+    ('Chiusura straordinaria', 'Per una chiusura straordinaria non potremo accoglierti quel giorno. Ci dispiace molto.'),
+    ('Problema in sala', 'Per un problema in sala non possiamo mantenere la tua prenotazione. Ci dispiace molto.'),
+    ('Doppia prenotazione', 'Per un disguido il tavolo risulta prenotato due volte. Ci dispiace molto.'),
+    ('Su richiesta del cliente', 'Come da tua richiesta abbiamo annullato la prenotazione.'),
+    ('Altro', 'Non possiamo mantenere la tua prenotazione perché'),
+  ];
+
+  List<(String, String)> get _motivi =>
+      widget.cancellazione ? _motiviCancellazione : _motiviRifiuto;
+
+  late String _selectedMotivo;
   late TextEditingController _msgCtrl;
   bool _sending = false;
 
   @override
   void initState() {
     super.initState();
+    _selectedMotivo = _motivi[0].$1;
     _msgCtrl = TextEditingController(text: _motivi[0].$2);
   }
 
@@ -2115,7 +2273,12 @@ class _RejectionScreenState extends State<RejectionScreen> {
     setState(() => _sending = true);
     try {
       final supabase = Supabase.instance.client;
-      await supabase.from('bookings').update({'status': 'canceled'}).eq('id', widget.booking['id']);
+      // Lo stato segue il gesto. Prima scriveva sempre `canceled`, cioe' il
+      // rifiuto finiva insieme alle disdette del cliente e i due casi non si
+      // distinguevano piu'.
+      await supabase.from('bookings').update({
+        'status': widget.cancellazione ? 'canceled_by_venue' : 'rejected',
+      }).eq('id', widget.booking['id']);
       final g = widget.booking['guests'];
       final email = g?['email'] as String? ?? '';
       if (email.isNotEmpty) {
@@ -2126,6 +2289,7 @@ class _RejectionScreenState extends State<RejectionScreen> {
             'cognome': g?['surname'] ?? '',
             'motivo': _selectedMotivo,
             'messaggio': _msgCtrl.text.trim(),
+            'tipo': widget.cancellazione ? 'cancellazione' : 'rifiuto',
             // Senza data e ora il cliente con piu' richieste non sa quale è stata rifiutata
             'date': widget.booking['date'] ?? '',
             'time': (widget.booking['time_start'] ?? '').toString(),
@@ -2151,8 +2315,11 @@ class _RejectionScreenState extends State<RejectionScreen> {
         child: Padding(
           padding: const EdgeInsets.all(24),
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            const Text('Perché rifiuti la prenotazione?',
-                style: TextStyle(color: AppColors.textPrimary, fontSize: 22, fontWeight: FontWeight.bold)),
+            Text(
+                widget.cancellazione
+                    ? 'Perché cancelli la prenotazione?'
+                    : 'Perché rifiuti la prenotazione?',
+                style: const TextStyle(color: AppColors.textPrimary, fontSize: 22, fontWeight: FontWeight.bold)),
             const SizedBox(height: 12),
             const Text('Invia un messaggio all\'ospite o utilizza uno dei nostri messaggi standard in base al motivo.',
                 style: TextStyle(color: AppColors.textSecondary, fontSize: 15)),
@@ -2209,8 +2376,13 @@ class _RejectionScreenState extends State<RejectionScreen> {
             Row(children: [
               ElevatedButton.icon(
                 onPressed: _sending ? null : _confirm,
-                icon: const Icon(Icons.thumb_down, size: 18),
-                label: const Text('Rifiuta', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                icon: Icon(
+                    widget.cancellazione
+                        ? Icons.event_busy_outlined
+                        : Icons.thumb_down,
+                    size: 18),
+                label: Text(widget.cancellazione ? 'Cancella' : 'Rifiuta',
+                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                 style: ElevatedButton.styleFrom(
                   // Azione distruttiva: era verde, colore che qui significa "accetta"
                   backgroundColor: AppColors.accent,

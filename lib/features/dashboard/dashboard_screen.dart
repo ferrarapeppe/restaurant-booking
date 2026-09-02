@@ -433,6 +433,12 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                   ref.read(selectedDateProvider.notifier).state = today;
                   context.go('/reservations');
                 },
+                onFiltro: (filtro) {
+                  final oggi = DateTime.now();
+                  ref.read(selectedDateProvider.notifier).state = oggi;
+                  context.go('/bookings?date='
+                      '${DateFormat('yyyy-MM-dd').format(oggi)}&filter=$filtro');
+                },
               ),
               const SizedBox(height: 16),
               _SettimanaCard(
@@ -584,6 +590,11 @@ class _StaseraCard extends StatelessWidget {
   final bool loading;
   final VoidCallback onTap;
 
+  /// Aprire l'elenco di stasera gia' ristretto: 'con_note', 'abituali',
+  /// 'prima_volta'. Prima la pastiglia non era cliccabile e il tocco finiva
+  /// sulla scheda, che porta al programma di sala.
+  final void Function(String filtro) onFiltro;
+
   const _StaseraCard({
     required this.turni,
     required this.coperti,
@@ -593,6 +604,7 @@ class _StaseraCard extends StatelessWidget {
     required this.conNote,
     required this.loading,
     required this.onTap,
+    required this.onFiltro,
   });
 
   static const _ordine = <(String, String)>[
@@ -693,13 +705,13 @@ class _StaseraCard extends StatelessWidget {
             Wrap(spacing: 8, runSpacing: 8, children: [
               if (abituali > 0)
                 _pastiglia('$abituali già stati qui', AppColors.goldLight,
-                    AppColors.goldDark),
+                    AppColors.goldDark, () => onFiltro('abituali')),
               if (conNote > 0)
                 _pastiglia('$conNote con note', AppColors.accentLight,
-                    AppColors.accentDark),
+                    AppColors.accentDark, () => onFiltro('con_note')),
               if (primaVolta > 0)
                 _pastiglia('$primaVolta alla prima volta', AppColors.cardLight,
-                    AppColors.textSecondary),
+                    AppColors.textSecondary, () => onFiltro('prima_volta')),
             ]),
           ],
         ]),
@@ -733,13 +745,25 @@ class _StaseraCard extends StatelessWidget {
     );
   }
 
-  Widget _pastiglia(String testo, Color sfondo, Color tinta) => Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
-        decoration: BoxDecoration(
-            color: sfondo, borderRadius: BorderRadius.circular(999)),
-        child: Text(testo,
-            style: TextStyle(
-                color: tinta, fontSize: 12, fontWeight: FontWeight.w600)),
+  Widget _pastiglia(
+          String testo, Color sfondo, Color tinta, VoidCallback onTap) =>
+      InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(999),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+          decoration: BoxDecoration(
+              color: sfondo,
+              borderRadius: BorderRadius.circular(999),
+              border: Border.all(color: tinta.withValues(alpha: 0.35))),
+          child: Row(mainAxisSize: MainAxisSize.min, children: [
+            Text(testo,
+                style: TextStyle(
+                    color: tinta, fontSize: 12, fontWeight: FontWeight.w600)),
+            const SizedBox(width: 3),
+            Icon(Icons.chevron_right, size: 14, color: tinta),
+          ]),
+        ),
       );
 }
 

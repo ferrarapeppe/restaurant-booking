@@ -141,7 +141,7 @@ export async function tavoliOccupati(
     .eq('bookings.date', data)
     .lt('bookings.time_start', fine)
     .gt('bookings.time_end', inizio)
-    .not('bookings.status', 'in', '(canceled,no_show,rejected)');
+    .not('bookings.status', 'in', '(canceled,canceled_by_venue,no_show,rejected)');
   if (escludiPrenotazione) q = q.neq('bookings.id', escludiPrenotazione);
   const { data: righe, error } = await q;
   if (error) throw new Error(`occupazione non leggibile: ${error.message}`);
