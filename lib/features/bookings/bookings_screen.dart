@@ -663,10 +663,13 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
         // orizzontale sotto una larghezza minima, intestazione compresa.
         Expanded(
           child: LayoutBuilder(builder: (context, vincoli) {
-            const larghezzaMinima = 720.0;
-            final larghezza = vincoli.maxWidth < larghezzaMinima
-                ? larghezzaMinima
-                : vincoli.maxWidth;
+            // Sotto la larghezza comoda si passa alle colonne strette invece
+            // di scorrere per duecento punti in piu'.
+            final m = vincoli.maxWidth < MisureElenco.larga.minima
+                ? MisureElenco.stretta
+                : MisureElenco.larga;
+            final larghezza =
+                vincoli.maxWidth < m.minima ? m.minima : vincoli.maxWidth;
             return SingleChildScrollView(
               scrollDirection: Axis.horizontal,
               child: SizedBox(
@@ -676,17 +679,17 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
                   Container(
                     color: AppColors.surface,
                     padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 10),
-                    child: const Row(children: [
-                      _Intestazione(larghezza: 72, testo: 'Ora', sinistra: 8),
-                      _Intestazione(larghezza: 78, testo: 'Persone', centrata: true),
-                      _Intestazione(testo: 'Nome e Cognome', sinistra: 12),
-                      _Intestazione(larghezza: 160, testo: 'Turno', sinistra: 4),
-                      _Intestazione(larghezza: 86, testo: 'Tavolo', sinistra: 4),
-                      _Intestazione(larghezza: 70, testo: 'Stato', centrata: true),
+                    child: Row(children: [
+                      _Intestazione(larghezza: m.ora, testo: 'Ora', sinistra: 8),
+                      _Intestazione(larghezza: m.persone, testo: 'Persone', centrata: true),
+                      const _Intestazione(testo: 'Nome e Cognome', sinistra: 12),
+                      _Intestazione(larghezza: m.turno, testo: 'Turno', sinistra: 4),
+                      _Intestazione(larghezza: m.tavolo, testo: 'Tavolo', sinistra: 4),
+                      _Intestazione(larghezza: m.stato, testo: 'Stato', centrata: true),
                     ]),
                   ),
                   const Divider(height: 1, color: AppColors.divider),
-                  Expanded(child: _corpoTabella(context)),
+                  Expanded(child: _corpoTabella(context, m)),
                 ]),
               ),
             );
@@ -703,7 +706,7 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
     );
   }
 
-  Widget _corpoTabella(BuildContext context) {
+  Widget _corpoTabella(BuildContext context, MisureElenco m) {
     return _loading
               ? const Center(child: CircularProgressIndicator(color: AppColors.accent))
               : _visibili.isEmpty
@@ -720,6 +723,7 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
                       itemBuilder: (context, index) {
                         final b = _visibili[index];
                         return _BookingRow(
+                          misure: m,
                           // Senza chiave, aggiornando l'elenco Flutter puo'
                           // riusare la riga sbagliata per una prenotazione
                           // diversa.
@@ -883,6 +887,29 @@ Future<bool> confermaCancellazione(BuildContext context) async {
   return ok ?? false;
 }
 
+/// Le larghezze delle colonne fisse dell'elenco.
+///
+/// Su un telefono la tabella non ci sta comunque e scorre in orizzontale, ma
+/// a 720 punti la colonna dell'ora era gia' mezza fuori appena si scorreva.
+/// Stringendo le fisse — soprattutto il turno, che si prendeva 160 punti — si
+/// scende a 540 e il grosso della riga si vede senza spostare niente.
+class MisureElenco {
+  final double ora, persone, turno, tavolo, stato, minima;
+  const MisureElenco._({
+    required this.ora,
+    required this.persone,
+    required this.turno,
+    required this.tavolo,
+    required this.stato,
+    required this.minima,
+  });
+
+  static const larga = MisureElenco._(
+      ora: 72, persone: 78, turno: 160, tavolo: 86, stato: 70, minima: 720);
+  static const stretta = MisureElenco._(
+      ora: 62, persone: 62, turno: 104, tavolo: 68, stato: 58, minima: 540);
+}
+
 // ── Status menu items ─────────────────────────────────────────────────────────
 const _kStatusChoices = [
   ('pending',   'Richiesta',          Icons.help_outline),
@@ -916,6 +943,7 @@ class _BookingRow extends StatelessWidget {
   final VoidCallback onTap;
   final Future<void> Function(String)? onStatusChange;
   final VoidCallback? onReject;
+  final MisureElenco misure;
 
   final bool mostraData;
 
@@ -930,6 +958,7 @@ class _BookingRow extends StatelessWidget {
     required this.onTap,
     this.onStatusChange,
     this.onReject,
+    required this.misure,
     this.mostraData = false,
     this.mostraArrivo = false,
   });
@@ -972,7 +1001,7 @@ class _BookingRow extends StatelessWidget {
 
     // Colonna Stato — estratta fuori dal GestureDetector del dettaglio
     Widget statoColumn = SizedBox(
-      width: 70,
+      width: misure.stato,
       child: isPending
           ? Row(mainAxisAlignment: MainAxisAlignment.center, children: [
               GestureDetector(
@@ -1065,7 +1094,7 @@ class _BookingRow extends StatelessWidget {
             child: Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
               // Colonna ora — teal
               Container(
-                width: 72,
+                width: misure.ora,
                 color: AppColors.textPrimary,
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
                 child: Column(
@@ -1096,7 +1125,7 @@ class _BookingRow extends StatelessWidget {
               ),
               // Persone (P)
               SizedBox(
-                width: 78,
+                width: misure.persone,
                 child: Center(
                   child: Container(
                     width: 28, height: 28,
@@ -1202,7 +1231,7 @@ class _BookingRow extends StatelessWidget {
               ),
               // Turno scelto nel modulo, per esteso
               SizedBox(
-                width: 160,
+                width: misure.turno,
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
                   child: Align(
@@ -1222,7 +1251,7 @@ class _BookingRow extends StatelessWidget {
               ),
               // Tavolo
               SizedBox(
-                width: 86,
+                width: misure.tavolo,
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
                   child: (tableName.isEmpty && areaMostrata.isEmpty)

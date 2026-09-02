@@ -219,7 +219,13 @@ class _GuestCard extends StatelessWidget {
           border: Border.all(color: isVip ? AppColors.gold : AppColors.divider, width: isVip ? 1.5 : 1),
           boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 4, offset: const Offset(0, 2))],
         ),
-        child: Row(
+        // I tag su una riga tutta loro, sotto.
+        //
+        // Prima stavano nella colonna di destra, accanto al numero di visite:
+        // quella colonna cresceva coi tag, schiacciava nome e recapiti, e le
+        // pastiglie finivano addosso alla riga del telefono.
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Row(
           children: [
             // Avatar
             _GuestAvatar(name: guest.name, size: 48, isVip: isVip),
@@ -267,62 +273,46 @@ class _GuestCard extends StatelessWidget {
                 ],
               ),
             ),
-            // Visite + tag
+            // Visite
             Column(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 Text('${guest.visitsCount}', style: const TextStyle(color: AppColors.accent, fontWeight: FontWeight.bold, fontSize: 18)),
                 const Text('visite', style: TextStyle(color: AppColors.textMuted, fontSize: 11)),
-                if (guest.tags.isNotEmpty) ...[
-                  const SizedBox(height: 6),
-                  Wrap(
-                    spacing: 4,
-                    runSpacing: 4,
-                    alignment: WrapAlignment.end,
-                    children: [
-                      for (final tag in guest.tags.take(3))
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: tag == 'vip'
-                                ? AppColors.gold
-                                : tag == 'no_show'
-                                    ? AppColors.accentLight
-                                    : AppColors.accentLight,
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: Text(
-                            tag,
-                            style: TextStyle(
-                              color: tag == 'vip'
-                                  ? AppColors.textPrimary
-                                  : tag == 'no_show'
-                                      ? AppColors.accent
-                                      : AppColors.accent,
-                              fontSize: 10,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
-                      if (guest.tags.length > 3)
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: AppColors.cardLight,
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: Text(
-                            '+${guest.tags.length - 3}',
-                            style: const TextStyle(color: AppColors.textSecondary, fontSize: 10, fontWeight: FontWeight.w600),
-                          ),
-                        ),
-                    ],
-                  ),
-                ],
               ],
             ),
           ],
         ),
+        // Tutti, non i primi tre: il "+2" nascondeva proprio quelli appena
+        // messi, che sono gli ultimi in ordine alfabetico piu' spesso di no.
+        if (guest.tags.isNotEmpty) ...[
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 4,
+            runSpacing: 4,
+            children: [
+              for (final tag in guest.tags)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: tag == 'vip' ? AppColors.gold : AppColors.accentLight,
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Text(
+                    tag,
+                    style: TextStyle(
+                      color: tag == 'vip'
+                          ? AppColors.textPrimary
+                          : AppColors.accent,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ],
+        ]),
       ),
     );
   }
