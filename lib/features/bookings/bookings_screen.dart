@@ -1130,42 +1130,41 @@ class _BookingRow extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Row(children: [
-                        Flexible(
-                          child: Text(guestName,
-                              style: const TextStyle(
-                                  color: AppColors.textPrimary,
-                                  fontSize: 14,
-                                  letterSpacing: 0.2,
-                                  fontWeight: FontWeight.w700),
-                              overflow: TextOverflow.ellipsis),
-                        ),
-                        for (final e in etichette.take(3)) ...[
-                          const SizedBox(width: 6),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: AppColors.goldLight,
-                              borderRadius: BorderRadius.circular(4),
-                              border: Border.all(color: AppColors.gold.withValues(alpha: 0.45)),
+                      Text(guestName,
+                          style: const TextStyle(
+                              color: AppColors.textPrimary,
+                              fontSize: 14,
+                              letterSpacing: 0.2,
+                              fontWeight: FontWeight.w700),
+                          overflow: TextOverflow.ellipsis),
+                      // I tag vanno a capo sotto il nome, tutti.
+                      //
+                      // Prima stavano in fila accanto al nome dentro una
+                      // colonna di larghezza fissa: con un nome lungo il terzo
+                      // finiva fuori, e sul telefono — dove la tabella scorre
+                      // in orizzontale — usciva dallo schermo. Sembrava che il
+                      // tag appena messo non fosse stato salvato.
+                      if (etichette.isNotEmpty) ...[
+                        const SizedBox(height: 4),
+                        Wrap(spacing: 4, runSpacing: 4, children: [
+                          for (final e in etichette)
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: AppColors.goldLight,
+                                borderRadius: BorderRadius.circular(4),
+                                border: Border.all(
+                                    color: AppColors.gold.withValues(alpha: 0.45)),
+                              ),
+                              child: Text(e,
+                                  style: const TextStyle(
+                                      color: AppColors.goldDark,
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w700)),
                             ),
-                            child: Text(e,
-                                style: const TextStyle(
-                                    color: AppColors.goldDark,
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w700)),
-                          ),
-                        ],
-                        // Gli altri si contano, per non spingere via il nome
-                        if (etichette.length > 3) ...[
-                          const SizedBox(width: 6),
-                          Text('+${etichette.length - 3}',
-                              style: const TextStyle(
-                                  color: AppColors.textSecondary,
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w700)),
-                        ],
-                      ]),
+                        ]),
+                      ],
                       // Quando e' entrata la richiesta: guardando l'elenco per
                       // ordine di arrivo e' il dato che conta.
                       // La nota del cliente, in riga: cercandola dal pannello
@@ -1313,6 +1312,11 @@ class _BookingDetailSheetState extends State<BookingDetailSheet>
 
   /// I tag stanno sul cliente, non sulla prenotazione: quelli aggiunti qui
   /// finiscono nella sua scheda e si rivedono sulle prenotazioni successive.
+  /// Vero quando un campo della scheda ha il fuoco, cioe' quando la tastiera
+  /// e' davvero aperta. Non si puo' chiedere all'ingombro dichiarato: su
+  /// Safari resta indietro.
+  bool _scrivendo = false;
+
   late Set<String> _tags;
   late Set<String> _tagIniziali;
   final _tagCtrl = TextEditingController();
@@ -1673,12 +1677,23 @@ class _BookingDetailSheetState extends State<BookingDetailSheet>
     final dateLabel = DateFormat('EEE d MMM yyyy', 'it_IT').format(_editDate);
 
     return DraggableScrollableSheet(
-      initialChildSize: 0.9, minChildSize: 0.5, maxChildSize: 0.95, expand: false,
+      initialChildSize: 0.95, minChildSize: 0.5, maxChildSize: 0.97, expand: false,
       // Lo spazio della tastiera si toglie qui, una volta sola: cosi' salgono
       // insieme le note, la casella dei messaggi e la barra col salvataggio.
       // Correggerlo dentro i singoli pezzi lasciava il ✓ sotto i tasti.
-      builder: (_, sc) => Padding(
-        padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+      //
+      // Ma va tolto solo se la tastiera c'e' davvero. Safari su iPhone
+      // continua a dichiarare l'ingombro anche dopo averla chiusa, e la
+      // scheda restava con due dita di bianco sotto i pulsanti: la barra
+      // finiva a meta' schermo e il contenuto si leggeva in un buco stretto.
+      // Se nessun campo ha il fuoco, la tastiera non puo' esserci.
+      builder: (_, sc) => FocusScope(
+        onFocusChange: (dentro) {
+          if (mounted && dentro != _scrivendo) setState(() => _scrivendo = dentro);
+        },
+        child: Padding(
+        padding: EdgeInsets.only(
+            bottom: _scrivendo ? MediaQuery.of(context).viewInsets.bottom : 0),
         child: Column(children: [
         Container(margin: const EdgeInsets.symmetric(vertical: 8), width: 40, height: 4,
             decoration: BoxDecoration(color: AppColors.divider, borderRadius: BorderRadius.circular(2))),
@@ -1691,7 +1706,7 @@ class _BookingDetailSheetState extends State<BookingDetailSheet>
         ),
         Expanded(
           child: TabBarView(controller: _tabController, children: [
-            ListView(controller: sc, padding: const EdgeInsets.fromLTRB(16, 16, 16, 100), children: [
+            ListView(controller: sc, padding: const EdgeInsets.fromLTRB(16, 16, 16, 20), children: [
               _DetailRow(label: 'Data', child: Row(children: [
                 Expanded(child: Text(_cap(dateLabel), style: const TextStyle(color: AppColors.textPrimary, fontSize: 16))),
                 IconButton(icon: const Icon(Icons.chevron_left, color: AppColors.textSecondary, size: 20),
@@ -1967,7 +1982,7 @@ class _BookingDetailSheetState extends State<BookingDetailSheet>
                 style: const TextStyle(color: AppColors.textPrimary),
                 decoration: const InputDecoration(border: InputBorder.none, isDense: true),
               )),
-              const SizedBox(height: 20),
+              const SizedBox(height: 4),
             ]),
             // Prima: un segnaposto "Prenotazione creata" e un campo il cui
             // pulsante di invio non era collegato a nulla.
@@ -1976,7 +1991,7 @@ class _BookingDetailSheetState extends State<BookingDetailSheet>
         ),
         Container(
           color: AppColors.surface,
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+          padding: const EdgeInsets.fromLTRB(16, 6, 16, 10),
           child: Column(mainAxisSize: MainAxisSize.min, children: [
             if (widget.booking['status'] == 'pending') ...[
               Row(children: [
@@ -2113,6 +2128,7 @@ class _BookingDetailSheetState extends State<BookingDetailSheet>
           ]),
         ),
       ]),
+      ),
       ),
     );
   }
