@@ -171,7 +171,8 @@ class _FloorPlanScreenState extends State<FloorPlanScreen> {
       // Carica tutte le prenotazioni pending (con e senza tavolo)
       final pendingRes = await _supabase
           .from('bookings')
-          .select('*, guests(first_name, surname, name, phone, email), tables!bookings_table_id_fkey(name, capacity)')
+          .select('*, guests(first_name, surname, name, phone, email, tags), '
+              'tables!bookings_table_id_fkey(name, capacity)')
           .eq('restaurant_id', _restaurantId)
           .eq('date', dateStr)
           .eq('status', 'pending');
@@ -624,7 +625,7 @@ class _FloorPlanScreenState extends State<FloorPlanScreen> {
         final selMin = int.parse(selParts[0]) * 60 + int.parse(selParts[1]);
         final res = await _supabase
             .from('bookings')
-            .select('*, guests(first_name, surname, email, phone)')
+            .select('*, guests(first_name, surname, email, phone, tags)')
             .eq('restaurant_id', _restaurantId)
             .eq('date', dateStr)
             .eq('table_id', table['id'])

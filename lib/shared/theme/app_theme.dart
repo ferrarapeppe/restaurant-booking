@@ -57,6 +57,9 @@ class AppColors {
 
   // Sfondi tenui abbinati, per pastiglie e riquadri di stato
   static const statoAttesaSfondo = goldLight;
+  // Fondo della riga di chi e' seduto. Tenue apposta: sopra ci passa il testo
+  // normale, che sull'azzurro pieno non si leggerebbe.
+  static const statoAlTavoloSfondo = Color(0xFFE4EEF6);
   static const statoConfermatoSfondo = Color(0xFFEAF5EF);
   static const statoAnnullatoSfondo = accentLight;
 }

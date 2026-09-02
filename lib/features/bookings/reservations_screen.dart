@@ -148,7 +148,8 @@ class _ScheduleBodyState extends ConsumerState<_ScheduleBody> {
           // `phone` non era nell'elenco, e la scheda che si apre da qui e'
           // modificabile: il campo telefono nasceva vuoto perche' il dato non
           // era stato caricato, e salvando cancellava il numero del cliente.
-          .select('*, guests(first_name, surname, name, phone, email), tables!bookings_table_id_fkey(name, areas(name))')
+          .select('*, guests(first_name, surname, name, phone, email, tags), '
+              'tables!bookings_table_id_fkey(name, areas(name))')
           .eq('restaurant_id', _restaurantId)
           .eq('date', dateStr)
           .inFilter('status', ['approved', 'pending', 'seated', 'walkin'])
@@ -180,7 +181,9 @@ class _ScheduleBodyState extends ConsumerState<_ScheduleBody> {
   Color _statusColor(String status) {
     switch (status) {
       case 'approved': return AppColors.textPrimary;
-      case 'seated':   return AppColors.statoConfermato;
+      // Azzurro come nel calendario e nell'elenco: prima era verde, cioe'
+      // uguale a "accettata", e non si vedeva chi fosse gia' arrivato.
+      case 'seated':   return AppColors.statoAlTavolo;
       case 'pending':  return AppColors.statoAttesa;
       case 'walkin':   return AppColors.statoAlTavolo;
       default:         return AppColors.textMuted;

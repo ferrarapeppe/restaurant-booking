@@ -45,7 +45,7 @@ final prenotazioniIntervalloProvider = FutureProvider.autoDispose
       .from('bookings')
       .select('id, date, time_start, party_size, status, source, notes, '
           'internal_notes, table_id, guest_id, '
-          'guests(id, first_name, surname, name, phone, email), '
+          'guests(id, first_name, surname, name, phone, email, tags), '
           'tables!bookings_table_id_fkey(id, name, capacity, area_id, areas(name)), '
           'booking_tables(tables(name))')
       .eq('restaurant_id', _idRistorante)
@@ -586,7 +586,7 @@ class _VistaSettimana extends ConsumerWidget {
 /// nell'app: oro se aspetta risposta, verde se accettata, blu se al tavolo.
 (Color, Color) coloriStato(dynamic stato) => switch (stato) {
       'pending' => (AppColors.gold, AppColors.goldLight),
-      'seated' => (AppColors.statoAlTavolo, const Color(0xFFE9F1FA)),
+      'seated' => (AppColors.statoAlTavolo, AppColors.statoAlTavoloSfondo),
       _ => (AppColors.statoConfermato, AppColors.statoConfermatoSfondo),
     };
 

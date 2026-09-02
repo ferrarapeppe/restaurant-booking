@@ -1047,7 +1047,15 @@ class _BookingRow extends StatelessWidget {
             ),
     );
 
-    return IntrinsicHeight(
+    // Chi e' seduto si riconosce dalla riga intera, non da un pallino di
+    // dieci pixel in fondo: a servizio in corso e' la cosa che si cerca
+    // scorrendo l'elenco. Azzurro tenue, perche' sopra ci passa il testo
+    // normale.
+    return ColoredBox(
+      color: status == 'seated'
+          ? AppColors.statoAlTavoloSfondo
+          : Colors.transparent,
+      child: IntrinsicHeight(
       child: Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
         // Area tappabile per dettaglio (tutto tranne Stato)
         Expanded(
@@ -1282,6 +1290,7 @@ class _BookingRow extends StatelessWidget {
         ),
         statoColumn,
       ]),
+      ),
     );
   }
 }
@@ -1301,6 +1310,14 @@ class _BookingDetailSheetState extends State<BookingDetailSheet>
   late TabController _tabController;
   final _supabase = Supabase.instance.client;
   late TextEditingController _nomeCtrl, _cognomeCtrl, _phoneCtrl, _emailCtrl, _noteCtrl, _msgCtrl;
+
+  /// I tag stanno sul cliente, non sulla prenotazione: quelli aggiunti qui
+  /// finiscono nella sua scheda e si rivedono sulle prenotazioni successive.
+  late Set<String> _tags;
+  late Set<String> _tagIniziali;
+  final _tagCtrl = TextEditingController();
+
+  static const _tagNoti = ['vip', 'regular', 'no_show', 'allergie', 'compleanno'];
 
   /// I campi del cliente che la schermata chiamante ha davvero caricato.
   late Set<String> _campiCliente;
@@ -1344,6 +1361,11 @@ class _BookingDetailSheetState extends State<BookingDetailSheet>
     // che il Programma di sala non caricava — il campo nasceva vuoto e il
     // salvataggio scriveva la stringa vuota sopra il numero del cliente.
     _campiCliente = g is Map ? g.keys.map((k) => k.toString()).toSet() : <String>{};
+    _tags = {
+      for (final x in (g?['tags'] as List? ?? const []))
+        x.toString().trim().toLowerCase()
+    }..removeWhere((x) => x.isEmpty);
+    _tagIniziali = {..._tags};
     _nomeCtrl = TextEditingController(text: (g?['first_name'] ?? '').toString());
     _cognomeCtrl = TextEditingController(text: (g?['surname'] ?? '').toString().toUpperCase());
     _phoneCtrl = TextEditingController(text: (g?['phone'] ?? '').toString());
@@ -1355,6 +1377,7 @@ class _BookingDetailSheetState extends State<BookingDetailSheet>
   @override
   void dispose() {
     _tabController.dispose();
+    _tagCtrl.dispose();
     _nomeCtrl.dispose(); _cognomeCtrl.dispose(); _phoneCtrl.dispose();
     _emailCtrl.dispose(); _noteCtrl.dispose(); _msgCtrl.dispose();
     super.dispose();
@@ -1377,6 +1400,11 @@ class _BookingDetailSheetState extends State<BookingDetailSheet>
         aggiungi('surname', _cognomeCtrl.text.trim());
         aggiungi('phone', _phoneCtrl.text.trim());
         aggiungi('email', _emailCtrl.text.trim());
+        // I tag si scrivono solo se sono cambiati davvero: una schermata che
+        // non li avesse caricati manderebbe una lista vuota e li cancellerebbe.
+        if (!_setUguali(_tags, _tagIniziali)) {
+          datiCliente['tags'] = _tags.toList()..sort();
+        }
         if (datiCliente.isNotEmpty) {
           await _supabase.from('guests').update(datiCliente).eq('id', guestId);
         }
@@ -1413,6 +1441,8 @@ class _BookingDetailSheetState extends State<BookingDetailSheet>
           },
         });
       }
+      // Salvati: il "da salvare" accanto ai tag deve sparire.
+      _tagIniziali = {..._tags};
       widget.onSaved();
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Prenotazione salvata'), backgroundColor: AppColors.badgeGreen),
@@ -1424,6 +1454,19 @@ class _BookingDetailSheetState extends State<BookingDetailSheet>
     } finally {
       if (mounted) setState(() => _saving = false);
     }
+  }
+
+  static bool _setUguali(Set<String> a, Set<String> b) =>
+      a.length == b.length && a.containsAll(b);
+
+  void _aggiungiTag(String grezzo) {
+    final tag = grezzo.trim().toLowerCase();
+    if (tag.isEmpty || _tags.contains(tag)) {
+      _tagCtrl.clear();
+      return;
+    }
+    setState(() => _tags.add(tag));
+    _tagCtrl.clear();
   }
 
   /// L'elenco completo dei tavoli della prenotazione.
@@ -1759,6 +1802,84 @@ class _BookingDetailSheetState extends State<BookingDetailSheet>
               _EditableField(label: 'E-mail', controller: _emailCtrl, type: TextInputType.emailAddress),
               const SizedBox(height: 8),
               _EditableField(label: 'Cognome', controller: _cognomeCtrl),
+              const SizedBox(height: 16),
+              Row(children: [
+                const Icon(Icons.local_offer_outlined,
+                    size: 15, color: AppColors.textSecondary),
+                const SizedBox(width: 6),
+                const Text('Tag del cliente',
+                    style: TextStyle(
+                        color: AppColors.textPrimary,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700)),
+                const SizedBox(width: 8),
+                if (!_setUguali(_tags, _tagIniziali))
+                  const Text('da salvare',
+                      style: TextStyle(color: AppColors.goldDark, fontSize: 11)),
+              ]),
+              const SizedBox(height: 4),
+              const Text('Restano sulla scheda del cliente, non su questa prenotazione.',
+                  style: TextStyle(color: AppColors.textMuted, fontSize: 11)),
+              const SizedBox(height: 8),
+              Wrap(spacing: 6, runSpacing: 6, children: [
+                // Prima quelli gia' assegnati, che si possono togliere.
+                for (final tag in _tags.toList()..sort())
+                  InputChip(
+                    label: Text(tag),
+                    onDeleted: () => setState(() => _tags.remove(tag)),
+                    backgroundColor: AppColors.goldLight,
+                    side: BorderSide(color: AppColors.gold.withValues(alpha: 0.45)),
+                    labelStyle: const TextStyle(
+                        color: AppColors.goldDark,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700),
+                    deleteIconColor: AppColors.goldDark,
+                    visualDensity: VisualDensity.compact,
+                  ),
+                // Poi i soliti, per non doverli riscrivere ogni volta.
+                for (final tag in _tagNoti.where((x) => !_tags.contains(x)))
+                  ActionChip(
+                    avatar: const Icon(Icons.add, size: 14, color: AppColors.textSecondary),
+                    label: Text(tag),
+                    onPressed: () => _aggiungiTag(tag),
+                    backgroundColor: Colors.transparent,
+                    side: const BorderSide(color: AppColors.divider),
+                    labelStyle: const TextStyle(
+                        color: AppColors.textSecondary, fontSize: 12),
+                    visualDensity: VisualDensity.compact,
+                  ),
+              ]),
+              const SizedBox(height: 8),
+              TextField(
+                controller: _tagCtrl,
+                textInputAction: TextInputAction.done,
+                onSubmitted: _aggiungiTag,
+                style: const TextStyle(color: AppColors.textPrimary, fontSize: 14),
+                decoration: InputDecoration(
+                  isDense: true,
+                  hintText: 'Un altro tag e invio',
+                  hintStyle: const TextStyle(color: AppColors.textMuted, fontSize: 13),
+                  prefixIcon: const Icon(Icons.label_outline,
+                      color: AppColors.textSecondary, size: 18),
+                  suffixIcon: IconButton(
+                    icon: const Icon(Icons.add, size: 18, color: AppColors.accent),
+                    onPressed: () => _aggiungiTag(_tagCtrl.text),
+                    tooltip: 'Aggiungi',
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(vertical: 10),
+                  filled: true,
+                  fillColor: AppColors.background,
+                  border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide: const BorderSide(color: AppColors.divider)),
+                  enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide: const BorderSide(color: AppColors.divider)),
+                  focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide: const BorderSide(color: AppColors.accent, width: 2)),
+                ),
+              ),
               const SizedBox(height: 16),
               const Divider(color: AppColors.divider),
               _DetailRow(label: 'Stato', child: DropdownButton<String>(
