@@ -1322,15 +1322,19 @@ class _BookingDetailSheetState extends State<BookingDetailSheet>
   static int _numero(Map<String, dynamic> t) =>
       int.tryParse((t['name'] ?? '').toString().replaceAll(RegExp(r'\D'), '')) ?? 9999;
 
-  /// Chiede al motore sul server quali tavoli darebbe.
+  /// Chiede al motore sul server quali tavoli darebbe, e li assegna.
   ///
-  /// Propone e basta: la scelta resta a chi guarda. E' il motivo per cui il
-  /// pulsante non salva — riempie la selezione e aspetta il ✓.
+  /// Assegna subito invece di aspettare il ✓: il pulsante che riempiva la
+  /// selezione senza salvare era un trabocchetto — chiudendo la scheda la
+  /// proposta svaniva, e chi lo tocca si aspetta che assegni. Non manda
+  /// nessuna mail ed è reversibile: la revisione resta, si fa cambiando i
+  /// tavoli a mano.
   Future<void> _proponiTavoli() async {
     setState(() => _tavoliInCorso = true);
     try {
       final esito = await TavoliPrenotazione.proponi(
-          widget.booking['id'].toString());
+          widget.booking['id'].toString(),
+          applica: true);
       if (!mounted) return;
       final proposta = esito?['proposta'];
       if (proposta == null) {
@@ -1350,11 +1354,15 @@ class _BookingDetailSheetState extends State<BookingDetailSheet>
       scelti.sort((a, b) => _numero(a).compareTo(_numero(b)));
       setState(() => _tavoli = scelti);
       final spreco = (proposta['spreco'] as int?) ?? 0;
+      final elenco = scelti.map((t) => t['name']).join(' + ');
+      // L'elenco dietro va ricaricato: i tavoli sono gia' scritti, e senza
+      // questo la colonna TAVOLO resterebbe a "da assegnare".
+      widget.onSaved();
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
         content: Text(spreco == 0
-            ? 'Proposta: ${scelti.map((t) => t['name']).join(' + ')}. Tocca ✓ per confermare.'
-            : 'Proposta: ${scelti.map((t) => t['name']).join(' + ')}, '
-                '$spreco ${spreco == 1 ? 'posto' : 'posti'} in piu\'. Tocca ✓ per confermare.'),
+            ? 'Assegnati i tavoli $elenco.'
+            : 'Assegnati i tavoli $elenco, '
+                '$spreco ${spreco == 1 ? 'posto' : 'posti'} in piu\'.'),
         backgroundColor: AppColors.badgeGreen,
       ));
     } catch (e) {
