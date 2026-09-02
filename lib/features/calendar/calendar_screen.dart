@@ -46,7 +46,7 @@ final prenotazioniIntervalloProvider = FutureProvider.autoDispose
       .select('id, date, time_start, party_size, status, source, notes, '
           'internal_notes, table_id, guest_id, '
           'guests(id, first_name, surname, name, phone, email), '
-          'tables(id, name, capacity, area_id, areas(name))')
+          'tables!bookings_table_id_fkey(id, name, capacity, area_id, areas(name))')
       .eq('restaurant_id', _idRistorante)
       .gte('date', periodo.$1)
       .lte('date', periodo.$2)

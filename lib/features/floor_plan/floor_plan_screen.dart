@@ -7,6 +7,7 @@ import 'package:restaurant_booking/shared/widgets/app_drawer.dart';
 import 'package:restaurant_booking/features/bookings/bookings_screen.dart';
 import 'package:intl/intl.dart';
 import 'package:restaurant_booking/shared/widgets/pulsante_barra.dart';
+import 'package:restaurant_booking/data/tavoli_prenotazione.dart';
 
 // Stato tavolo
 enum TableStatus { free, booked, occupied, unavailable }
@@ -139,8 +140,15 @@ class _FloorPlanScreenState extends State<FloorPlanScreen> {
       for (final t in tablesRes) {
         statuses[t['id']] = TableStatus.free;
       }
+      // I tavoli di ogni prenotazione, che possono essere piu' d'uno.
+      // Guardare la sola colonna `table_id` ne vedrebbe uno, e i compagni
+      // risulterebbero liberi: e' cosi' che nascono i doppi usi.
+      final tavoliPer = await TavoliPrenotazione.perGiornata(dateStr);
+
       for (final b in bookingsRes) {
-        if (b['table_id'] == null) continue;
+        final suoiTavoli = tavoliPer[b['id'].toString()] ??
+            (b['table_id'] == null ? const <String>[] : [b['table_id'].toString()]);
+        if (suoiTavoli.isEmpty) continue;
         final startParts = (b['time_start'] as String).substring(0, 5).split(':');
         final startMin = int.parse(startParts[0]) * 60 + int.parse(startParts[1]);
         // Se time_end è null assumiamo 2 ore di durata
@@ -152,16 +160,18 @@ class _FloorPlanScreenState extends State<FloorPlanScreen> {
           endMin = startMin + 120;
         }
         if (selMinutes >= startMin && selMinutes < endMin) {
-          statuses[b['table_id']] = b['status'] == 'seated'
-              ? TableStatus.occupied
-              : TableStatus.booked;
+          for (final idTavolo in suoiTavoli) {
+            statuses[idTavolo] = b['status'] == 'seated'
+                ? TableStatus.occupied
+                : TableStatus.booked;
+          }
         }
       }
 
       // Carica tutte le prenotazioni pending (con e senza tavolo)
       final pendingRes = await _supabase
           .from('bookings')
-          .select('*, guests(first_name, surname, name, phone, email), tables(name, capacity)')
+          .select('*, guests(first_name, surname, name, phone, email), tables!bookings_table_id_fkey(name, capacity)')
           .eq('restaurant_id', _restaurantId)
           .eq('date', dateStr)
           .eq('status', 'pending');

@@ -9,6 +9,7 @@ import 'package:restaurant_booking/core/providers/booking_providers.dart';
 import 'package:restaurant_booking/features/bookings/bookings_screen.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' as supabase_flutter;
 import 'package:restaurant_booking/shared/widgets/pulsante_barra.dart';
+import 'package:restaurant_booking/data/tavoli_prenotazione.dart';
 
 class ReservationsScreen extends ConsumerStatefulWidget {
   const ReservationsScreen({super.key});
@@ -111,6 +112,10 @@ class _ScheduleBodyState extends ConsumerState<_ScheduleBody> {
   List<Map<String, dynamic>> _tables = [];
   bool _loading = false;
 
+  /// I tavoli di ogni prenotazione: possono essere piu' d'uno, e allora la
+  /// prenotazione compare su tutte le righe che occupa.
+  Map<String, List<String>> _tavoliPer = {};
+
   static const int _startHour = 17;
   static const int _endHour = 23;
   static const int _slotMinutes = 15;
@@ -143,15 +148,17 @@ class _ScheduleBodyState extends ConsumerState<_ScheduleBody> {
           // `phone` non era nell'elenco, e la scheda che si apre da qui e'
           // modificabile: il campo telefono nasceva vuoto perche' il dato non
           // era stato caricato, e salvando cancellava il numero del cliente.
-          .select('*, guests(first_name, surname, name, phone, email), tables(name, areas(name))')
+          .select('*, guests(first_name, surname, name, phone, email), tables!bookings_table_id_fkey(name, areas(name))')
           .eq('restaurant_id', _restaurantId)
           .eq('date', dateStr)
           .inFilter('status', ['approved', 'pending', 'seated', 'walkin'])
           .order('time_start');
+      final tavoliPer = await TavoliPrenotazione.perGiornata(dateStr);
       if (!mounted) return;
       setState(() {
         _tables = List<Map<String, dynamic>>.from(tablesRes);
         _bookings = List<Map<String, dynamic>>.from(bookingsRes);
+        _tavoliPer = tavoliPer;
         _loading = false;
       });
     } catch (e) {
@@ -646,8 +653,14 @@ class _ScheduleBodyState extends ConsumerState<_ScheduleBody> {
     final tableId = table['id']?.toString();
     final tableName = table['name']?.toString() ?? '';
     final capacity = (table['capacity'] as int?) ?? 0;
-    final tableBookings =
-        _bookings.where((b) => b['table_id']?.toString() == tableId).toList();
+    // Una prenotazione compare su ogni tavolo che occupa. Confrontare la
+    // sola colonna `table_id` la mostrerebbe sul primo e la farebbe sparire
+    // dagli altri, che sembrerebbero liberi.
+    final tableBookings = _bookings.where((b) {
+      final suoi = _tavoliPer[b['id'].toString()];
+      if (suoi != null) return suoi.contains(tableId);
+      return b['table_id']?.toString() == tableId;
+    }).toList();
     final c = ColoriSala.di(table['areas']?['name']?.toString());
 
     return Container(

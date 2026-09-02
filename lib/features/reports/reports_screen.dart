@@ -45,7 +45,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
       final righe = await Supabase.instance.client
           .from('bookings')
           .select('id, date, time_start, party_size, status, source, created_at, '
-              'internal_notes, guest_id, tables(areas(name))')
+              'internal_notes, guest_id, tables!bookings_table_id_fkey(areas(name))')
           .eq('restaurant_id', _idRistorante)
           .order('date');
       if (!mounted) return;

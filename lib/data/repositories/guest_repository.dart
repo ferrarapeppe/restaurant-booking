@@ -161,7 +161,7 @@ class GuestRepository {
   Future<List<Map<String, dynamic>>> getGuestBookingsMappe(String guestId) async {
     final response = await _client
         .from('bookings')
-        .select('*, guests(*), tables(id, name, capacity, area_id, areas(name))')
+        .select('*, guests(*), tables!bookings_table_id_fkey(id, name, capacity, area_id, areas(name))')
         .eq('guest_id', guestId)
         .order('date', ascending: false);
     return [for (final r in response as List) Map<String, dynamic>.from(r as Map)];

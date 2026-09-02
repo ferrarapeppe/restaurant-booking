@@ -205,7 +205,7 @@ async function esegui(
     const { data, error } = await db
       .from('bookings')
       .select('id, date, time_start, party_size, status, source, notes, internal_notes, '
-        + 'guests(first_name, surname, name, phone), tables(name, areas(name))')
+        + 'guests(first_name, surname, name, phone), tables!bookings_table_id_fkey(name, areas(name))')
       .eq('restaurant_id', ID_RISTORANTE)
       .gte('date', da)
       .lte('date', a)
@@ -248,7 +248,7 @@ async function esegui(
   if (nome === 'conteggi_periodo') {
     const { data, error } = await db
       .from('bookings')
-      .select('date, party_size, status, time_start, internal_notes, tables(areas(name))')
+      .select('date, party_size, status, time_start, internal_notes, tables!bookings_table_id_fkey(areas(name))')
       .eq('restaurant_id', ID_RISTORANTE)
       .gte('date', String(arg.da ?? ''))
       .lte('date', String(arg.a ?? ''));
@@ -296,7 +296,7 @@ async function esegui(
       .from('bookings')
       .select('id, date, time_start, party_size, status, notes, internal_notes, '
         + 'table_id, guest_id, guests(id, first_name, surname, name, phone, email), '
-        + 'tables(name, capacity)')
+        + 'tables!bookings_table_id_fkey(name, capacity)')
       .eq('restaurant_id', ID_RISTORANTE)
       .eq('id', id)
       .maybeSingle();

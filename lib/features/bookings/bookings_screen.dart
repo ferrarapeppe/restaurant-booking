@@ -11,6 +11,7 @@ import 'package:restaurant_booking/core/providers/booking_providers.dart';
 import 'package:restaurant_booking/features/bookings/stato_giornata.dart';
 import 'package:restaurant_booking/features/bookings/scelte_modulo.dart';
 import 'package:restaurant_booking/shared/widgets/pulsante_barra.dart';
+import 'package:restaurant_booking/data/tavoli_prenotazione.dart';
 
 class BookingsScreen extends ConsumerStatefulWidget {
   final DateTime? initialDate;
@@ -226,7 +227,7 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
       debugPrint('BOOKINGS LOAD date=$dateStr status=$_statusFilter periodo=$_periodo');
       var query = _supabase
           .from('bookings')
-          .select('*, guests(first_name, surname, name, phone, email, tags), tables(name, capacity, area_id, areas(name))')
+          .select('*, guests(first_name, surname, name, phone, email, tags), tables!bookings_table_id_fkey(name, capacity, area_id, areas(name))')
           .eq('restaurant_id', _restaurantId);
       final estremi = _estremiPeriodo;
       if (_filtroSpeciale == 'senza_tavolo') {
@@ -1173,9 +1174,13 @@ class _BookingDetailSheetState extends State<BookingDetailSheet>
   late String _editTime;
   late int _editPartySize;
   late String _editStatus, _editSource;
-  String? _editTableId;
-  String _editTableName = '';
-  int _editTableCapacity = 0;
+  /// I tavoli assegnati. Una prenotazione puo' tenerne piu' d'uno: cinque
+  /// persone nel dehors, dove i tavoli sono da due, ne occupano tre.
+  List<Map<String, dynamic>> _tavoli = [];
+  bool _tavoliInCorso = false;
+
+  int get _postiScelti =>
+      _tavoli.fold<int>(0, (s, t) => s + ((t['capacity'] as int?) ?? 0));
   ScelteModulo _scelte = const ScelteModulo();
   bool _saving = false;
 
@@ -1189,11 +1194,16 @@ class _BookingDetailSheetState extends State<BookingDetailSheet>
     _editPartySize = (b['party_size'] as int?) ?? 2;
     _editStatus = (b['status'] as String?) ?? 'approved';
     _editSource = (b['source'] as String?) ?? 'phone';
-    _editTableId = b['table_id'] as String?;
+    _caricaTavoli();
     _scelte = ScelteModulo.da(b['internal_notes']);
     final t = b['tables'] as Map<String, dynamic>?;
-    _editTableName = t?['name']?.toString() ?? '';
-    _editTableCapacity = (t?['capacity'] as int?) ?? 0;
+    // Il primo tavolo si conosce subito dalla riga della prenotazione: si
+    // mostra mentre l'elenco completo arriva, invece di lasciare il vuoto.
+    if (t != null) {
+      _tavoli = [
+        {'id': b['table_id'], 'name': t['name'], 'capacity': t['capacity'] ?? 0},
+      ];
+    }
     final g = b['guests'];
     // Quali dati del cliente sono davvero arrivati. Una schermata che li
     // carica a meta' non deve poterli cancellare: e' successo col telefono,
@@ -1237,6 +1247,10 @@ class _BookingDetailSheetState extends State<BookingDetailSheet>
           await _supabase.from('guests').update(datiCliente).eq('id', guestId);
         }
       }
+      await TavoliPrenotazione.salva(
+        widget.booking['id'].toString(),
+        [for (final t in _tavoli) t['id'].toString()],
+      );
       final dateStr = DateFormat('yyyy-MM-dd').format(_editDate);
       await _supabase.from('bookings').update({
         'date': dateStr,
@@ -1245,7 +1259,8 @@ class _BookingDetailSheetState extends State<BookingDetailSheet>
         'status': _editStatus,
         'source': _editSource,
         'notes': _noteCtrl.text.trim(),
-        'table_id': _editTableId,
+        // `table_id` lo allinea TavoliPrenotazione.salva, qui sotto: e' il
+        // primo tavolo, e serve solo alle schermate non ancora aggiornate.
       }).eq('id', widget.booking['id']);
       // L'email parte solo al passaggio ad "accettata", mai al cambio di tavolo
       if (_editStatus == 'approved' && widget.booking['status'] != 'approved') {
@@ -1277,6 +1292,77 @@ class _BookingDetailSheetState extends State<BookingDetailSheet>
     }
   }
 
+  /// L'elenco completo dei tavoli della prenotazione.
+  Future<void> _caricaTavoli() async {
+    try {
+      final res = await _supabase
+          .from('booking_tables')
+          .select('table_id, tables(id, name, capacity)')
+          .eq('booking_id', widget.booking['id']);
+      final tavoli = <Map<String, dynamic>>[];
+      for (final r in res as List) {
+        final t = (r as Map)['tables'] as Map?;
+        if (t == null) continue;
+        tavoli.add({
+          'id': t['id'],
+          'name': t['name'],
+          'capacity': (t['capacity'] as int?) ?? 0,
+        });
+      }
+      if (!mounted || tavoli.isEmpty) return;
+      tavoli.sort((a, b) => _numero(a).compareTo(_numero(b)));
+      setState(() => _tavoli = tavoli);
+    } catch (_) {
+      // Se la lettura fallisce resta quello che si sapeva dalla riga.
+    }
+  }
+
+  static int _numero(Map<String, dynamic> t) =>
+      int.tryParse((t['name'] ?? '').toString().replaceAll(RegExp(r'\D'), '')) ?? 9999;
+
+  /// Chiede al motore sul server quali tavoli darebbe.
+  ///
+  /// Propone e basta: la scelta resta a chi guarda. E' il motivo per cui il
+  /// pulsante non salva — riempie la selezione e aspetta il ✓.
+  Future<void> _proponiTavoli() async {
+    setState(() => _tavoliInCorso = true);
+    try {
+      final esito = await TavoliPrenotazione.proponi(
+          widget.booking['id'].toString());
+      if (!mounted) return;
+      final proposta = esito?['proposta'];
+      if (proposta == null) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text((esito?['motivo'] ?? 'Nessuna proposta disponibile.').toString()),
+          backgroundColor: AppColors.gold,
+        ));
+        return;
+      }
+      final scelti = <Map<String, dynamic>>[
+        for (final t in (proposta['tavoli'] as List? ?? const []))
+          {'id': t['id'], 'name': t['nome'], 'capacity': t['posti'] ?? 0},
+      ];
+      setState(() => _tavoli = scelti);
+      final spreco = (proposta['spreco'] as int?) ?? 0;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(spreco == 0
+            ? 'Proposta: ${scelti.map((t) => t['name']).join(' + ')}. Tocca ✓ per confermare.'
+            : 'Proposta: ${scelti.map((t) => t['name']).join(' + ')}, '
+                '$spreco ${spreco == 1 ? 'posto' : 'posti'} in piu\'. Tocca ✓ per confermare.'),
+        backgroundColor: AppColors.badgeGreen,
+      ));
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text('Proposta non riuscita: $e'),
+          backgroundColor: AppColors.accent,
+        ));
+      }
+    } finally {
+      if (mounted) setState(() => _tavoliInCorso = false);
+    }
+  }
+
   Future<void> _pickTable() async {
     final tables = await Supabase.instance.client
         .from('tables')
@@ -1288,41 +1374,88 @@ class _BookingDetailSheetState extends State<BookingDetailSheet>
       context: context,
       backgroundColor: AppColors.surface,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
-      builder: (_) => ListView(
-        shrinkWrap: true,
-        padding: const EdgeInsets.symmetric(vertical: 8),
-        children: [
-          ListTile(
-            leading: const Icon(Icons.block, color: AppColors.textMuted),
-            title: const Text('Nessun tavolo', style: TextStyle(color: AppColors.textPrimary)),
-            onTap: () {
-              setState(() { _editTableId = null; _editTableName = ''; _editTableCapacity = 0; });
-              Navigator.pop(context);
-            },
-          ),
-          ...tables.map((t) {
-            final areaName = (t['areas'] as Map?)?['name']?.toString() ?? '';
-            return ListTile(
-              leading: Container(
-                width: 32, height: 32,
-                decoration: const BoxDecoration(shape: BoxShape.circle, color: AppColors.textPrimary),
-                child: Center(child: Text(t['name'] ?? '', style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold))),
+      isScrollControlled: true,
+      useSafeArea: true,
+      // A scelta multipla: si spunta e si continua, invece di chiudersi al
+      // primo tocco. Un tavolo solo non basta per cinque persone in dehors.
+      builder: (ctx) {
+        var scelti = [..._tavoli];
+        return StatefulBuilder(builder: (ctx, aggiorna) {
+          final posti = scelti.fold<int>(
+              0, (s, t) => s + ((t['capacity'] as int?) ?? 0));
+          final ospiti = _editPartySize;
+          return SizedBox(
+            height: MediaQuery.of(ctx).size.height * 0.75,
+            child: Column(children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                child: Row(children: [
+                  Expanded(
+                    child: Text(
+                      scelti.isEmpty
+                          ? 'Scegli i tavoli — $ospiti persone'
+                          : '$posti posti su $ospiti persone',
+                      style: TextStyle(
+                          color: posti >= ospiti
+                              ? AppColors.badgeGreen
+                              : AppColors.textPrimary,
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: () {
+                      setState(() => _tavoli = scelti
+                        ..sort((a, b) => _numero(a).compareTo(_numero(b))));
+                      Navigator.pop(ctx);
+                    },
+                    child: const Text('Fatto',
+                        style: TextStyle(
+                            color: AppColors.accent, fontWeight: FontWeight.bold)),
+                  ),
+                ]),
               ),
-              title: Text('Tavolo ${t['name']}', style: const TextStyle(color: AppColors.textPrimary)),
-              subtitle: areaName.isNotEmpty ? Text(areaName, style: const TextStyle(color: AppColors.textSecondary, fontSize: 12)) : null,
-              trailing: Text('${t['capacity']} posti', style: const TextStyle(color: AppColors.textMuted, fontSize: 12)),
-              onTap: () {
-                setState(() {
-                  _editTableId = t['id'] as String;
-                  _editTableName = t['name']?.toString() ?? '';
-                  _editTableCapacity = (t['capacity'] as int?) ?? 0;
-                });
-                Navigator.pop(context);
-              },
-            );
-          }),
-        ],
-      ),
+              const Divider(height: 1, color: AppColors.divider),
+              Expanded(
+                child: ListView(children: [
+                  for (final t in tables)
+                    Builder(builder: (_) {
+                      final id = t['id'].toString();
+                      final dentro = scelti.any((s) => s['id'].toString() == id);
+                      final areaName = (t['areas'] as Map?)?['name']?.toString() ?? '';
+                      return CheckboxListTile(
+                        value: dentro,
+                        activeColor: AppColors.accent,
+                        controlAffinity: ListTileControlAffinity.leading,
+                        title: Text('Tavolo ${t['name']}',
+                            style: const TextStyle(color: AppColors.textPrimary)),
+                        subtitle: areaName.isEmpty
+                            ? null
+                            : Text(areaName,
+                                style: const TextStyle(
+                                    color: AppColors.textSecondary, fontSize: 12)),
+                        secondary: Text('${t['capacity']} posti',
+                            style: const TextStyle(
+                                color: AppColors.textMuted, fontSize: 12)),
+                        onChanged: (v) => aggiorna(() {
+                          if (v == true) {
+                            scelti.add({
+                              'id': t['id'],
+                              'name': t['name'],
+                              'capacity': (t['capacity'] as int?) ?? 0,
+                            });
+                          } else {
+                            scelti.removeWhere((s) => s['id'].toString() == id);
+                          }
+                        }),
+                      );
+                    }),
+                ]),
+              ),
+            ]),
+          );
+        });
+      },
     );
   }
 
@@ -1404,28 +1537,73 @@ class _BookingDetailSheetState extends State<BookingDetailSheet>
                   ),
               ],
               const Divider(color: AppColors.divider),
-              GestureDetector(
-                onTap: _pickTable,
-                child: _DetailRow(label: 'Tavolo', child: Row(children: [
-                  Expanded(
-                    child: _editTableName.isNotEmpty
-                        ? Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: AppColors.accent.withValues(alpha: 0.15),
-                              borderRadius: BorderRadius.circular(20),
-                              border: Border.all(color: AppColors.accent),
-                            ),
-                            child: Text(
-                              _editTableCapacity > 0 ? '$_editTableName  ($_editTableCapacity posti)' : _editTableName,
-                              style: const TextStyle(color: AppColors.accent, fontWeight: FontWeight.bold),
-                            ),
-                          )
-                        : const Text('Tocca per assegnare un tavolo',
-                            style: TextStyle(color: AppColors.gold, fontSize: 14)),
+              _DetailRow(
+                label: _tavoli.length > 1 ? 'Tavoli' : 'Tavolo',
+                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  GestureDetector(
+                    onTap: _pickTable,
+                    behavior: HitTestBehavior.opaque,
+                    child: Row(children: [
+                      Expanded(
+                        child: _tavoli.isEmpty
+                            ? const Text('Tocca per assegnare i tavoli',
+                                style: TextStyle(color: AppColors.gold, fontSize: 14))
+                            : Wrap(spacing: 6, runSpacing: 6, children: [
+                                for (final t in _tavoli)
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 10, vertical: 4),
+                                    decoration: BoxDecoration(
+                                      color: AppColors.accent.withValues(alpha: 0.15),
+                                      borderRadius: BorderRadius.circular(20),
+                                      border: Border.all(color: AppColors.accent),
+                                    ),
+                                    child: Text(
+                                      '${t['name']}  (${t['capacity']})',
+                                      style: const TextStyle(
+                                          color: AppColors.accent,
+                                          fontWeight: FontWeight.bold),
+                                    ),
+                                  ),
+                              ]),
+                      ),
+                      const Icon(Icons.edit_outlined,
+                          color: AppColors.textMuted, size: 16),
+                    ]),
                   ),
-                  const Icon(Icons.edit_outlined, color: AppColors.textMuted, size: 16),
-                ])),
+                  const SizedBox(height: 8),
+                  Row(children: [
+                    // Il conto dei posti sta accanto ai tavoli: e' l'unica
+                    // cosa che dice se la scelta regge le persone attese.
+                    if (_tavoli.isNotEmpty)
+                      Text(
+                        _postiScelti >= _editPartySize
+                            ? '$_postiScelti posti per $_editPartySize persone'
+                            : 'Solo $_postiScelti posti per $_editPartySize persone',
+                        style: TextStyle(
+                            color: _postiScelti >= _editPartySize
+                                ? AppColors.textSecondary
+                                : AppColors.accent,
+                            fontSize: 12,
+                            fontWeight: _postiScelti >= _editPartySize
+                                ? FontWeight.normal
+                                : FontWeight.bold),
+                      ),
+                    const Spacer(),
+                    TextButton.icon(
+                      onPressed: _tavoliInCorso ? null : _proponiTavoli,
+                      icon: _tavoliInCorso
+                          ? const SizedBox(
+                              width: 14, height: 14,
+                              child: CircularProgressIndicator(
+                                  strokeWidth: 2, color: AppColors.goldDark))
+                          : const Icon(Icons.auto_awesome_outlined, size: 16),
+                      label: const Text('Proponi'),
+                      style: TextButton.styleFrom(
+                          foregroundColor: AppColors.goldDark),
+                    ),
+                  ]),
+                ]),
               ),
               const SizedBox(height: 16),
               _EditableField(label: 'Nome', controller: _nomeCtrl),
