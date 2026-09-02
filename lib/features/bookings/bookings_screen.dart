@@ -35,7 +35,6 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
   static const _restaurantId = '2b126a92-24d5-4e83-b38c-dfc82035a0cf';
   final _supabase = Supabase.instance.client;
   String _statusFilter = 'attivo';
-  String? _sourceFilter;
 
   /// 'senza_tavolo' o 'da_approvare': elenchi che ignorano la giornata
   /// mostrata e guardano tutte le date da oggi in avanti.
@@ -61,8 +60,11 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
         ref.read(selectedDateProvider.notifier).state = widget.initialDate!;
       }
       if (widget.initialFilter == 'da_assegnare') {
+        // Si parte dalle sole in attesa, ma si caricano tutte quelle dal
+        // sito: cosi' accettandone una non sparisce dallo schermo, si
+        // sposta fra le pastiglie e la si ritrova.
+        _filtroSpeciale = 'da_assegnare';
         _statusFilter = 'pending';
-        _sourceFilter = 'web';
       }
       // Due elenchi che attraversano i giorni: non hanno una data, hanno una
       // condizione. Prima "senza tavolo" veniva mandato su `da_assegnare`,
@@ -193,6 +195,7 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
   String get _etichettaFiltro => switch (_filtroSpeciale) {
         'senza_tavolo' => 'Senza tavolo assegnato',
         'da_approvare' => 'Da approvare',
+        'da_assegnare' => 'Arrivate dal sito',
         _ => '',
       };
 
@@ -230,7 +233,9 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
           .select('*, guests(first_name, surname, name, phone, email, tags), tables!bookings_table_id_fkey(name, capacity, area_id, areas(name))')
           .eq('restaurant_id', _restaurantId);
       final estremi = _estremiPeriodo;
-      if (_filtroSpeciale == 'senza_tavolo') {
+      if (_filtroSpeciale == 'da_assegnare') {
+        query = query.eq('source', 'web');
+      } else if (_filtroSpeciale == 'senza_tavolo') {
         query = query
             .isFilter('table_id', null)
             .gte('date', DateFormat('yyyy-MM-dd').format(DateTime.now()))
@@ -239,8 +244,6 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
         query = query
             .eq('status', 'pending')
             .gte('date', DateFormat('yyyy-MM-dd').format(DateTime.now()));
-      } else if (_sourceFilter == 'web') {
-        query = query.eq('source', 'web').eq('status', 'pending');
       } else if (_perArrivo) {
         query = query.gte('created_at', _daQuandoArrivate.toIso8601String());
       } else if (estremi != null) {
@@ -360,7 +363,6 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
       // Anche il filtro va tolto, altrimenti si torna alla giornata ma
       // l'elenco resta quello di prima e sembra rotto.
       _filtroSpeciale = null;
-      _sourceFilter = null;
       _statusFilter = 'attivo';
     });
     _loadBookings();
