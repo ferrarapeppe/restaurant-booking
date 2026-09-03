@@ -57,6 +57,12 @@ class SettingsScreen extends StatelessWidget {
                 description: 'Il link da dare ai clienti e il codice per mettere il modulo dentro un sito.',
                 onTap: () => context.push('/settings/link'),
               ),
+              _SettingsCard(
+                icon: Icons.notifications_active_outlined,
+                title: 'Avvisi su Telegram',
+                description: 'Chi riceve un messaggio quando arriva una prenotazione, e quali altri avvisi mandare.',
+                onTap: () => context.push('/settings/telegram'),
+              ),
             ],
           ),
           const SizedBox(height: 24),

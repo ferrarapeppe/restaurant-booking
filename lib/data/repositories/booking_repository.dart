@@ -1,5 +1,6 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:restaurant_booking/data/models/booking_model.dart';
+import 'package:restaurant_booking/data/avvisi_telegram.dart';
 
 class BookingRepository {
   final SupabaseClient _client = Supabase.instance.client;
@@ -60,6 +61,9 @@ class BookingRepository {
 
   Future<void> updateStatus(String id, String status) async {
     await _client.from('bookings').update({'status': status}).eq('id', id);
+    // Qui passano i cambi di stato delle schermate che non scrivono da sole:
+    // e' il posto giusto per l'avviso, invece di ripeterlo in ognuna.
+    AvvisiTelegram.cambioStato(id);
   }
 
   Future<void> deleteBooking(String id) async {

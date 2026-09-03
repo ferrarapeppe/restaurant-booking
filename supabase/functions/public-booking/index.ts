@@ -11,6 +11,7 @@
 
 import { createClient } from 'npm:@supabase/supabase-js@2';
 import { proponiTavoli, assegna } from '../_shared/tavoli.ts';
+import { avvisa, dataEstesa, pulisci } from '../_shared/telegram.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -224,6 +225,29 @@ Deno.serve(async (req) => {
         bookingId: idPrenotazione,
       });
 
+      // L'avviso allo staff. Dopo l'email e senza `await` bloccante sul
+      // buon esito: se Telegram non risponde, la prenotazione e' comunque
+      // registrata e il cliente ha gia' ricevuto la sua conferma.
+      await avvisa(
+        db,
+        ID_RISTORANTE,
+        'prenotazione',
+        `🔔 <b>Nuova prenotazione</b>
+` +
+          `${pulisci(nome)} ${pulisci(cognome)} — ${dataEstesa(data)} alle ${ora}
+` +
+          `${persone} ${persone === 1 ? 'persona' : 'persone'} · ${pulisci(area.name)}
+` +
+          `${pulisci(turno)}
+` +
+          `📞 ${pulisci(telefono)}` +
+          (note ? `
+📝 ${pulisci(note)}` : '') +
+          `
+
+Da approvare nel gestionale.`,
+      );
+
       return risposta({ bookingId: idPrenotazione });
     }
 
@@ -288,6 +312,23 @@ Deno.serve(async (req) => {
         restaurantCity: ristorante?.city ?? '',
         restaurantEmail: ristorante?.email ?? '',
       });
+
+      // Il messaggio di un cliente oggi si vede solo entrando nell'app: se
+      // scrive "siamo in ritardo di venti minuti" nessuno se ne accorge.
+      const chi = [ospite.first_name, ospite.surname].filter(Boolean).join(' ') ||
+        'Un cliente';
+      await avvisa(
+        db,
+        ID_RISTORANTE,
+        'messaggio',
+        `💬 <b>Messaggio da ${pulisci(chi)}</b>
+` +
+          `Prenotazione di ${dataEstesa(String(prenotazione.date))} alle ` +
+          `${String(prenotazione.time_start).slice(0, 5)}
+
+` +
+          `${pulisci(testo)}`,
+      );
 
       return risposta({ ok: true });
     }

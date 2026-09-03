@@ -12,6 +12,7 @@ import 'package:restaurant_booking/features/bookings/stato_giornata.dart';
 import 'package:restaurant_booking/features/bookings/scelte_modulo.dart';
 import 'package:restaurant_booking/shared/widgets/pulsante_barra.dart';
 import 'package:restaurant_booking/data/tavoli_prenotazione.dart';
+import 'package:restaurant_booking/data/avvisi_telegram.dart';
 
 class BookingsScreen extends ConsumerStatefulWidget {
   final DateTime? initialDate;
@@ -748,6 +749,9 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen> {
                             if (newStatus == 'approved' && precedente != 'approved') {
                               sendBookingAcceptedEmail(b);
                             }
+                            if (newStatus != precedente) {
+                              AvvisiTelegram.cambioStato(b['id'].toString());
+                            }
                             _loadBookings();
                           },
                           onReject: () => Navigator.push(context, MaterialPageRoute(
@@ -1482,6 +1486,9 @@ class _BookingDetailSheetState extends State<BookingDetailSheet>
             'email': _emailCtrl.text.trim(),
           },
         });
+      }
+      if (_editStatus != (widget.booking['status'] ?? '')) {
+        AvvisiTelegram.cambioStato(widget.booking['id'].toString());
       }
       widget.onSaved();
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(
