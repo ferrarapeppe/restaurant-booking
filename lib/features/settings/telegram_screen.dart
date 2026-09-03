@@ -114,8 +114,8 @@ class _TelegramScreenState extends State<TelegramScreen> {
       if (!mounted) return;
       if (trovate.isEmpty) {
         _avviso(
-            'Nessuna chat trovata. Scrivi un messaggio qualsiasi al bot (o nel '
-            'gruppo dove l\'hai messo) e riprova.',
+            'Nessuna chat trovata. Nel gruppo scrivi /start@ seguito dal nome '
+            'del bot: un messaggio normale il bot non lo vede.',
             errore: true);
         return;
       }
@@ -342,12 +342,15 @@ class _Spiegazione extends StatelessWidget {
             SizedBox(height: 8),
             Text(
               'Telegram non permette a un bot di scrivere per primo a un '
-              'numero di telefono. Quindi:\n\n'
-              '1. la persona apre il gruppo dello staff (o il bot) su '
-              'Telegram e scrive un messaggio qualsiasi;\n'
-              '2. tu tocchi «Cerca le chat del bot» qui sotto;\n'
-              '3. scegli la chat dall\'elenco.\n\n'
-              'Da quel momento riceve tutto. Per toglierla basta il cestino.',
+              'numero di telefono. Quindi la chat deve farsi trovare:\n\n'
+              '1. nel gruppo dove hai messo il bot scrivi «/start@» seguito '
+              'dal nome del bot, per esempio /start@HioAvvisiBot. Un '
+              'messaggio normale non basta: nei gruppi il bot vede solo i '
+              'comandi rivolti a lui;\n'
+              '2. tocca «Cerca le chat del bot» qui sotto;\n'
+              '3. scegli la chat dall\'elenco, poi «Prova».\n\n'
+              'Per una singola persona basta invece che apra il bot e prema '
+              'Avvia. Per togliere un destinatario, il cestino.',
               style: TextStyle(
                   color: AppColors.textSecondary, fontSize: 13, height: 1.55),
             ),

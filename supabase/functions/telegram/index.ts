@@ -99,7 +99,18 @@ Deno.serve(async (req) => {
       if (!gettone) {
         return risposta({ error: 'Il gettone del bot non è impostato.' }, 400);
       }
-      const r = await fetch(`https://api.telegram.org/bot${gettone}/getUpdates`);
+      // `allowed_updates` va chiesto per nome: senza, Telegram NON manda
+      // `my_chat_member`, cioe' proprio l'evento "il bot e' stato aggiunto a
+      // un gruppo". Il gruppo restava invisibile anche col bot dentro.
+      const r = await fetch(
+        `https://api.telegram.org/bot${gettone}/getUpdates?timeout=0&allowed_updates=` +
+          encodeURIComponent(JSON.stringify([
+            'message',
+            'channel_post',
+            'my_chat_member',
+            'chat_member',
+          ])),
+      );
       const esito = await r.json().catch(() => ({}));
       if (!esito.ok) {
         return risposta({ error: String(esito.description ?? 'Telegram non risponde.') }, 400);
@@ -115,7 +126,13 @@ Deno.serve(async (req) => {
           tipo: String(chat.type ?? ''),
         });
       }
-      return risposta({ chats: [...viste.values()] });
+      // Un elenco vuoto non e' un guasto: e' che nessuno ha ancora parlato
+      // al bot. Dirlo qui, dove si sa perche', invece di lasciare l'app a
+      // indovinare.
+      return risposta({
+        chats: [...viste.values()],
+        aggiornamenti: (esito.result ?? []).length,
+      });
     }
 
     // ── Messaggio di prova ──────────────────────────────────────────────────
