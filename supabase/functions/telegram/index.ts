@@ -43,12 +43,16 @@ async function staffValido(req: Request, db: any): Promise<boolean> {
   );
   const { data: utente } = await anonimo.auth.getUser();
   if (!utente?.user) return false;
+  // In `staff_members` la chiave e' `id`, che *e'* l'identificativo
+  // dell'utente: non c'e' nessuna colonna `user_id`. Cercando quella la
+  // richiesta non trovava nessuno e rispondeva 401 a chi era regolarmente
+  // dentro. Stesso controllo di `assegna-tavoli`.
   const { data: membro } = await db
     .from('staff_members')
-    .select('id, active')
-    .eq('user_id', utente.user.id)
+    .select('active')
+    .eq('id', utente.user.id)
     .maybeSingle();
-  return !!membro?.active;
+  return membro?.active === true;
 }
 
 const ETICHETTE: Record<string, string> = {
